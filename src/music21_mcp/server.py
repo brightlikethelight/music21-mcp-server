@@ -1301,6 +1301,559 @@ def _rhythm_to_notation(durations: List[float]) -> str:
     
     return " ".join(notation)
 
+# Week 2: Music Theory Analysis Engine Tools
+
+@mcp.tool()
+async def identify_scale(
+    score_id: str,
+    start_measure: Optional[int] = None,
+    end_measure: Optional[int] = None,
+    confidence_threshold: float = 0.7
+) -> Dict[str, Any]:
+    """
+    Identify scales used in melodies or passages.
+    
+    Args:
+        score_id: ID of the score to analyze
+        start_measure: Start measure for analysis (optional)
+        end_measure: End measure for analysis (optional)
+        confidence_threshold: Minimum confidence for scale detection
+    
+    Returns:
+        Detected scales with confidence scores
+    """
+    try:
+        score = score_manager.get_score(score_id)
+        if not score:
+            raise ValueError(f"Score '{score_id}' not found")
+        
+        # Extract passage if specified
+        if start_measure and end_measure:
+            measures = score.getElementsByClass(stream.Measure)
+            passage = stream.Stream()
+            for m in measures[start_measure-1:end_measure]:
+                passage.append(m)
+            analyze_stream = passage
+        else:
+            analyze_stream = score
+        
+        # Use theory analyzer
+        result = await theory_analyzer.analyze_scale(
+            analyze_stream, 
+            include_modes=True,
+            include_exotic=True
+        )
+        
+        # Filter by confidence
+        filtered_scales = [
+            s for s in result.get('possible_scales', [])
+            if s['match_score'] >= confidence_threshold
+        ]
+        
+        return {
+            "status": "success",
+            "score_id": score_id,
+            "measure_range": f"{start_measure or 1}-{end_measure or 'end'}",
+            "detected_scales": filtered_scales,
+            "best_match": result.get('best_match'),
+            "pitch_content": result.get('pitch_classes', [])
+        }
+        
+    except Exception as e:
+        logger.error(f"Error identifying scale: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@mcp.tool()
+async def interval_vector(
+    score_id: str,
+    start_measure: Optional[int] = None,
+    end_measure: Optional[int] = None
+) -> Dict[str, Any]:
+    """
+    Calculate interval class vectors for sections.
+    
+    Args:
+        score_id: ID of the score to analyze
+        start_measure: Start measure (optional)
+        end_measure: End measure (optional)
+    
+    Returns:
+        Interval vector analysis with consonance metrics
+    """
+    try:
+        score = score_manager.get_score(score_id)
+        if not score:
+            raise ValueError(f"Score '{score_id}' not found")
+        
+        # Import advanced analyzer
+        from .core.advanced_theory import AdvancedTheoryAnalyzer
+        adv_analyzer = AdvancedTheoryAnalyzer()
+        
+        # Extract section
+        if start_measure and end_measure:
+            measures = list(score.getElementsByClass(stream.Measure))
+            section = stream.Stream()
+            for m in measures[start_measure-1:end_measure]:
+                section.append(m)
+            analyze_stream = section
+        else:
+            analyze_stream = score
+        
+        # Calculate interval vector
+        result = await adv_analyzer.calculate_interval_vector(analyze_stream)
+        
+        return {
+            "status": "success",
+            "score_id": score_id,
+            "measure_range": f"{start_measure or 1}-{end_measure or 'end'}",
+            "interval_vector": result.interval_vector,
+            "total_intervals": result.total_intervals,
+            "consonance_ratio": result.consonance_ratio,
+            "tritone_count": result.tritone_count,
+            "common_intervals": result.common_intervals,
+            "z_relation": result.z_relation
+        }
+        
+    except Exception as e:
+        logger.error(f"Error calculating interval vector: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@mcp.tool()
+async def chromatic_analysis(
+    score_id: str,
+    include_voice_leading: bool = True
+) -> Dict[str, Any]:
+    """
+    Identify chromatic passages and their functions.
+    
+    Args:
+        score_id: ID of the score to analyze
+        include_voice_leading: Include voice leading analysis
+    
+    Returns:
+        Chromatic analysis with functional classifications
+    """
+    try:
+        score = score_manager.get_score(score_id)
+        if not score:
+            raise ValueError(f"Score '{score_id}' not found")
+        
+        # Import advanced analyzer
+        from .core.advanced_theory import AdvancedTheoryAnalyzer
+        adv_analyzer = AdvancedTheoryAnalyzer()
+        
+        # Get key context
+        key_context = score.analyze('key')
+        
+        # Analyze chromatic elements
+        result = await adv_analyzer.analyze_chromatic_elements(score, key_context)
+        
+        response = {
+            "status": "success",
+            "score_id": score_id,
+            "key_context": str(key_context),
+            "chromatic_density": result.chromatic_density,
+            "chromatic_functions": result.chromatic_functions,
+            "modal_mixture_chords": result.modal_mixture_chords[:10],  # Limit output
+            "chromatic_notes_count": len(result.chromatic_notes)
+        }
+        
+        if include_voice_leading:
+            response["voice_leading"] = result.chromatic_voice_leading[:10]  # Limit
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in chromatic analysis: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@mcp.tool()
+async def secondary_dominants(
+    score_id: str
+) -> Dict[str, Any]:
+    """
+    Identify secondary dominant chords and tonicization patterns.
+    
+    Args:
+        score_id: ID of the score to analyze
+    
+    Returns:
+        Secondary dominants with target degrees and resolutions
+    """
+    try:
+        score = score_manager.get_score(score_id)
+        if not score:
+            raise ValueError(f"Score '{score_id}' not found")
+        
+        # Import advanced analyzer
+        from .core.advanced_theory import AdvancedTheoryAnalyzer
+        adv_analyzer = AdvancedTheoryAnalyzer()
+        
+        # Get key context
+        key_context = score.analyze('key')
+        
+        # Detect advanced harmony
+        harmony_result = await adv_analyzer.detect_advanced_harmony(score, key_context)
+        
+        return {
+            "status": "success",
+            "score_id": score_id,
+            "key_context": str(key_context),
+            "secondary_dominants": harmony_result.secondary_dominants,
+            "count": len(harmony_result.secondary_dominants),
+            "tonicized_degrees": list(set(
+                sd['target_degree'] for sd in harmony_result.secondary_dominants
+            ))
+        }
+        
+    except Exception as e:
+        logger.error(f"Error detecting secondary dominants: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@mcp.tool()
+async def phrase_structure(
+    score_id: str,
+    include_motives: bool = True
+) -> Dict[str, Any]:
+    """
+    Analyze musical phrase structure (period, sentence, etc).
+    
+    Args:
+        score_id: ID of the score to analyze
+        include_motives: Include motivic analysis
+    
+    Returns:
+        Phrase structure analysis with cadences and form
+    """
+    try:
+        score = score_manager.get_score(score_id)
+        if not score:
+            raise ValueError(f"Score '{score_id}' not found")
+        
+        # Import advanced analyzer
+        from .core.advanced_theory import AdvancedTheoryAnalyzer
+        adv_analyzer = AdvancedTheoryAnalyzer()
+        
+        # Analyze phrase structure
+        result = await adv_analyzer.analyze_phrase_structure(score, include_motives)
+        
+        return {
+            "status": "success",
+            "score_id": score_id,
+            "phrase_type": result.phrase_type.value,
+            "phrase_lengths": result.phrase_lengths,
+            "cadences": result.cadences,
+            "hypermetric_structure": result.hypermetric_structure,
+            "elisions": result.elisions,
+            "phrase_rhythm": result.phrase_rhythm,
+            "motivic_analysis": result.motivic_analysis if include_motives else None
+        }
+        
+    except Exception as e:
+        logger.error(f"Error analyzing phrase structure: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+# Week 3: Advanced Rhythm Tools
+
+@mcp.tool()
+async def beat_strength(
+    score_id: str,
+    part_index: Optional[int] = None
+) -> Dict[str, Any]:
+    """
+    Calculate metric accent patterns and beat strength.
+    
+    Args:
+        score_id: ID of the score to analyze
+        part_index: Specific part to analyze (optional)
+    
+    Returns:
+        Beat strength analysis with metric accents
+    """
+    try:
+        score = score_manager.get_score(score_id)
+        if not score:
+            raise ValueError(f"Score '{score_id}' not found")
+        
+        # Get time signature
+        time_sigs = score.getElementsByClass(meter.TimeSignature)
+        if not time_sigs:
+            return {"status": "error", "message": "No time signature found"}
+        
+        primary_ts = time_sigs[0]
+        
+        # Analyze beat strength for each measure
+        beat_analysis = []
+        measures = list(score.getElementsByClass(stream.Measure))[:10]  # Limit to first 10
+        
+        for measure in measures:
+            measure_beats = []
+            for beat_num in range(1, int(primary_ts.numerator) + 1):
+                # Find notes on this beat
+                notes_on_beat = []
+                for n in measure.notes:
+                    if isinstance(n, (note.Note, chord.Chord)) and int(n.beat) == beat_num:
+                        notes_on_beat.append(n)
+                
+                # Calculate strength based on meter
+                if beat_num == 1:
+                    strength = 1.0  # Downbeat
+                elif beat_num == (primary_ts.numerator + 1) // 2:
+                    strength = 0.7  # Mid-bar accent
+                else:
+                    strength = 0.3  # Weak beats
+                
+                measure_beats.append({
+                    "beat": beat_num,
+                    "strength": strength,
+                    "notes": len(notes_on_beat),
+                    "has_accent": any(
+                        isinstance(a, articulations.Accent) 
+                        for n in notes_on_beat 
+                        for a in n.articulations
+                    )
+                })
+            
+            beat_analysis.append({
+                "measure": measure.measureNumber,
+                "beats": measure_beats
+            })
+        
+        return {
+            "status": "success",
+            "score_id": score_id,
+            "time_signature": str(primary_ts),
+            "beat_pattern": rhythm_analyzer._analyze_beat_hierarchy(primary_ts),
+            "measure_analysis": beat_analysis
+        }
+        
+    except Exception as e:
+        logger.error(f"Error analyzing beat strength: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+# Week 4: Integration & Unified Analysis
+
+@mcp.tool()
+async def comprehensive_analysis(
+    score_id: str,
+    include_advanced: bool = True
+) -> Dict[str, Any]:
+    """
+    Run all Phase 1 analyses on a score.
+    
+    Args:
+        score_id: ID of the score to analyze
+        include_advanced: Include advanced theory analysis
+    
+    Returns:
+        Comprehensive analysis results from all modules
+    """
+    try:
+        score = score_manager.get_score(score_id)
+        if not score:
+            raise ValueError(f"Score '{score_id}' not found")
+        
+        results = {
+            "status": "success",
+            "score_id": score_id,
+            "metadata": score_manager.get_metadata(score_id),
+            "analyses": {}
+        }
+        
+        # Basic theory analysis
+        try:
+            key_result = await analyze_key(score_id, method="hybrid")
+            results["analyses"]["key"] = key_result
+        except Exception as e:
+            logger.error(f"Key analysis failed: {e}")
+            results["analyses"]["key"] = {"error": str(e)}
+        
+        # Scale analysis
+        try:
+            scale_result = await analyze_scale(score_id, include_modes=True)
+            results["analyses"]["scale"] = scale_result
+        except Exception as e:
+            logger.error(f"Scale analysis failed: {e}")
+            results["analyses"]["scale"] = {"error": str(e)}
+        
+        # Chord progression
+        try:
+            chord_result = await analyze_chord_progressions(score_id)
+            results["analyses"]["harmony"] = chord_result
+        except Exception as e:
+            logger.error(f"Chord analysis failed: {e}")
+            results["analyses"]["harmony"] = {"error": str(e)}
+        
+        # Rhythm analysis
+        try:
+            rhythm_result = await analyze_rhythm(score_id, include_patterns=True)
+            results["analyses"]["rhythm"] = rhythm_result
+        except Exception as e:
+            logger.error(f"Rhythm analysis failed: {e}")
+            results["analyses"]["rhythm"] = {"error": str(e)}
+        
+        # Advanced analyses if requested
+        if include_advanced:
+            # Chromatic analysis
+            try:
+                chromatic_result = await chromatic_analysis(score_id)
+                results["analyses"]["chromatic"] = chromatic_result
+            except Exception as e:
+                logger.error(f"Chromatic analysis failed: {e}")
+                results["analyses"]["chromatic"] = {"error": str(e)}
+            
+            # Phrase structure
+            try:
+                phrase_result = await phrase_structure(score_id, include_motives=False)
+                results["analyses"]["phrase_structure"] = phrase_result
+            except Exception as e:
+                logger.error(f"Phrase analysis failed: {e}")
+                results["analyses"]["phrase_structure"] = {"error": str(e)}
+        
+        # Calculate analysis time
+        results["analysis_time"] = datetime.now().isoformat()
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Error in comprehensive analysis: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@mcp.tool()
+async def batch_analysis(
+    score_ids: List[str],
+    analysis_types: List[str],
+    parallel: bool = False
+) -> Dict[str, Any]:
+    """
+    Analyze multiple scores in sequence or parallel.
+    
+    Args:
+        score_ids: List of score IDs to analyze
+        analysis_types: Types of analysis to run ('key', 'scale', 'rhythm', 'harmony')
+        parallel: Run analyses in parallel (experimental)
+    
+    Returns:
+        Batch analysis results
+    """
+    try:
+        results = {
+            "status": "success",
+            "total_scores": len(score_ids),
+            "analyses": {},
+            "summary": {}
+        }
+        
+        # Analysis function mapping
+        analysis_functions = {
+            "key": lambda sid: analyze_key(sid),
+            "scale": lambda sid: analyze_scale(sid),
+            "rhythm": lambda sid: analyze_rhythm(sid, include_patterns=False),
+            "harmony": lambda sid: analyze_chord_progressions(sid)
+        }
+        
+        # Run analyses
+        for score_id in score_ids:
+            results["analyses"][score_id] = {}
+            
+            for analysis_type in analysis_types:
+                if analysis_type in analysis_functions:
+                    try:
+                        result = await analysis_functions[analysis_type](score_id)
+                        results["analyses"][score_id][analysis_type] = result
+                    except Exception as e:
+                        results["analyses"][score_id][analysis_type] = {"error": str(e)}
+        
+        # Generate summary statistics
+        if "key" in analysis_types:
+            keys = []
+            for sid in score_ids:
+                if "key" in results["analyses"][sid] and "key" in results["analyses"][sid]["key"]:
+                    keys.append(results["analyses"][sid]["key"]["key"])
+            
+            if keys:
+                results["summary"]["common_keys"] = Counter(keys).most_common(3)
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Error in batch analysis: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@mcp.tool()
+async def generate_report(
+    score_id: str,
+    report_format: str = "summary"
+) -> Dict[str, Any]:
+    """
+    Generate a formatted analysis report.
+    
+    Args:
+        score_id: ID of the score
+        report_format: Format type ('summary', 'detailed', 'educational')
+    
+    Returns:
+        Formatted analysis report
+    """
+    try:
+        # Run comprehensive analysis
+        analysis = await comprehensive_analysis(score_id, include_advanced=True)
+        
+        if analysis["status"] != "success":
+            return analysis
+        
+        # Generate report based on format
+        report = {
+            "status": "success",
+            "score_id": score_id,
+            "title": analysis["metadata"].get("title", "Untitled"),
+            "composer": analysis["metadata"].get("composer", "Unknown"),
+            "report_type": report_format,
+            "generated_at": datetime.now().isoformat()
+        }
+        
+        if report_format == "summary":
+            # Executive summary
+            report["summary"] = {
+                "key": analysis["analyses"].get("key", {}).get("key", "Unknown"),
+                "time_signature": analysis["metadata"].get("time_signatures", [{}])[0].get("signature", "Unknown"),
+                "tempo": analysis["analyses"].get("rhythm", {}).get("tempo", {}).get("primary_bpm", "Unknown"),
+                "measures": analysis["metadata"].get("measure_count", 0),
+                "complexity": analysis["analyses"].get("rhythm", {}).get("complexity", "Unknown")
+            }
+            
+        elif report_format == "detailed":
+            # Full analysis details
+            report["details"] = analysis["analyses"]
+            
+        elif report_format == "educational":
+            # Educational explanations
+            report["explanations"] = {}
+            
+            # Key explanation
+            if "key" in analysis["analyses"]:
+                key_data = analysis["analyses"]["key"]
+                report["explanations"]["key"] = (
+                    f"The piece is in {key_data.get('key', 'an unknown key')}. "
+                    f"This was determined with {key_data.get('confidence', 0):.1%} confidence."
+                )
+            
+            # Rhythm explanation
+            if "rhythm" in analysis["analyses"]:
+                rhythm_data = analysis["analyses"]["rhythm"]
+                tempo = rhythm_data.get("tempo", {})
+                report["explanations"]["tempo"] = (
+                    f"The tempo is {tempo.get('primary_bpm', 'unknown')} BPM "
+                    f"({tempo.get('character', 'moderate')}), with "
+                    f"{tempo.get('stability', 0):.1%} stability."
+                )
+        
+        return report
+        
+    except Exception as e:
+        logger.error(f"Error generating report: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
 def main():
     """Main entry point for the server"""
     import uvicorn
