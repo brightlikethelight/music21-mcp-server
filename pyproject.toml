@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "music21-mcp-server"
+version = "0.1.0"
+description = "MCP server providing music analysis and composition capabilities through music21"
+authors = [
+    {name = "Bright-L01", email = "brightliu@college.harvard.edu"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+keywords = ["music", "analysis", "mcp", "music21", "composition"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+dependencies = [
+    "music21>=9.1.0",
+    "mcp>=0.1.0",
+    "fastmcp>=0.1.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "pillow>=10.0.0",
+    "pydantic>=2.0.0",
+    "aiofiles>=23.0.0",
+    "httpx>=0.25.0",
+    "cachetools>=5.3.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.4.0",
+]
+audio = [
+    "pydub>=0.25.0",
+    "simpleaudio>=1.0.4",
+    "soundfile>=0.12.0",
+]
+visualization = [
+    "plotly>=5.17.0",
+    "seaborn>=0.12.0",
+    "music21[lily]",
+]
+
+[tool.setuptools]
+packages = ["music21_mcp"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+music21_mcp = ["schemas/*.json"]
+
+[project.scripts]
+music21-mcp = "music21_mcp.server:main"
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+addopts = "-v --cov=music21_mcp --cov-report=html --cov-report=term"
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
