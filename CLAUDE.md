@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a music21 MCP (Model Context Protocol) server that provides music analysis and composition capabilities through the music21 library. Phase 1 (Core Music Analysis) has been implemented, providing comprehensive score parsing, music theory analysis, and rhythm analysis capabilities.
+This is a music21 MCP (Model Context Protocol) server that provides music analysis and composition capabilities through the music21 library. Phase 1 (Core Music Analysis) and Phase 2 (Advanced Analysis) have been fully implemented, providing comprehensive music analysis capabilities.
 
 ## Current Status
 
@@ -12,11 +12,22 @@ This is a music21 MCP (Model Context Protocol) server that provides music analys
 - Score I/O with multi-format support (MIDI, MusicXML, ABC, Kern)
 - Music theory analysis (key detection, scales, intervals, chord progressions)
 - Rhythm analysis (tempo, meter, patterns, syncopation, groove)
+- Advanced theory features (secondary dominants, augmented sixths, phrase structure)
 
-⏳ **Phase 2 Pending**: Advanced Analysis
-- Harmonic analysis with voice leading
-- Melodic analysis and motif detection
-- Advanced pattern recognition
+✅ **Phase 2 Complete**: Advanced Analysis
+- Harmonic analysis (functional harmony, Roman numerals, cadences)
+- Voice leading analysis (parallel motion detection, voice crossing, smoothness)
+- Jazz harmony (extended chords, substitutions, modal interchange)
+- Harmonic sequences and modulation detection
+- Melodic contour and pattern analysis
+- Motivic analysis with transformations
+- Cross-cultural melodic analysis
+- Melodic similarity and development tracking
+- Voice leading and counterpoint analysis
+- Species counterpoint checking
+- Bach chorale style analysis
+- Voice independence metrics
+- Fugue analysis (subject/answer detection, episodes, strettos)
 
 ⏳ **Phase 3 Pending**: Creative Tools
 - Composition assistance

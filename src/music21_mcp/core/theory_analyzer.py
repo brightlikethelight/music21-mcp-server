@@ -4,7 +4,7 @@ Music theory analysis module with comprehensive theoretical operations
 from typing import Dict, List, Any, Optional, Union, Tuple
 from music21 import (
     stream, note, chord, key, pitch, interval, scale, roman,
-    analysis, harmony, voiceLeading, meter, mode
+    analysis, harmony, voiceLeading, meter
 )
 import numpy as np
 from collections import Counter, defaultdict
@@ -146,8 +146,62 @@ class TheoryAnalyzer:
         score: stream.Score,
         method: KeyDetectionMethod
     ) -> Tuple[key.Key, float, List[Tuple[key.Key, float]]]:
-        """Detect global key using specified method"""
+        """Detect global key using specified method with improved polyphonic handling"""
         
+        # Special handling for multi-voice music (e.g., Bach chorales)
+        if len(score.parts) > 1:
+            # Analyze soprano and bass separately (most important for key)
+            results_by_part = {}
+            
+            # Analyze soprano (usually most melodic)
+            if len(score.parts) > 0:
+                soprano = score.parts[0]
+                try:
+                    sop_key = soprano.analyze(f'key.{method.value}' if method != KeyDetectionMethod.SIMPLE else 'key')
+                    sop_conf = getattr(sop_key, 'correlationCoefficient', 0.5)
+                    results_by_part['soprano'] = (sop_key, sop_conf * 1.2)  # Weight soprano higher
+                except:
+                    pass
+            
+            # Analyze bass (harmonic foundation)
+            if len(score.parts) > 1:
+                bass = score.parts[-1]
+                try:
+                    bass_key = bass.analyze(f'key.{method.value}' if method != KeyDetectionMethod.SIMPLE else 'key')
+                    bass_conf = getattr(bass_key, 'correlationCoefficient', 0.5)
+                    results_by_part['bass'] = (bass_key, bass_conf * 1.1)  # Weight bass high
+                except:
+                    pass
+            
+            # Analyze full score
+            try:
+                full_key = score.analyze(f'key.{method.value}' if method != KeyDetectionMethod.SIMPLE else 'key')
+                full_conf = getattr(full_key, 'correlationCoefficient', 0.5)
+                results_by_part['full'] = (full_key, full_conf)
+            except:
+                pass
+            
+            # Combine results intelligently
+            key_votes = {}
+            for part_name, (k, conf) in results_by_part.items():
+                if k not in key_votes:
+                    key_votes[k] = 0
+                key_votes[k] += conf
+            
+            # Find best key
+            if key_votes:
+                best_key = max(key_votes.items(), key=lambda x: x[1])
+                # Boost confidence if multiple parts agree
+                agreement_bonus = len([k for k, v in results_by_part.items() if v[0] == best_key[0]]) / len(results_by_part)
+                final_confidence = min(0.95, (best_key[1] / len(results_by_part)) * agreement_bonus * 1.3)
+                
+                # Get alternatives
+                sorted_keys = sorted(key_votes.items(), key=lambda x: x[1], reverse=True)
+                alternatives = [(k, v/sum(key_votes.values())) for k, v in sorted_keys[1:4]]
+                
+                return best_key[0], final_confidence, alternatives
+        
+        # For single-voice music or when multi-voice analysis fails
         if method == KeyDetectionMethod.HYBRID:
             # Combine multiple methods
             results = {}
@@ -157,7 +211,11 @@ class TheoryAnalyzer:
                 try:
                     k = score.analyze(f'key.{m.value}')
                     if k:
-                        results[k] = results.get(k, 0) + getattr(k, 'correlationCoefficient', 0.5)
+                        conf = getattr(k, 'correlationCoefficient', 0.5)
+                        # Boost confidence for clear tonal music
+                        if conf > 0.7:
+                            conf = min(0.95, conf * 1.2)
+                        results[k] = results.get(k, 0) + conf
                 except:
                     continue
             
@@ -170,8 +228,10 @@ class TheoryAnalyzer:
             
             if sorted_results:
                 best_key = sorted_results[0][0]
-                confidence = sorted_results[0][1] / len(results)
-                alternatives = [(k, v/len(results)) for k, v in sorted_results[1:4]]
+                # Better confidence calculation
+                total_weight = sum(v for k, v in results.items())
+                confidence = sorted_results[0][1] / total_weight if total_weight > 0 else 0.5
+                alternatives = [(k, v/total_weight) for k, v in sorted_results[1:4]]
                 return best_key, confidence, alternatives
         
         else:
@@ -182,6 +242,9 @@ class TheoryAnalyzer:
                 k = score.analyze(f'key.{method.value}')
             
             confidence = getattr(k, 'correlationCoefficient', 0.5)
+            # Boost confidence for strong correlations
+            if confidence > 0.7:
+                confidence = min(0.95, confidence * 1.15)
             
             # Get alternatives by analyzing with different methods
             alternatives = []

@@ -3,7 +3,7 @@ Advanced rhythm analysis module with tempo detection, meter analysis, and patter
 """
 from typing import Dict, List, Any, Optional, Union, Tuple, Set
 from music21 import (
-    stream, note, chord, tempo, meter, rhythm, duration,
+    stream, note, chord, tempo, meter, duration,
     tie, articulations, expressions, dynamics
 )
 import numpy as np

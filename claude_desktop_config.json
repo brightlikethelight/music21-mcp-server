@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "music21": {
+      "command": "python3",
+      "args": [
+        "-m",
+        "music21_mcp.server",
+        "--stdio"
+      ],
+      "env": {}
+    }
+  }
+}
