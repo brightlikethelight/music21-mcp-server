@@ -2,11 +2,13 @@
 Unit tests for rhythm analysis functionality
 """
 import pytest
-from music21 import stream, note, chord, meter, tempo, tie
+from music21 import meter, note, stream, tempo
 
 from src.music21_mcp.core.rhythm_analyzer import (
-    RhythmAnalyzer, RhythmicComplexity, TempoAnalysis,
-    MeterAnalysis, RhythmicPattern
+    MeterAnalysis,
+    RhythmAnalyzer,
+    RhythmicComplexity,
+    TempoAnalysis,
 )
 
 

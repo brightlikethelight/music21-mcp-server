@@ -2,11 +2,13 @@
 Unit tests for music theory analysis functionality
 """
 import pytest
-from music21 import stream, note, chord, key, interval, scale
+from music21 import chord, key, note, stream
 
 from src.music21_mcp.core.theory_analyzer import (
-    TheoryAnalyzer, KeyDetectionMethod, KeyAnalysisResult,
-    IntervalAnalysis
+    IntervalAnalysis,
+    KeyAnalysisResult,
+    KeyDetectionMethod,
+    TheoryAnalyzer,
 )
 
 

@@ -1,16 +1,18 @@
 """
 Unit tests for score parsing functionality
 """
-import pytest
-import asyncio
-from pathlib import Path
-import tempfile
 import os
-from music21 import stream, converter
+import tempfile
+
+import pytest
+from music21 import stream
 
 from src.music21_mcp.core.score_parser import (
-    FormatDetector, SmartScoreParser, MidiParser, MusicXMLParser,
-    ABCParser, KernParser, FormatType
+    ABCParser,
+    FormatDetector,
+    MidiParser,
+    MusicXMLParser,
+    SmartScoreParser,
 )
 
 

@@ -2,12 +2,13 @@
 Music21 MCP Server - Simplified and Stable Version
 Provides core music analysis functionality through MCP protocol
 """
-from mcp.server.fastmcp import FastMCP
-from music21 import stream, converter, corpus, note
-import os
-from typing import Dict, Any, Optional
 import logging
+import os
 import tempfile
+from typing import Any, Dict, Optional
+
+from mcp.server.fastmcp import FastMCP
+from music21 import converter, corpus, note, stream
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

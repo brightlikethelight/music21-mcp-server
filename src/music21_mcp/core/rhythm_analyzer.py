@@ -1,19 +1,15 @@
 """
 Advanced rhythm analysis module with tempo detection, meter analysis, and pattern recognition
 """
-from typing import Dict, List, Any, Optional, Union, Tuple, Set
-from music21 import (
-    stream, note, chord, tempo, meter, duration,
-    tie, articulations, expressions, dynamics
-)
-import numpy as np
-from collections import Counter, defaultdict
 import logging
+from collections import Counter
 from dataclasses import dataclass
 from enum import Enum
-from scipy import signal
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+from music21 import articulations, chord, expressions, meter, note, stream, tempo
 from scipy.stats import entropy
-import asyncio
 
 logger = logging.getLogger(__name__)
 

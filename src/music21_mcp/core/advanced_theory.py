@@ -1,18 +1,13 @@
 """
 Advanced music theory analysis module with specialized harmonic and structural analysis
 """
-from typing import Dict, List, Any, Optional, Union, Tuple, Set
-from music21 import (
-    stream, note, chord, key, pitch, interval, scale, roman,
-    analysis, harmony, voiceLeading, meter, tempo, expressions,
-    tie, dynamics, articulations
-)
-import numpy as np
-from collections import Counter, defaultdict
 import logging
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from enum import Enum
-import re
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from music21 import chord, expressions, interval, key, note, pitch, roman, stream
 
 logger = logging.getLogger(__name__)
 

@@ -2,14 +2,17 @@
 Unit tests for harmonic analyzer functionality
 """
 import pytest
-from music21 import stream, note, chord, key, roman, tempo, meter
-import numpy as np
+from music21 import chord, key, meter, note, stream
 
 from src.music21_mcp.core.harmonic_analyzer import (
-    HarmonicAnalyzer, HarmonicFunction, VoiceLeadingError,
-    ChordSubstitutionType, FunctionalHarmonyAnalysis,
-    VoiceLeadingAnalysis, JazzHarmonyAnalysis,
-    ModulationAnalysis, HarmonicSequence
+    ChordSubstitutionType,
+    FunctionalHarmonyAnalysis,
+    HarmonicAnalyzer,
+    HarmonicFunction,
+    JazzHarmonyAnalysis,
+    ModulationAnalysis,
+    VoiceLeadingAnalysis,
+    VoiceLeadingError,
 )
 
 

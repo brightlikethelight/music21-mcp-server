@@ -1,15 +1,19 @@
 """
 Integration tests for harmonic analysis MCP endpoints
 """
-import pytest
-from music21 import stream, note, chord, key, meter, roman
-
 import sys
+
+import pytest
+from music21 import chord, key, meter, note, stream
+
 sys.path.insert(0, 'src')
 from music21_mcp.server import (
-    score_manager, import_score, functional_harmony_analysis,
-    voice_leading_analysis, jazz_harmony_analysis,
-    detect_harmonic_sequences, modulation_analysis
+    detect_harmonic_sequences,
+    functional_harmony_analysis,
+    jazz_harmony_analysis,
+    modulation_analysis,
+    score_manager,
+    voice_leading_analysis,
 )
 
 

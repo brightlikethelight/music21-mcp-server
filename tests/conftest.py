@@ -1,12 +1,13 @@
 """
 Pytest configuration and shared fixtures for music21 MCP server tests
 """
-import pytest
 import asyncio
-from pathlib import Path
-from music21 import stream, note, chord, key, meter, tempo
-import tempfile
 import os
+import tempfile
+from pathlib import Path
+
+import pytest
+from music21 import chord, key, meter, note, stream, tempo
 
 # Test data directory
 TEST_DATA_DIR = Path(__file__).parent / "test_data"

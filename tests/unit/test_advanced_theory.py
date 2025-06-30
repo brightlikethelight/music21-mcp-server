@@ -2,12 +2,17 @@
 Unit tests for advanced theory analysis functionality
 """
 import pytest
-from music21 import stream, note, chord, key, interval, roman
+from music21 import chord, key, note, stream
 
 from src.music21_mcp.core.advanced_theory import (
-    AdvancedTheoryAnalyzer, ChromaticFunction, PhraseType,
-    ScaleDegreeAnalysis, IntervalVectorAnalysis, ChromaticAnalysis,
-    AdvancedHarmonicAnalysis, PhraseStructure
+    AdvancedHarmonicAnalysis,
+    AdvancedTheoryAnalyzer,
+    ChromaticAnalysis,
+    ChromaticFunction,
+    IntervalVectorAnalysis,
+    PhraseStructure,
+    PhraseType,
+    ScaleDegreeAnalysis,
 )
 
 

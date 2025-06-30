@@ -1,22 +1,20 @@
 """
 Advanced score parsing module with multi-format support and intelligent parsing
 """
+import logging
 import os
 import re
-import chardet
 import tempfile
-import asyncio
-import aiofiles
-import httpx
-from typing import Optional, Dict, Any, Union, List, Tuple, BinaryIO
-from pathlib import Path
-from music21 import stream, converter, environment, midi, musicxml, abcFormat
-import logging
-from datetime import datetime
-import mimetypes
 import zipfile
-import gzip
 from abc import ABC, abstractmethod
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import aiofiles
+import chardet
+import httpx
+from music21 import abcFormat, converter, environment, midi, stream
 
 logger = logging.getLogger(__name__)
 

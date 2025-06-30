@@ -2,13 +2,17 @@
 Unit tests for melodic analyzer functionality
 """
 import pytest
-from music21 import stream, note, pitch, key, meter, tempo
-import numpy as np
+from music21 import key, meter, note, stream
 
 from src.music21_mcp.core.melodic_analyzer import (
-    MelodicAnalyzer, ContourType, MotiveType, PatternTransformation,
-    MelodicStyle, MelodicMotive, ContourAnalysis, MotivicAnalysis,
-    PatternMatch, CrossCulturalAnalysis, MelodicSimilarity
+    ContourAnalysis,
+    ContourType,
+    CrossCulturalAnalysis,
+    MelodicAnalyzer,
+    MelodicSimilarity,
+    MelodicStyle,
+    MotivicAnalysis,
+    PatternTransformation,
 )
 
 

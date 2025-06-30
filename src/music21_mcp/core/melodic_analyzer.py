@@ -3,20 +3,15 @@ Melodic Pattern Recognition Engine for music21 MCP server
 Implements motivic analysis, contour analysis, pattern matching,
 and cross-cultural melodic analysis.
 """
-import asyncio
-from typing import Dict, List, Any, Optional, Tuple, Set, Union
+from collections import Counter
 from dataclasses import dataclass, field
-from enum import Enum
-from collections import defaultdict, Counter
-import numpy as np
-from scipy import signal
 from difflib import SequenceMatcher
-import itertools
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
-from music21 import (
-    stream, note, pitch, interval, analysis,
-    scale, key, meter, tempo, dynamics, articulations
-)
+import numpy as np
+from music21 import note, pitch, stream
+from scipy import signal
 
 
 class ContourType(Enum):

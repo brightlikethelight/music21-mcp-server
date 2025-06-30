@@ -1,16 +1,20 @@
 """
 Integration tests for melodic analysis MCP endpoints
 """
-import pytest
-from music21 import stream, note, chord, key, meter, tempo
-
 import sys
+
+import pytest
+from music21 import chord, key, meter, note, stream, tempo
+
 sys.path.insert(0, 'src')
 from music21_mcp.server import (
-    score_manager, import_score, analyze_melodic_contour,
-    detect_melodic_motives, find_melodic_patterns,
-    analyze_cross_cultural_melody, calculate_melodic_similarity,
-    analyze_melodic_development
+    analyze_cross_cultural_melody,
+    analyze_melodic_contour,
+    analyze_melodic_development,
+    calculate_melodic_similarity,
+    detect_melodic_motives,
+    find_melodic_patterns,
+    score_manager,
 )
 
 

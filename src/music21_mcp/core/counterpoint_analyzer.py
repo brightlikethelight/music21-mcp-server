@@ -3,17 +3,12 @@ Voice Leading and Counterpoint Analysis Engine for music21 MCP server
 Implements species counterpoint checking, Bach chorale analysis,
 voice independence metrics, and fugue analysis.
 """
-import asyncio
-from typing import Dict, List, Any, Optional, Tuple, Set
 from dataclasses import dataclass, field
 from enum import Enum
-from collections import defaultdict, Counter
-import numpy as np
+from typing import Any, Dict, List, Optional, Tuple
 
-from music21 import (
-    stream, note, pitch, interval, key, chord, roman,
-    voiceLeading, analysis, counterpoint
-)
+import numpy as np
+from music21 import chord, interval, note, roman, stream, voiceLeading
 
 
 class CounterpointSpecies(Enum):

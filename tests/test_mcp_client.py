@@ -4,14 +4,14 @@ Test MCP client integration - simulates how Claude Desktop or Cursor would inter
 """
 import asyncio
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Test with actual MCP client library
 try:
     from mcp import Client
-    from mcp.client.stdio import stdio_client
     from mcp.client.session import ClientSession
+    from mcp.client.stdio import stdio_client
     HAS_MCP_CLIENT = True
 except ImportError:
     print("⚠️ MCP client library not installed. Install with: pip install mcp")

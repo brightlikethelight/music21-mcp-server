@@ -1,15 +1,19 @@
 """
 Integration tests for counterpoint and voice leading MCP endpoints
 """
-import pytest
-from music21 import stream, note, chord, key, meter, interval
-
 import sys
+
+import pytest
+from music21 import chord, note, stream
+
 sys.path.insert(0, 'src')
 from music21_mcp.server import (
-    score_manager, import_score, check_voice_leading,
-    analyze_species_counterpoint, analyze_bach_chorale_style,
-    analyze_voice_independence, analyze_fugue
+    analyze_bach_chorale_style,
+    analyze_fugue,
+    analyze_species_counterpoint,
+    analyze_voice_independence,
+    check_voice_leading,
+    score_manager,
 )
 
 

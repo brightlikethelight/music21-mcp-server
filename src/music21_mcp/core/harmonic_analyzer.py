@@ -3,17 +3,12 @@ Harmonic Analysis Engine for music21 MCP server
 Implements advanced harmonic analysis including functional harmony,
 voice leading, jazz harmony, and modulation detection.
 """
-import asyncio
-from typing import Dict, List, Any, Optional, Tuple, Set
 from dataclasses import dataclass, field
 from enum import Enum
-from collections import defaultdict, Counter
-import numpy as np
+from typing import Any, Dict, List, Optional, Tuple
 
-from music21 import (
-    stream, chord, roman, key, analysis, interval, pitch,
-    note, harmony, scale, voiceLeading
-)
+import numpy as np
+from music21 import chord, harmony, interval, key, note, roman, stream, voiceLeading
 
 
 class HarmonicFunction(Enum):
@@ -197,7 +192,7 @@ class HarmonicAnalyzer:
                             'type': self._get_deception_type(rn)
                         })
                         
-            except Exception as e:
+            except Exception:
                 # Handle non-diatonic chords
                 pass
         

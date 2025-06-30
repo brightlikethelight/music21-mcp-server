@@ -1,20 +1,30 @@
 """
 Integration tests for MCP server endpoints
 """
-import pytest
-import asyncio
-from unittest.mock import Mock, patch
-from music21 import stream, note, chord, key, meter, tempo
-
 # Import server components
 import sys
+from unittest.mock import Mock
+
+import pytest
+from music21 import chord, key, note, stream
+
 sys.path.insert(0, 'src')
 from music21_mcp.server import (
-    score_manager, import_score, export_score, analyze_key,
-    analyze_scale, analyze_chord_progressions, analyze_rhythm,
-    identify_scale, interval_vector, chromatic_analysis,
-    secondary_dominants, phrase_structure, comprehensive_analysis,
-    batch_analysis, generate_report
+    analyze_chord_progressions,
+    analyze_key,
+    analyze_rhythm,
+    analyze_scale,
+    batch_analysis,
+    chromatic_analysis,
+    comprehensive_analysis,
+    export_score,
+    generate_report,
+    identify_scale,
+    import_score,
+    interval_vector,
+    phrase_structure,
+    score_manager,
+    secondary_dominants,
 )
 
 

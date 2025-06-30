@@ -20,8 +20,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 # Import the server tools
 from music21_mcp.server import (
-    import_score, analyze_key, analyze_chords, 
-    get_score_info, export_score, delete_score
+    analyze_chords,
+    analyze_key,
+    delete_score,
+    export_score,
+    get_score_info,
+    import_score,
 )
 
 
@@ -40,7 +44,7 @@ async def basic_workflow_example():
     )
     
     if result["status"] == "success":
-        print(f"✅ Successfully imported Bach chorale")
+        print("✅ Successfully imported Bach chorale")
         print(f"   Notes: {result['num_notes']}")
         print(f"   Measures: {result['num_measures']}")
         print(f"   Parts: {result['num_parts']}")
@@ -90,7 +94,7 @@ async def basic_workflow_example():
     info_result = await get_score_info("bach_example")
     
     if info_result["status"] == "success":
-        print(f"✅ Score Information:")
+        print("✅ Score Information:")
         print(f"   Title: {info_result.get('title', 'Unknown')}")
         print(f"   Composer: {info_result.get('composer', 'Unknown')}")
         print(f"   Duration: {info_result['duration_quarters']} quarter notes")
@@ -181,16 +185,16 @@ async def main():
         # Run the text import example
         await text_import_example()
         
-        print(f"\n🎯 Next Steps:")
-        print(f"  - Try other examples in this directory")
-        print(f"  - Experiment with your own MIDI/XML files")
-        print(f"  - Check out the comprehensive API docs")
-        print(f"  - Integrate with Claude Desktop for AI-powered analysis")
+        print("\n🎯 Next Steps:")
+        print("  - Try other examples in this directory")
+        print("  - Experiment with your own MIDI/XML files")
+        print("  - Check out the comprehensive API docs")
+        print("  - Integrate with Claude Desktop for AI-powered analysis")
         
     except Exception as e:
         print(f"\n❌ Example failed with error: {e}")
-        print(f"   Make sure music21 is installed: pip install music21")
-        print(f"   Make sure the server package is installed: pip install -e .")
+        print("   Make sure music21 is installed: pip install music21")
+        print("   Make sure the server package is installed: pip install -e .")
         return 1
     
     return 0
