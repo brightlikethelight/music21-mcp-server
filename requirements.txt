@@ -1,5 +1,5 @@
 # Core dependencies
-music21>=9.1.0
+music21>=8.1.0  # Use version compatible with Python 3.9+ for CI
 mcp>=0.1.0
 numpy>=1.21.0
 
