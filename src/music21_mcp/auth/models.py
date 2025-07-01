@@ -66,7 +66,9 @@ class ClientRegistration(BaseModel):
     updated_at: Optional[datetime] = None
 
     @validator("client_secret", always=True)
-    def set_client_secret(cls, v: Optional[str], values: Dict[str, Any]) -> Optional[str]:
+    def set_client_secret(
+        cls, v: Optional[str], values: Dict[str, Any]
+    ) -> Optional[str]:
         if values.get("client_type") == ClientType.CONFIDENTIAL and v is None:
             return secrets.token_urlsafe(32)
         return v
@@ -137,7 +139,9 @@ class TokenRequest(BaseModel):
     scope: Optional[str] = None  # For client_credentials
 
     @validator("code_verifier")
-    def validate_code_verifier(cls, v: Optional[str], values: Dict[str, Any]) -> Optional[str]:
+    def validate_code_verifier(
+        cls, v: Optional[str], values: Dict[str, Any]
+    ) -> Optional[str]:
         if values.get("grant_type") == GrantType.AUTHORIZATION_CODE:
             if not v:
                 raise ValueError("Code verifier is required for PKCE")
