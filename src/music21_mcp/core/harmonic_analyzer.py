@@ -125,7 +125,7 @@ class HarmonicSequence:
 class HarmonicAnalyzer:
     """Advanced harmonic analysis engine"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.current_key = None
         self.roman_analyzer = None
 
@@ -150,7 +150,7 @@ class HarmonicAnalyzer:
 
         # Extract chords and analyze
         chords = list(score.flatten().getElementsByClass(chord.Chord))
-        measures = score.parts[0].getElementsByClass(stream.Measure)
+        measures = list(score.parts[0].getElementsByClass(stream.Measure))
 
         # Roman numeral analysis
         for i, ch in enumerate(chords):
