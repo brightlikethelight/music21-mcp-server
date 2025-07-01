@@ -205,7 +205,7 @@ class HarmonizationTool(BaseTool):
 
     async def _analyze_melody(self, melody: List[note.Note]) -> Dict[str, Any]:
         """Analyze melodic features to inform harmonization"""
-        analysis = {
+        analysis: Dict[str, Any] = {
             "key": None,
             "contour": [],
             "implied_harmonies": [],
@@ -216,7 +216,7 @@ class HarmonizationTool(BaseTool):
 
         try:
             # Detect key
-            melody_stream = stream.Stream(melody)
+            melody_stream: stream.Stream = stream.Stream(melody)
             key_obj = melody_stream.analyze("key")
             analysis["key"] = key_obj
 
@@ -252,7 +252,7 @@ class HarmonizationTool(BaseTool):
                 contour.append("static")
         return contour
 
-    def _get_implied_harmony(self, note_obj: note.Note, key_obj) -> List[str]:
+    def _get_implied_harmony(self, note_obj: note.Note, key_obj: Any) -> List[str]:
         """Get possible harmonies implied by a melodic note"""
         scale_degree = key_obj.getScaleDegreeFromPitch(note_obj.pitch)
 
