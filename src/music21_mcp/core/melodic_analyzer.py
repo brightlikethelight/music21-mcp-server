@@ -233,7 +233,7 @@ class MelodicAnalyzer:
         all_motives = []
 
         for part in melodic_parts:
-            notes = list(part.flatten().notes)
+            notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
             if len(notes) < min_length:
                 continue
 
@@ -295,7 +295,7 @@ class MelodicAnalyzer:
             List of PatternMatch objects
         """
         patterns: List[Dict[str, Any]] = []
-        notes = list(melody.flatten().notes)
+        notes = [n for n in melody.flatten().notes if hasattr(n, 'pitch')]
 
         if len(notes) < pattern_length * 2:
             return patterns
@@ -357,7 +357,7 @@ class MelodicAnalyzer:
         """
         result = CrossCulturalAnalysis()
 
-        notes = list(melody.flatten().notes)
+        notes = [n for n in melody.flatten().notes if hasattr(n, 'pitch')]
         if not notes:
             return result
 
@@ -553,7 +553,7 @@ class MelodicAnalyzer:
             development["complexity_curve"].append(complexity_point)
 
         # Find climax points
-        all_notes = list(melody.flatten().notes)
+        all_notes = [n for n in melody.flatten().notes if hasattr(n, 'pitch')]
         if all_notes:
             pitches = [n.pitch.midi for n in all_notes]
             climax_indices = signal.find_peaks(pitches, prominence=5)[0]
@@ -655,7 +655,7 @@ class MelodicAnalyzer:
         return [direction for direction, length in prime]
 
     def _find_arch_points(
-        self, pitches: List[int], notes: List[note.Note]
+        self, pitches: List[int], notes: List[Any]
     ) -> List[Dict[str, Any]]:
         """Find melodic arch points (peaks and valleys)"""
         arch_points = []
@@ -716,7 +716,7 @@ class MelodicAnalyzer:
 
         return min(complexity, 1.0)
 
-    def _calculate_melodic_smoothness(self, notes: List[note.Note]) -> float:
+    def _calculate_melodic_smoothness(self, notes: List[Any]) -> float:
         """Calculate melodic smoothness based on interval sizes"""
         if len(notes) < 2:
             return 1.0
@@ -742,7 +742,7 @@ class MelodicAnalyzer:
 
         for part in score.parts:
             # Check if part is likely melodic (not just chords)
-            notes = list(part.flatten().notes)
+            notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
             if not notes:
                 continue
 
@@ -755,7 +755,7 @@ class MelodicAnalyzer:
 
         return melodic_parts
 
-    def _create_motive(self, notes: List[note.Note], start_index: int) -> MelodicMotive:
+    def _create_motive(self, notes: List[Any], start_index: int) -> MelodicMotive:
         """Create a motive object from notes"""
         pitches = [n.pitch for n in notes]
 
@@ -802,7 +802,7 @@ class MelodicAnalyzer:
         )
 
     def _find_motive_occurrences(
-        self, motive: MelodicMotive, all_notes: List[note.Note], start_from: int = 0
+        self, motive: MelodicMotive, all_notes: List[Any], start_from: int = 0
     ) -> List[Dict[str, Any]]:
         """Find all occurrences of a motive with transformations"""
         occurrences = []
@@ -837,7 +837,7 @@ class MelodicAnalyzer:
     def _calculate_motive_similarity(
         self,
         motive: MelodicMotive,
-        candidate_notes: List[note.Note],
+        candidate_notes: List[Any],
         transformation: PatternTransformation,
     ) -> float:
         """Calculate similarity between motive and candidate"""
@@ -1186,7 +1186,7 @@ class MelodicAnalyzer:
 
         return contour_similarity > 0.7
 
-    def _get_interval_pattern(self, notes: List[note.Note]) -> List[int]:
+    def _get_interval_pattern(self, notes: List[Any]) -> List[int]:
         """Extract interval pattern from notes"""
         intervals = []
         for i in range(len(notes) - 1):
@@ -1195,8 +1195,8 @@ class MelodicAnalyzer:
 
     def _compare_patterns(
         self,
-        pattern1_notes: List[note.Note],
-        pattern2_notes: List[note.Note],
+        pattern1_notes: List[Any],
+        pattern2_notes: List[Any],
         transformation: PatternTransformation,
     ) -> Tuple[float, Optional[int]]:
         """Compare two patterns with given transformation"""
@@ -1257,7 +1257,7 @@ class MelodicAnalyzer:
 
         return unique_patterns
 
-    def _get_interval_sequence(self, notes: List[note.Note]) -> List[int]:
+    def _get_interval_sequence(self, notes: List[Any]) -> List[int]:
         """Get sequence of intervals between consecutive notes"""
         intervals = []
         for i in range(len(notes) - 1):
@@ -1286,7 +1286,7 @@ class MelodicAnalyzer:
         return characteristics
 
     def _score_western_classical(
-        self, notes: List[note.Note], intervals: List[int], scale_chars: Dict[str, Any]
+        self, notes: List[Any], intervals: List[int], scale_chars: Dict[str, Any]
     ) -> float:
         """Score Western classical characteristics"""
         score = 0.0
@@ -1313,7 +1313,7 @@ class MelodicAnalyzer:
         return min(score, 1.0)
 
     def _score_jazz_style(
-        self, notes: List[note.Note], intervals: List[int], scale_chars: Dict[str, Any]
+        self, notes: List[Any], intervals: List[int], scale_chars: Dict[str, Any]
     ) -> float:
         """Score jazz characteristics"""
         score = 0.0
@@ -1339,7 +1339,7 @@ class MelodicAnalyzer:
         return min(score, 1.0)
 
     def _score_raga_style(
-        self, notes: List[note.Note], intervals: List[int], scale_chars: Dict[str, Any]
+        self, notes: List[Any], intervals: List[int], scale_chars: Dict[str, Any]
     ) -> float:
         """Score Indian raga characteristics"""
         score = 0.0
@@ -1363,7 +1363,7 @@ class MelodicAnalyzer:
         return min(score, 1.0)
 
     def _score_maqam_style(
-        self, notes: List[note.Note], intervals: List[int], scale_chars: Dict[str, Any]
+        self, notes: List[Any], intervals: List[int], scale_chars: Dict[str, Any]
     ) -> float:
         """Score Arabic maqam characteristics"""
         score = 0.0
@@ -1399,7 +1399,7 @@ class MelodicAnalyzer:
         return 0.0
 
     def _score_blues_style(
-        self, notes: List[note.Note], intervals: List[int], pitch_classes: List[int]
+        self, notes: List[Any], intervals: List[int], pitch_classes: List[int]
     ) -> float:
         """Score blues characteristics"""
         score = 0.0
@@ -1419,7 +1419,7 @@ class MelodicAnalyzer:
 
         return min(score, 1.0)
 
-    def _detect_ornamentations(self, notes: List[note.Note]) -> List[Dict[str, Any]]:
+    def _detect_ornamentations(self, notes: List[Any]) -> List[Dict[str, Any]]:
         """Detect melodic ornamentations"""
         ornamentations = []
 
@@ -1472,7 +1472,7 @@ class MelodicAnalyzer:
 
         return ornamentations
 
-    def _detect_microtones(self, notes: List[note.Note]) -> List[Dict[str, Any]]:
+    def _detect_microtones(self, notes: List[Any]) -> List[Dict[str, Any]]:
         """Detect microtonal inflections"""
         microtones = []
 
@@ -1494,7 +1494,7 @@ class MelodicAnalyzer:
 
     def _extract_cultural_markers(
         self,
-        notes: List[note.Note],
+        notes: List[Any],
         intervals: List[int],
         primary_style: Optional[MelodicStyle],
     ) -> Dict[str, Any]:
@@ -1528,8 +1528,8 @@ class MelodicAnalyzer:
         self, melody1: stream.Stream, melody2: stream.Stream, method: str
     ) -> float:
         """Calculate similarity between two melodies"""
-        notes1 = list(melody1.flatten().notes)
-        notes2 = list(melody2.flatten().notes)
+        notes1 = [n for n in melody1.flatten().notes if hasattr(n, 'pitch')]
+        notes2 = [n for n in melody2.flatten().notes if hasattr(n, 'pitch')]
 
         if not notes1 or not notes2:
             return 0.0
@@ -1576,7 +1576,7 @@ class MelodicAnalyzer:
 
         return 0.0
 
-    def _get_contour_vector(self, notes: List[note.Note]) -> List[int]:
+    def _get_contour_vector(self, notes: List[Any]) -> List[int]:
         """Get contour vector from notes"""
         contour = []
         for i in range(len(notes) - 1):
@@ -1629,10 +1629,10 @@ class MelodicAnalyzer:
         """Identify types of variations applied"""
         variation_types = []
 
-        theme_notes = list(theme.flatten().notes)
+        theme_notes = [n for n in theme.flatten().notes if hasattr(n, 'pitch')]
 
         for var in variations:
-            var_notes = list(var.flatten().notes)
+            var_notes = [n for n in var.flatten().notes if hasattr(n, 'pitch')]
 
             # Check for different variation techniques
             types = []
@@ -1719,7 +1719,7 @@ class MelodicAnalyzer:
         return 0
 
     def _analyze_climax_context(
-        self, notes: List[note.Note], climax_index: int
+        self, notes: List[Any], climax_index: int
     ) -> Dict[str, Any]:
         """Analyze the context around a melodic climax"""
         context = {"approach": "unknown", "departure": "unknown", "local_range": 0}

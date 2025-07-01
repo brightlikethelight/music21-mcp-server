@@ -361,8 +361,8 @@ class CounterpointAnalyzer:
     # Helper methods for species counterpoint
     async def _analyze_first_species(
         self,
-        cf_notes: List[note.Note],
-        cp_notes: List[note.Note],
+        cf_notes: List[Any],
+        cp_notes: List[Any],
         result: SpeciesAnalysis,
     ) -> SpeciesAnalysis:
         """Analyze first species (note against note)"""
@@ -405,8 +405,8 @@ class CounterpointAnalyzer:
 
     async def _analyze_second_species(
         self,
-        cf_notes: List[note.Note],
-        cp_notes: List[note.Note],
+        cf_notes: List[Any],
+        cp_notes: List[Any],
         result: SpeciesAnalysis,
     ) -> SpeciesAnalysis:
         """Analyze second species (two notes against one)"""
@@ -455,8 +455,8 @@ class CounterpointAnalyzer:
 
     async def _analyze_third_species(
         self,
-        cf_notes: List[note.Note],
-        cp_notes: List[note.Note],
+        cf_notes: List[Any],
+        cp_notes: List[Any],
         result: SpeciesAnalysis,
     ) -> SpeciesAnalysis:
         """Analyze third species (four notes against one)"""
@@ -507,8 +507,8 @@ class CounterpointAnalyzer:
 
     async def _analyze_fourth_species(
         self,
-        cf_notes: List[note.Note],
-        cp_notes: List[note.Note],
+        cf_notes: List[Any],
+        cp_notes: List[Any],
         result: SpeciesAnalysis,
     ) -> SpeciesAnalysis:
         """Analyze fourth species (syncopation)"""
@@ -536,8 +536,8 @@ class CounterpointAnalyzer:
 
     async def _analyze_fifth_species(
         self,
-        cf_notes: List[note.Note],
-        cp_notes: List[note.Note],
+        cf_notes: List[Any],
+        cp_notes: List[Any],
         result: SpeciesAnalysis,
     ) -> SpeciesAnalysis:
         """Analyze fifth species (florid counterpoint)"""
@@ -559,8 +559,8 @@ class CounterpointAnalyzer:
 
     async def _analyze_free_counterpoint(
         self,
-        cf_notes: List[note.Note],
-        cp_notes: List[note.Note],
+        cf_notes: List[Any],
+        cp_notes: List[Any],
         result: SpeciesAnalysis,
     ) -> SpeciesAnalysis:
         """Analyze free counterpoint"""
@@ -569,8 +569,8 @@ class CounterpointAnalyzer:
 
     def _check_voice_leading(
         self,
-        cf_notes: List[note.Note],
-        cp_notes: List[note.Note],
+        cf_notes: List[Any],
+        cp_notes: List[Any],
         result: SpeciesAnalysis,
     ) -> SpeciesAnalysis:
         """Check voice leading rules"""
@@ -605,7 +605,7 @@ class CounterpointAnalyzer:
         return result
 
     def _check_melodic_quality(
-        self, melody_notes: List[note.Note], result: SpeciesAnalysis
+        self, melody_notes: List[Any], result: SpeciesAnalysis
     ) -> SpeciesAnalysis:
         """Check melodic quality of counterpoint line"""
         # Check for large leaps
@@ -672,8 +672,8 @@ class CounterpointAnalyzer:
 
     def _check_harmonic_intervals(
         self,
-        cf_notes: List[note.Note],
-        cp_notes: List[note.Note],
+        cf_notes: List[Any],
+        cp_notes: List[Any],
         result: SpeciesAnalysis,
     ) -> SpeciesAnalysis:
         """Check harmonic interval usage"""
@@ -698,8 +698,8 @@ class CounterpointAnalyzer:
 
     def _check_cadences(
         self,
-        cf_notes: List[note.Note],
-        cp_notes: List[note.Note],
+        cf_notes: List[Any],
+        cp_notes: List[Any],
         result: SpeciesAnalysis,
     ) -> SpeciesAnalysis:
         """Check cadence formulas"""
@@ -747,7 +747,7 @@ class CounterpointAnalyzer:
 
         return result
 
-    def _is_valid_passing_tone(self, notes: List[note.Note], index: int) -> bool:
+    def _is_valid_passing_tone(self, notes: List[Any], index: int) -> bool:
         """Check if note is a valid passing tone"""
         if index == 0 or index >= len(notes) - 1:
             return False
@@ -878,7 +878,7 @@ class CounterpointAnalyzer:
 
         for i, part in enumerate(parts):
             if i < len(voice_names):
-                notes = list(part.flatten().notes)
+                notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
                 if notes:
                     pitches = [n.pitch.midi for n in notes if n.isNote]
                     if pitches:
@@ -923,8 +923,8 @@ class CounterpointAnalyzer:
         """Check Bach-style voice leading between two parts"""
         errors = []
 
-        notes1 = list(part1.flatten().notes)
-        notes2 = list(part2.flatten().notes)
+        notes1 = [n for n in part1.flatten().notes if hasattr(n, 'pitch')]
+        notes2 = [n for n in part2.flatten().notes if hasattr(n, 'pitch')]
 
         # Align notes by offset
         aligned = self._align_voices_by_offset(notes1, notes2)
@@ -971,7 +971,7 @@ class CounterpointAnalyzer:
         return errors
 
     def _align_voices_by_offset(
-        self, notes1: List[note.Note], notes2: List[note.Note]
+        self, notes1: List[Any], notes2: List[Any]
     ) -> List[Tuple[Optional[note.Note], Optional[note.Note]]]:
         """Align two voices by musical offset"""
         aligned = []
@@ -1150,7 +1150,7 @@ class CounterpointAnalyzer:
 
     def _get_melodic_intervals(self, part: stream.Part) -> List[int]:
         """Get melodic intervals from a part"""
-        notes = list(part.flatten().notes)
+        notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
         intervals = []
 
         for i in range(len(notes) - 1):
@@ -1167,7 +1167,7 @@ class CounterpointAnalyzer:
 
         contours = []
         for part in parts:
-            notes = list(part.flatten().notes)
+            notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
             contour = []
             for i in range(len(notes) - 1):
                 if notes[i].isNote and notes[i + 1].isNote:
@@ -1226,8 +1226,8 @@ class CounterpointAnalyzer:
         """Find voice crossing instances"""
         crossings = []
 
-        notes1 = list(part1.flatten().notes)
-        notes2 = list(part2.flatten().notes)
+        notes1 = [n for n in part1.flatten().notes if hasattr(n, 'pitch')]
+        notes2 = [n for n in part2.flatten().notes if hasattr(n, 'pitch')]
 
         aligned = self._align_voices_by_offset(notes1, notes2)
 
@@ -1251,8 +1251,8 @@ class CounterpointAnalyzer:
         """Find voice overlap instances"""
         overlaps = []
 
-        notes1 = list(part1.flatten().notes)
-        notes2 = list(part2.flatten().notes)
+        notes1 = [n for n in part1.flatten().notes if hasattr(n, 'pitch')]
+        notes2 = [n for n in part2.flatten().notes if hasattr(n, 'pitch')]
 
         # Check if voices get too close
         for i in range(min(len(notes1), len(notes2))):
@@ -1286,8 +1286,8 @@ class CounterpointAnalyzer:
 
         for i in range(len(parts)):
             for j in range(i + 1, len(parts)):
-                notes1 = list(parts[i].flatten().notes)
-                notes2 = list(parts[j].flatten().notes)
+                notes1 = [n for n in parts[i].flatten().notes if hasattr(n, 'pitch')]
+                notes2 = [n for n in parts[j].flatten().notes if hasattr(n, 'pitch')]
 
                 aligned = self._align_voices_by_offset(notes1, notes2)
 
@@ -1347,7 +1347,7 @@ class CounterpointAnalyzer:
         """Find the fugue subject"""
         # Usually in the first voice to enter
         for part in fugue.parts:
-            notes = list(part.flatten().notes)
+            notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
 
             # Look for initial melodic material
             if len(notes) >= 4:  # Minimum subject length
@@ -1376,7 +1376,7 @@ class CounterpointAnalyzer:
 
         return None
 
-    def _get_interval_pattern(self, notes: List[note.Note]) -> List[int]:
+    def _get_interval_pattern(self, notes: List[Any]) -> List[int]:
         """Get interval pattern from notes"""
         intervals = []
         for i in range(len(notes) - 1):
@@ -1391,7 +1391,7 @@ class CounterpointAnalyzer:
         subject_intervals = subject["intervals"]
 
         for part in fugue.parts:
-            notes = list(part.flatten().notes)
+            notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
 
             # Look for transposed subject
             for i in range(len(notes) - len(subject_intervals)):
@@ -1477,7 +1477,7 @@ class CounterpointAnalyzer:
         subject_intervals = subject["intervals"]
 
         for part_idx, part in enumerate(fugue.parts):
-            notes = list(part.flatten().notes)
+            notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
 
             for i in range(len(notes) - len(subject_intervals)):
                 candidate_notes = notes[i : i + len(subject_intervals) + 1]
