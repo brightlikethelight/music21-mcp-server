@@ -2,6 +2,7 @@
 Base class for all music21 MCP tools
 Provides common functionality and interface contracts
 """
+
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -19,17 +20,17 @@ class BaseTool(ABC):
     - Progress reporting for long operations
     - Memory-efficient processing
     """
-    
+
     def __init__(self, score_manager: Dict[str, Any]):
         """Initialize with reference to score manager"""
         self.score_manager = score_manager
         self._progress_callback: Optional[Callable] = None
-        
+
     @abstractmethod
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """
         Execute the tool operation
-        
+
         Returns:
             Dict with at minimum:
             - status: 'success' or 'error'
@@ -37,26 +38,26 @@ class BaseTool(ABC):
             - Additional tool-specific fields
         """
         pass
-    
+
     @abstractmethod
     def validate_inputs(self, **kwargs) -> Optional[str]:
         """
         Validate input parameters
-        
+
         Returns:
             None if valid, error message if invalid
         """
         pass
-    
+
     def set_progress_callback(self, callback: Callable[[float, str], None]):
         """Set callback for progress reporting (percent, message)"""
         self._progress_callback = callback
-    
+
     def report_progress(self, percent: float, message: str = ""):
         """Report progress if callback is set"""
         if self._progress_callback:
             self._progress_callback(percent, message)
-    
+
     @contextmanager
     def error_handling(self, operation: str):
         """Context manager for consistent error handling"""
@@ -69,32 +70,30 @@ class BaseTool(ABC):
         except Exception as e:
             logger.error(f"{operation} failed: {str(e)}")
             raise
-    
-    def create_error_response(self, message: str, details: Optional[Dict] = None) -> Dict[str, Any]:
+
+    def create_error_response(
+        self, message: str, details: Optional[Dict] = None
+    ) -> Dict[str, Any]:
         """Create standardized error response"""
-        response = {
-            "status": "error",
-            "message": message
-        }
+        response = {"status": "error", "message": message}
         if details:
             response.update(details)
         return response
-    
-    def create_success_response(self, message: str = "Operation completed successfully", **kwargs) -> Dict[str, Any]:
+
+    def create_success_response(
+        self, message: str = "Operation completed successfully", **kwargs
+    ) -> Dict[str, Any]:
         """Create standardized success response"""
-        response = {
-            "status": "success",
-            "message": message
-        }
+        response = {"status": "success", "message": message}
         response.update(kwargs)
         return response
-    
+
     def check_score_exists(self, score_id: str) -> Optional[str]:
         """Check if score exists, return error message if not"""
         if score_id not in self.score_manager:
             return f"Score with ID '{score_id}' not found"
         return None
-    
+
     def get_score(self, score_id: str):
         """Get score from manager"""
         return self.score_manager.get(score_id)

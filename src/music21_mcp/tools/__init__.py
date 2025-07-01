@@ -18,17 +18,17 @@ from .style_imitation_tool import StyleImitationTool
 from .voice_leading_tool import VoiceLeadingAnalysisTool
 
 __all__ = [
-    'ImportScoreTool',
-    'ListScoresTool', 
-    'KeyAnalysisTool',
-    'ChordAnalysisTool',
-    'ScoreInfoTool',
-    'ExportScoreTool',
-    'DeleteScoreTool',
-    'HarmonyAnalysisTool',
-    'VoiceLeadingAnalysisTool',
-    'PatternRecognitionTool',
-    'HarmonizationTool',
-    'CounterpointGeneratorTool',
-    'StyleImitationTool'
+    "ImportScoreTool",
+    "ListScoresTool",
+    "KeyAnalysisTool",
+    "ChordAnalysisTool",
+    "ScoreInfoTool",
+    "ExportScoreTool",
+    "DeleteScoreTool",
+    "HarmonyAnalysisTool",
+    "VoiceLeadingAnalysisTool",
+    "PatternRecognitionTool",
+    "HarmonizationTool",
+    "CounterpointGeneratorTool",
+    "StyleImitationTool",
 ]

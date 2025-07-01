@@ -2,6 +2,7 @@
 Style Imitation Tool - Analyze and generate music in specific composer styles
 Uses machine learning-inspired techniques for style analysis and generation
 """
+
 import logging
 import random
 from collections import Counter, defaultdict
@@ -24,108 +25,110 @@ class StyleImitationTool(BaseTool):
     4. Multi-parametric style modeling
     5. Hybrid generation with constraints
     """
-    
+
     def __init__(self, score_manager: Dict[str, Any]):
         super().__init__(score_manager)
-        
+
         # Pre-defined style characteristics
         self.style_profiles = {
-            'bach': {
-                'melodic': {
-                    'stepwise_preference': 0.7,
-                    'leap_recovery': True,
-                    'sequence_use': 0.8,
-                    'chromatic_passing': 0.3
+            "bach": {
+                "melodic": {
+                    "stepwise_preference": 0.7,
+                    "leap_recovery": True,
+                    "sequence_use": 0.8,
+                    "chromatic_passing": 0.3,
                 },
-                'harmonic': {
-                    'progression_strictness': 0.9,
-                    'voice_independence': 0.95,
-                    'cadence_types': ['PAC', 'IAC', 'HC'],
-                    'modulation_frequency': 0.3
+                "harmonic": {
+                    "progression_strictness": 0.9,
+                    "voice_independence": 0.95,
+                    "cadence_types": ["PAC", "IAC", "HC"],
+                    "modulation_frequency": 0.3,
                 },
-                'rhythmic': {
-                    'motor_rhythm': True,
-                    'syncopation': 0.2,
-                    'consistent_subdivision': True
+                "rhythmic": {
+                    "motor_rhythm": True,
+                    "syncopation": 0.2,
+                    "consistent_subdivision": True,
                 },
-                'texture': 'polyphonic'
+                "texture": "polyphonic",
             },
-            'mozart': {
-                'melodic': {
-                    'stepwise_preference': 0.6,
-                    'leap_recovery': True,
-                    'alberti_bass': True,
-                    'ornamental_figures': 0.4
+            "mozart": {
+                "melodic": {
+                    "stepwise_preference": 0.6,
+                    "leap_recovery": True,
+                    "alberti_bass": True,
+                    "ornamental_figures": 0.4,
                 },
-                'harmonic': {
-                    'progression_strictness': 0.8,
-                    'chromatic_harmony': 0.2,
-                    'cadence_types': ['PAC', 'HC', 'DC'],
-                    'tonicization': 0.4
+                "harmonic": {
+                    "progression_strictness": 0.8,
+                    "chromatic_harmony": 0.2,
+                    "cadence_types": ["PAC", "HC", "DC"],
+                    "tonicization": 0.4,
                 },
-                'rhythmic': {
-                    'periodic_phrasing': True,
-                    'rhythmic_clarity': True,
-                    'grace_notes': 0.3
+                "rhythmic": {
+                    "periodic_phrasing": True,
+                    "rhythmic_clarity": True,
+                    "grace_notes": 0.3,
                 },
-                'texture': 'homophonic'
+                "texture": "homophonic",
             },
-            'chopin': {
-                'melodic': {
-                    'lyrical_lines': True,
-                    'chromatic_inflection': 0.6,
-                    'wide_leaps': 0.3,
-                    'rubato_implied': True
+            "chopin": {
+                "melodic": {
+                    "lyrical_lines": True,
+                    "chromatic_inflection": 0.6,
+                    "wide_leaps": 0.3,
+                    "rubato_implied": True,
                 },
-                'harmonic': {
-                    'chromatic_harmony': 0.7,
-                    'extended_chords': 0.6,
-                    'pedal_points': 0.4,
-                    'modal_mixture': 0.5
+                "harmonic": {
+                    "chromatic_harmony": 0.7,
+                    "extended_chords": 0.6,
+                    "pedal_points": 0.4,
+                    "modal_mixture": 0.5,
                 },
-                'rhythmic': {
-                    'flexible_tempo': True,
-                    'polyrhythm': 0.3,
-                    'ornamental_rhythm': 0.5
+                "rhythmic": {
+                    "flexible_tempo": True,
+                    "polyrhythm": 0.3,
+                    "ornamental_rhythm": 0.5,
                 },
-                'texture': 'melody_dominated_homophony'
+                "texture": "melody_dominated_homophony",
             },
-            'debussy': {
-                'melodic': {
-                    'pentatonic_scales': 0.4,
-                    'whole_tone': 0.3,
-                    'modal_scales': 0.5,
-                    'atmospheric': True
+            "debussy": {
+                "melodic": {
+                    "pentatonic_scales": 0.4,
+                    "whole_tone": 0.3,
+                    "modal_scales": 0.5,
+                    "atmospheric": True,
                 },
-                'harmonic': {
-                    'parallel_motion': 0.6,
-                    'non_functional': 0.7,
-                    'extended_tertian': 0.8,
-                    'quartal_harmony': 0.3
+                "harmonic": {
+                    "parallel_motion": 0.6,
+                    "non_functional": 0.7,
+                    "extended_tertian": 0.8,
+                    "quartal_harmony": 0.3,
                 },
-                'rhythmic': {
-                    'fluid_rhythm': True,
-                    'cross_rhythm': 0.4,
-                    'metric_ambiguity': 0.5
+                "rhythmic": {
+                    "fluid_rhythm": True,
+                    "cross_rhythm": 0.4,
+                    "metric_ambiguity": 0.5,
                 },
-                'texture': 'layered'
-            }
+                "texture": "layered",
+            },
         }
-        
+
         self.transition_matrices = {}
         self.rhythm_patterns = {}
         self.harmonic_progressions = {}
-    
-    async def execute(self, 
-                     style_source: Optional[str] = None,
-                     composer: Optional[str] = None,
-                     generation_length: int = 16,
-                     starting_note: Optional[str] = None,
-                     constraints: Optional[List[str]] = None,
-                     complexity: str = "medium") -> Dict[str, Any]:
+
+    async def execute(
+        self,
+        style_source: Optional[str] = None,
+        composer: Optional[str] = None,
+        generation_length: int = 16,
+        starting_note: Optional[str] = None,
+        constraints: Optional[List[str]] = None,
+        complexity: str = "medium",
+    ) -> Dict[str, Any]:
         """
         Generate music in a specific style
-        
+
         Args:
             style_source: Score ID to analyze for style
             composer: Pre-defined composer style to use
@@ -139,11 +142,11 @@ class StyleImitationTool(BaseTool):
             style_source=style_source,
             composer=composer,
             generation_length=generation_length,
-            complexity=complexity
+            complexity=complexity,
         )
         if error:
             return self.create_error_response(error)
-        
+
         with self.error_handling(f"Style imitation"):
             # Learn style characteristics
             if style_source:
@@ -154,65 +157,61 @@ class StyleImitationTool(BaseTool):
                 self.report_progress(0.1, f"Loading {composer} style profile")
                 style_data = self._load_composer_style(composer)
             else:
-                return self.create_error_response("Must provide either style_source or composer")
-            
+                return self.create_error_response(
+                    "Must provide either style_source or composer"
+                )
+
             self.report_progress(0.3, "Building generative models")
-            
+
             # Build transition matrices
             if style_source:
                 self._build_transition_matrices(source_score, style_data)
             else:
                 self._load_preset_transitions(composer)
-            
+
             self.report_progress(0.5, "Generating new composition")
-            
+
             # Generate based on style
             generated_score = await self._generate_style_based_music(
-                style_data,
-                generation_length,
-                starting_note,
-                constraints,
-                complexity
+                style_data, generation_length, starting_note, constraints, complexity
             )
-            
+
             self.report_progress(0.8, "Applying style refinements")
-            
+
             # Refine with style-specific rules
             refined_score = self._apply_style_refinements(
-                generated_score,
-                style_data,
-                composer
+                generated_score, style_data, composer
             )
-            
+
             # Analyze the generated piece
             self.report_progress(0.9, "Analyzing generated music")
             generation_analysis = await self._analyze_generation(
-                refined_score,
-                style_data
+                refined_score, style_data
             )
-            
+
             # Store result
             result_id = f"generated_{composer or 'custom'}_style"
             self.score_manager[result_id] = refined_score
-            
+
             self.report_progress(1.0, "Style imitation complete")
-            
+
             return self.create_success_response(
                 generated_score_id=result_id,
                 style_source=style_source or composer,
                 measures_generated=generation_length,
                 complexity=complexity,
-                style_adherence=generation_analysis['style_adherence'],
-                musical_features=generation_analysis['features'],
-                transition_types_used=generation_analysis['transitions'],
-                harmonic_language=generation_analysis['harmony']
+                style_adherence=generation_analysis["style_adherence"],
+                musical_features=generation_analysis["features"],
+                transition_types_used=generation_analysis["transitions"],
+                harmonic_language=generation_analysis["harmony"],
             )
-    
-    async def analyze_style(self, score_id: str,
-                          detailed: bool = True) -> Dict[str, Any]:
+
+    async def analyze_style(
+        self, score_id: str, detailed: bool = True
+    ) -> Dict[str, Any]:
         """
         Analyze the style characteristics of a score
-        
+
         Args:
             score_id: ID of score to analyze
             detailed: Whether to include detailed statistics
@@ -220,135 +219,169 @@ class StyleImitationTool(BaseTool):
         error = self.check_score_exists(score_id)
         if error:
             return self.create_error_response(error)
-        
+
         with self.error_handling(f"Style analysis of '{score_id}'"):
             score = self.get_score(score_id)
-            
+
             self.report_progress(0.2, "Analyzing melodic characteristics")
             style_data = await self._analyze_style(score)
-            
+
             if detailed:
                 self.report_progress(0.5, "Computing detailed statistics")
-                
+
                 # Additional detailed analysis
-                style_data['interval_distribution'] = self._compute_interval_distribution(score)
-                style_data['rhythm_histogram'] = self._compute_rhythm_histogram(score)
-                style_data['chord_vocabulary'] = self._extract_chord_vocabulary(score)
-                style_data['phrase_lengths'] = self._analyze_phrase_structure(score)
-                
+                style_data["interval_distribution"] = (
+                    self._compute_interval_distribution(score)
+                )
+                style_data["rhythm_histogram"] = self._compute_rhythm_histogram(score)
+                style_data["chord_vocabulary"] = self._extract_chord_vocabulary(score)
+                style_data["phrase_lengths"] = self._analyze_phrase_structure(score)
+
                 self.report_progress(0.8, "Identifying style markers")
-                style_data['distinctive_features'] = self._identify_distinctive_features(style_data)
-            
+                style_data["distinctive_features"] = (
+                    self._identify_distinctive_features(style_data)
+                )
+
             # Compare to known styles
             self.report_progress(0.9, "Comparing to known styles")
             style_similarities = self._compare_to_known_styles(style_data)
-            
+
             return self.create_success_response(
                 style_characteristics=style_data,
                 closest_known_styles=style_similarities,
-                detailed_analysis=detailed
+                detailed_analysis=detailed,
             )
-    
+
     def validate_inputs(self, **kwargs) -> Optional[str]:
         """Validate input parameters"""
-        if 'style_source' in kwargs and kwargs['style_source']:
-            error = self.check_score_exists(kwargs['style_source'])
+        if "style_source" in kwargs and kwargs["style_source"]:
+            error = self.check_score_exists(kwargs["style_source"])
             if error:
                 return error
-        
-        if 'composer' in kwargs and kwargs['composer']:
-            if kwargs['composer'] not in self.style_profiles:
+
+        if "composer" in kwargs and kwargs["composer"]:
+            if kwargs["composer"] not in self.style_profiles:
                 return f"Unknown composer: {kwargs['composer']}. Available: {list(self.style_profiles.keys())}"
-        
-        if 'generation_length' in kwargs:
-            if not 1 <= kwargs['generation_length'] <= 64:
+
+        if "generation_length" in kwargs:
+            if not 1 <= kwargs["generation_length"] <= 64:
                 return "generation_length must be between 1 and 64 measures"
-        
-        if 'complexity' in kwargs:
-            if kwargs['complexity'] not in ['simple', 'medium', 'complex']:
+
+        if "complexity" in kwargs:
+            if kwargs["complexity"] not in ["simple", "medium", "complex"]:
                 return "complexity must be 'simple', 'medium', or 'complex'"
-        
-        if not kwargs.get('style_source') and not kwargs.get('composer'):
+
+        if not kwargs.get("style_source") and not kwargs.get("composer"):
             return "Must provide either style_source or composer"
-        
+
         return None
-    
+
     async def _analyze_style(self, score: stream.Score) -> Dict[str, Any]:
         """Analyze style characteristics of a score"""
         style_data = {
-            'melodic': {},
-            'harmonic': {},
-            'rhythmic': {},
-            'textural': {},
-            'formal': {}
+            "melodic": {},
+            "harmonic": {},
+            "rhythmic": {},
+            "textural": {},
+            "formal": {},
         }
-        
+
         try:
             # Melodic analysis
             all_notes = list(score.flatten().notes)
             if all_notes:
                 intervals = []
                 for i in range(len(all_notes) - 1):
-                    if isinstance(all_notes[i], note.Note) and isinstance(all_notes[i+1], note.Note):
-                        intv = interval.Interval(all_notes[i], all_notes[i+1])
+                    if isinstance(all_notes[i], note.Note) and isinstance(
+                        all_notes[i + 1], note.Note
+                    ):
+                        intv = interval.Interval(all_notes[i], all_notes[i + 1])
                         intervals.append(intv.semitones)
-                
+
                 # Calculate melodic statistics
                 if intervals:
-                    style_data['melodic']['avg_interval'] = np.mean(np.abs(intervals))
-                    style_data['melodic']['stepwise_motion'] = sum(1 for i in intervals if abs(i) <= 2) / len(intervals)
-                    style_data['melodic']['leap_frequency'] = sum(1 for i in intervals if abs(i) > 4) / len(intervals)
-                    style_data['melodic']['largest_leap'] = max(abs(i) for i in intervals)
-                    style_data['melodic']['contour_changes'] = self._count_contour_changes(intervals)
-            
+                    style_data["melodic"]["avg_interval"] = np.mean(np.abs(intervals))
+                    style_data["melodic"]["stepwise_motion"] = sum(
+                        1 for i in intervals if abs(i) <= 2
+                    ) / len(intervals)
+                    style_data["melodic"]["leap_frequency"] = sum(
+                        1 for i in intervals if abs(i) > 4
+                    ) / len(intervals)
+                    style_data["melodic"]["largest_leap"] = max(
+                        abs(i) for i in intervals
+                    )
+                    style_data["melodic"]["contour_changes"] = (
+                        self._count_contour_changes(intervals)
+                    )
+
             # Harmonic analysis
             chords = list(score.flatten().getElementsByClass(chord.Chord))
             if chords:
-                style_data['harmonic']['chord_density'] = len(chords) / score.duration.quarterLength
-                style_data['harmonic']['unique_chords'] = len(set(ch.pitchedCommonName for ch in chords))
-                style_data['harmonic']['dissonance_level'] = self._calculate_dissonance_level(chords)
-                
+                style_data["harmonic"]["chord_density"] = (
+                    len(chords) / score.duration.quarterLength
+                )
+                style_data["harmonic"]["unique_chords"] = len(
+                    set(ch.pitchedCommonName for ch in chords)
+                )
+                style_data["harmonic"]["dissonance_level"] = (
+                    self._calculate_dissonance_level(chords)
+                )
+
                 # Progression tendencies
                 progressions = self._extract_progression_patterns(chords)
-                style_data['harmonic']['common_progressions'] = progressions
-            
+                style_data["harmonic"]["common_progressions"] = progressions
+
             # Rhythmic analysis
-            durations = [n.duration.quarterLength for n in all_notes if isinstance(n, note.Note)]
+            durations = [
+                n.duration.quarterLength for n in all_notes if isinstance(n, note.Note)
+            ]
             if durations:
-                style_data['rhythmic']['avg_duration'] = np.mean(durations)
-                style_data['rhythmic']['rhythm_variety'] = len(set(durations))
-                style_data['rhythmic']['syncopation_level'] = self._calculate_syncopation(all_notes)
-                style_data['rhythmic']['common_patterns'] = self._extract_rhythm_patterns(all_notes)
-            
+                style_data["rhythmic"]["avg_duration"] = np.mean(durations)
+                style_data["rhythmic"]["rhythm_variety"] = len(set(durations))
+                style_data["rhythmic"]["syncopation_level"] = (
+                    self._calculate_syncopation(all_notes)
+                )
+                style_data["rhythmic"]["common_patterns"] = (
+                    self._extract_rhythm_patterns(all_notes)
+                )
+
             # Textural analysis
             parts = score.parts
             if len(parts) > 0:
-                style_data['textural']['voice_count'] = len(parts)
-                style_data['textural']['density_profile'] = self._analyze_texture_density(parts)
-                style_data['textural']['voice_independence'] = self._calculate_voice_independence(parts)
-            
+                style_data["textural"]["voice_count"] = len(parts)
+                style_data["textural"]["density_profile"] = (
+                    self._analyze_texture_density(parts)
+                )
+                style_data["textural"]["voice_independence"] = (
+                    self._calculate_voice_independence(parts)
+                )
+
             # Formal analysis
-            style_data['formal']['total_measures'] = sum(1 for _ in score.parts[0].getElementsByClass('Measure'))
-            style_data['formal']['phrase_structure'] = self._detect_phrase_structure(score)
-            
+            style_data["formal"]["total_measures"] = sum(
+                1 for _ in score.parts[0].getElementsByClass("Measure")
+            )
+            style_data["formal"]["phrase_structure"] = self._detect_phrase_structure(
+                score
+            )
+
         except Exception as e:
             logger.error(f"Style analysis error: {e}")
-        
+
         return style_data
-    
+
     def _count_contour_changes(self, intervals: List[int]) -> int:
         """Count melodic contour direction changes"""
         changes = 0
         for i in range(len(intervals) - 1):
-            if intervals[i] * intervals[i+1] < 0:  # Different signs
+            if intervals[i] * intervals[i + 1] < 0:  # Different signs
                 changes += 1
         return changes
-    
+
     def _calculate_dissonance_level(self, chords: List[chord.Chord]) -> float:
         """Calculate overall dissonance level"""
         if not chords:
             return 0.0
-        
+
         dissonance_sum = 0
         for ch in chords:
             # Simple dissonance calculation based on intervals
@@ -359,84 +392,94 @@ class StyleImitationTool(BaseTool):
                     # Dissonant intervals: m2, M2, tritone, m7, M7
                     if interval_class in [1, 2, 6, 10, 11]:
                         dissonance_sum += 1
-        
+
         return dissonance_sum / len(chords)
-    
-    def _extract_progression_patterns(self, chords: List[chord.Chord]) -> List[Tuple[str, int]]:
+
+    def _extract_progression_patterns(
+        self, chords: List[chord.Chord]
+    ) -> List[Tuple[str, int]]:
         """Extract common chord progression patterns"""
         progressions = []
-        
+
         for i in range(len(chords) - 1):
-            prog = (chords[i].pitchedCommonName, chords[i+1].pitchedCommonName)
+            prog = (chords[i].pitchedCommonName, chords[i + 1].pitchedCommonName)
             progressions.append(prog)
-        
+
         # Count frequencies
         prog_counter = Counter(progressions)
         return prog_counter.most_common(5)
-    
+
     def _calculate_syncopation(self, notes: List[note.Note]) -> float:
         """Calculate syncopation level"""
         syncopated = 0
         total = 0
-        
+
         for n in notes:
             if isinstance(n, note.Note):
                 # Check if note starts on weak beat
                 if n.beat and n.beat % 1 != 0:
                     syncopated += 1
                 total += 1
-        
+
         return syncopated / max(total, 1)
-    
-    def _extract_rhythm_patterns(self, notes: List[note.Note]) -> List[Tuple[Tuple[float, ...], int]]:
+
+    def _extract_rhythm_patterns(
+        self, notes: List[note.Note]
+    ) -> List[Tuple[Tuple[float, ...], int]]:
         """Extract common rhythm patterns"""
         patterns = []
         window_size = 4
-        
+
         for i in range(len(notes) - window_size + 1):
-            pattern = tuple(n.duration.quarterLength for n in notes[i:i+window_size] 
-                          if isinstance(n, note.Note))
+            pattern = tuple(
+                n.duration.quarterLength
+                for n in notes[i : i + window_size]
+                if isinstance(n, note.Note)
+            )
             if len(pattern) == window_size:
                 patterns.append(pattern)
-        
+
         pattern_counter = Counter(patterns)
         return pattern_counter.most_common(5)
-    
+
     def _analyze_texture_density(self, parts: List[stream.Part]) -> Dict[str, float]:
         """Analyze texture density across time"""
-        return {
-            'average': 0.7,  # Simplified
-            'variation': 0.2
-        }
-    
+        return {"average": 0.7, "variation": 0.2}  # Simplified
+
     def _calculate_voice_independence(self, parts: List[stream.Part]) -> float:
         """Calculate independence between voices"""
         if len(parts) < 2:
             return 1.0
-        
+
         # Simplified - check rhythm independence
         independence_scores = []
-        
+
         for i in range(len(parts) - 1):
             for j in range(i + 1, len(parts)):
-                part1_rhythm = [n.duration.quarterLength for n in parts[i].flatten().notes]
-                part2_rhythm = [n.duration.quarterLength for n in parts[j].flatten().notes]
-                
+                part1_rhythm = [
+                    n.duration.quarterLength for n in parts[i].flatten().notes
+                ]
+                part2_rhythm = [
+                    n.duration.quarterLength for n in parts[j].flatten().notes
+                ]
+
                 # Compare rhythms
                 if part1_rhythm and part2_rhythm:
                     min_len = min(len(part1_rhythm), len(part2_rhythm))
-                    matching = sum(1 for k in range(min_len) if part1_rhythm[k] == part2_rhythm[k])
+                    matching = sum(
+                        1 for k in range(min_len) if part1_rhythm[k] == part2_rhythm[k]
+                    )
                     independence = 1 - (matching / min_len)
                     independence_scores.append(independence)
-        
+
         return np.mean(independence_scores) if independence_scores else 0.5
-    
+
     def _detect_phrase_structure(self, score: stream.Score) -> List[int]:
         """Detect phrase boundaries"""
         # Simplified - look for rests or long notes
         phrase_lengths = []
         current_phrase = 0
-        
+
         for element in score.flatten():
             if isinstance(element, note.Note):
                 current_phrase += element.duration.quarterLength
@@ -444,389 +487,422 @@ class StyleImitationTool(BaseTool):
                 if current_phrase > 0:
                     phrase_lengths.append(current_phrase)
                     current_phrase = 0
-        
+
         if current_phrase > 0:
             phrase_lengths.append(current_phrase)
-        
+
         return phrase_lengths
-    
+
     def _load_composer_style(self, composer: str) -> Dict[str, Any]:
         """Load pre-defined composer style profile"""
         profile = self.style_profiles.get(composer, {})
-        
+
         # Convert to analysis format
         style_data = {
-            'melodic': profile.get('melodic', {}),
-            'harmonic': profile.get('harmonic', {}),
-            'rhythmic': profile.get('rhythmic', {}),
-            'textural': {'texture_type': profile.get('texture', 'homophonic')},
-            'formal': {}
+            "melodic": profile.get("melodic", {}),
+            "harmonic": profile.get("harmonic", {}),
+            "rhythmic": profile.get("rhythmic", {}),
+            "textural": {"texture_type": profile.get("texture", "homophonic")},
+            "formal": {},
         }
-        
+
         return style_data
-    
-    def _build_transition_matrices(self, score: stream.Score, style_data: Dict[str, Any]):
+
+    def _build_transition_matrices(
+        self, score: stream.Score, style_data: Dict[str, Any]
+    ):
         """Build Markov transition matrices from score"""
         # Pitch transitions
         pitch_transitions = defaultdict(lambda: defaultdict(int))
         notes = [n for n in score.flatten().notes if isinstance(n, note.Note)]
-        
+
         for i in range(len(notes) - 1):
             current = notes[i].pitch.midi
-            next_pitch = notes[i+1].pitch.midi
+            next_pitch = notes[i + 1].pitch.midi
             pitch_transitions[current][next_pitch] += 1
-        
+
         # Normalize to probabilities
         for current in pitch_transitions:
             total = sum(pitch_transitions[current].values())
             if total > 0:
                 for next_pitch in pitch_transitions[current]:
                     pitch_transitions[current][next_pitch] /= total
-        
-        self.transition_matrices['pitch'] = dict(pitch_transitions)
-        
+
+        self.transition_matrices["pitch"] = dict(pitch_transitions)
+
         # Rhythm transitions
         rhythm_transitions = defaultdict(lambda: defaultdict(int))
         for i in range(len(notes) - 1):
             current = notes[i].duration.quarterLength
-            next_dur = notes[i+1].duration.quarterLength
+            next_dur = notes[i + 1].duration.quarterLength
             rhythm_transitions[current][next_dur] += 1
-        
+
         # Normalize
         for current in rhythm_transitions:
             total = sum(rhythm_transitions[current].values())
             if total > 0:
                 for next_dur in rhythm_transitions[current]:
                     rhythm_transitions[current][next_dur] /= total
-        
-        self.transition_matrices['rhythm'] = dict(rhythm_transitions)
-    
+
+        self.transition_matrices["rhythm"] = dict(rhythm_transitions)
+
     def _load_preset_transitions(self, composer: str):
         """Load preset transition matrices for known composers"""
         # Simplified preset transitions
-        if composer == 'bach':
-            self.transition_matrices['pitch'] = {
+        if composer == "bach":
+            self.transition_matrices["pitch"] = {
                 # Simplified - would be much more complex in reality
                 60: {62: 0.3, 64: 0.2, 59: 0.2, 60: 0.1, 65: 0.2},  # C
                 62: {64: 0.3, 60: 0.2, 65: 0.2, 62: 0.1, 67: 0.2},  # D
                 # ... etc
             }
-        elif composer == 'mozart':
-            self.transition_matrices['pitch'] = {
+        elif composer == "mozart":
+            self.transition_matrices["pitch"] = {
                 60: {62: 0.25, 64: 0.25, 67: 0.25, 60: 0.25},  # More balanced
                 # ... etc
             }
         # ... other composers
-    
-    async def _generate_style_based_music(self, style_data: Dict[str, Any],
-                                        generation_length: int,
-                                        starting_note: Optional[str],
-                                        constraints: Optional[List[str]],
-                                        complexity: str) -> stream.Score:
+
+    async def _generate_style_based_music(
+        self,
+        style_data: Dict[str, Any],
+        generation_length: int,
+        starting_note: Optional[str],
+        constraints: Optional[List[str]],
+        complexity: str,
+    ) -> stream.Score:
         """Generate music based on learned style"""
         generated_score = stream.Score()
         part = stream.Part()
-        
+
         # Parse constraints
         key_constraint = None
         range_constraint = None
         if constraints:
             for constraint in constraints:
-                if constraint.startswith('key:'):
-                    key_constraint = constraint.split(':')[1]
-                elif constraint.startswith('range:'):
-                    range_constraint = constraint.split(':')[1]
-        
+                if constraint.startswith("key:"):
+                    key_constraint = constraint.split(":")[1]
+                elif constraint.startswith("range:"):
+                    range_constraint = constraint.split(":")[1]
+
         # Determine starting pitch
         if starting_note:
             current_pitch = pitch.Pitch(starting_note)
         else:
-            current_pitch = pitch.Pitch('C4')
-        
+            current_pitch = pitch.Pitch("C4")
+
         # Generate notes
         total_duration = 0
         target_duration = generation_length * 4  # Assume 4/4 time
-        
+
         while total_duration < target_duration:
             # Choose next pitch
-            if 'pitch' in self.transition_matrices and current_pitch.midi in self.transition_matrices['pitch']:
+            if (
+                "pitch" in self.transition_matrices
+                and current_pitch.midi in self.transition_matrices["pitch"]
+            ):
                 # Use Markov chain
-                transitions = self.transition_matrices['pitch'][current_pitch.midi]
+                transitions = self.transition_matrices["pitch"][current_pitch.midi]
                 next_pitches = list(transitions.keys())
                 probabilities = list(transitions.values())
-                
+
                 if next_pitches:
                     next_midi = np.random.choice(next_pitches, p=probabilities)
                     current_pitch = pitch.Pitch(midi=next_midi)
                 else:
                     # Random step
-                    current_pitch = self._generate_stylistic_pitch(current_pitch, style_data)
+                    current_pitch = self._generate_stylistic_pitch(
+                        current_pitch, style_data
+                    )
             else:
                 # Use style-based generation
-                current_pitch = self._generate_stylistic_pitch(current_pitch, style_data)
-            
+                current_pitch = self._generate_stylistic_pitch(
+                    current_pitch, style_data
+                )
+
             # Apply range constraint
             if range_constraint:
-                min_pitch, max_pitch = range_constraint.split('-')
+                min_pitch, max_pitch = range_constraint.split("-")
                 min_midi = pitch.Pitch(min_pitch).midi
                 max_midi = pitch.Pitch(max_pitch).midi
                 current_pitch.midi = max(min_midi, min(max_midi, current_pitch.midi))
-            
+
             # Choose duration
             duration = self._generate_stylistic_duration(style_data, complexity)
-            
+
             # Create note
             n = note.Note(current_pitch, quarterLength=duration)
             part.append(n)
-            
+
             total_duration += duration
-        
+
         generated_score.insert(0, part)
-        
+
         # Add additional voices for complex styles
-        if complexity == 'complex' and style_data.get('textural', {}).get('voice_count', 1) > 1:
+        if (
+            complexity == "complex"
+            and style_data.get("textural", {}).get("voice_count", 1) > 1
+        ):
             # Add bass line
             bass_part = self._generate_bass_line(part, style_data)
             generated_score.insert(0, bass_part)
-        
+
         return generated_score
-    
-    def _generate_stylistic_pitch(self, current: pitch.Pitch, 
-                                style_data: Dict[str, Any]) -> pitch.Pitch:
+
+    def _generate_stylistic_pitch(
+        self, current: pitch.Pitch, style_data: Dict[str, Any]
+    ) -> pitch.Pitch:
         """Generate next pitch based on style characteristics"""
-        stepwise_pref = style_data.get('melodic', {}).get('stepwise_motion', 0.7)
-        
+        stepwise_pref = style_data.get("melodic", {}).get("stepwise_motion", 0.7)
+
         if random.random() < stepwise_pref:
             # Stepwise motion
             step = random.choice([-2, -1, 1, 2])
         else:
             # Leap
-            leap_size = style_data.get('melodic', {}).get('avg_interval', 3)
+            leap_size = style_data.get("melodic", {}).get("avg_interval", 3)
             step = random.choice([-1, 1]) * random.randint(3, int(leap_size * 2))
-        
+
         new_pitch = pitch.Pitch(midi=current.midi + step)
         return new_pitch
-    
-    def _generate_stylistic_duration(self, style_data: Dict[str, Any], 
-                                   complexity: str) -> float:
+
+    def _generate_stylistic_duration(
+        self, style_data: Dict[str, Any], complexity: str
+    ) -> float:
         """Generate rhythm based on style"""
-        if 'rhythm' in self.transition_matrices:
+        if "rhythm" in self.transition_matrices:
             # Use learned transitions
-            durations = list(self.transition_matrices['rhythm'].keys())
+            durations = list(self.transition_matrices["rhythm"].keys())
             if durations:
                 return random.choice(durations)
-        
+
         # Use style-based generation
-        avg_dur = style_data.get('rhythmic', {}).get('avg_duration', 1.0)
-        
-        if complexity == 'simple':
+        avg_dur = style_data.get("rhythmic", {}).get("avg_duration", 1.0)
+
+        if complexity == "simple":
             return random.choice([0.5, 1.0])
-        elif complexity == 'medium':
+        elif complexity == "medium":
             return random.choice([0.25, 0.5, 1.0, 1.5])
         else:
             # Complex - more variety
             base_durs = [0.125, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
             weights = [0.1, 0.2, 0.3, 0.1, 0.2, 0.05, 0.05]
             return np.random.choice(base_durs, p=weights)
-    
-    def _generate_bass_line(self, melody_part: stream.Part, 
-                          style_data: Dict[str, Any]) -> stream.Part:
+
+    def _generate_bass_line(
+        self, melody_part: stream.Part, style_data: Dict[str, Any]
+    ) -> stream.Part:
         """Generate a bass line to accompany melody"""
         bass_part = stream.Part()
         bass_part.partName = "Bass"
-        
+
         # Simple bass generation - root notes on strong beats
         for element in melody_part:
             if isinstance(element, note.Note):
                 # Create bass note a fifth or octave below
                 bass_pitch = pitch.Pitch(midi=element.pitch.midi - 12)
-                bass_note = note.Note(bass_pitch, quarterLength=element.duration.quarterLength)
+                bass_note = note.Note(
+                    bass_pitch, quarterLength=element.duration.quarterLength
+                )
                 bass_part.append(bass_note)
-        
+
         return bass_part
-    
-    def _apply_style_refinements(self, score: stream.Score, 
-                               style_data: Dict[str, Any],
-                               composer: Optional[str]) -> stream.Score:
+
+    def _apply_style_refinements(
+        self, score: stream.Score, style_data: Dict[str, Any], composer: Optional[str]
+    ) -> stream.Score:
         """Apply style-specific refinements to generated music"""
         refined_score = score.deepcopy()
-        
-        if composer == 'bach':
+
+        if composer == "bach":
             # Add passing tones
             refined_score = self._add_bach_ornaments(refined_score)
-        elif composer == 'mozart':
+        elif composer == "mozart":
             # Add Alberti bass patterns
             refined_score = self._add_mozart_accompaniment(refined_score)
-        elif composer == 'chopin':
+        elif composer == "chopin":
             # Add rubato markings and pedal
             refined_score = self._add_chopin_expression(refined_score)
-        elif composer == 'debussy':
+        elif composer == "debussy":
             # Add whole-tone passages
             refined_score = self._add_debussy_colors(refined_score)
-        
+
         return refined_score
-    
+
     def _add_bach_ornaments(self, score: stream.Score) -> stream.Score:
         """Add Bach-style ornaments"""
         # Simplified - add some passing tones
         for part in score.parts:
             notes = list(part.flatten().notes)
             for i in range(len(notes) - 1):
-                if isinstance(notes[i], note.Note) and isinstance(notes[i+1], note.Note):
-                    interval_size = abs(notes[i].pitch.midi - notes[i+1].pitch.midi)
+                if isinstance(notes[i], note.Note) and isinstance(
+                    notes[i + 1], note.Note
+                ):
+                    interval_size = abs(notes[i].pitch.midi - notes[i + 1].pitch.midi)
                     if interval_size == 4:  # Major third
                         # Could add passing tone
                         pass
         return score
-    
+
     def _add_mozart_accompaniment(self, score: stream.Score) -> stream.Score:
         """Add Mozart-style accompaniment patterns"""
         # Simplified implementation
         return score
-    
+
     def _add_chopin_expression(self, score: stream.Score) -> stream.Score:
         """Add Chopin-style expression"""
         # Add tempo markings, dynamics
         return score
-    
+
     def _add_debussy_colors(self, score: stream.Score) -> stream.Score:
         """Add Debussy-style harmonic colors"""
         # Add pedal markings, parallel motion
         return score
-    
-    async def _analyze_generation(self, score: stream.Score, 
-                                style_data: Dict[str, Any]) -> Dict[str, Any]:
+
+    async def _analyze_generation(
+        self, score: stream.Score, style_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Analyze how well the generation matches the style"""
         # Analyze the generated score
         generated_style = await self._analyze_style(score)
-        
+
         # Compare to target style
         adherence_scores = {}
-        
+
         # Melodic adherence
-        if 'melodic' in style_data and 'melodic' in generated_style:
+        if "melodic" in style_data and "melodic" in generated_style:
             melodic_score = 0
             comparisons = 0
-            
-            for key in ['stepwise_motion', 'leap_frequency', 'avg_interval']:
-                if key in style_data['melodic'] and key in generated_style['melodic']:
-                    target = style_data['melodic'][key]
-                    actual = generated_style['melodic'][key]
+
+            for key in ["stepwise_motion", "leap_frequency", "avg_interval"]:
+                if key in style_data["melodic"] and key in generated_style["melodic"]:
+                    target = style_data["melodic"][key]
+                    actual = generated_style["melodic"][key]
                     # Calculate similarity (simple difference)
                     similarity = 1 - min(abs(target - actual) / max(target, 0.1), 1)
                     melodic_score += similarity
                     comparisons += 1
-            
+
             if comparisons > 0:
-                adherence_scores['melodic'] = melodic_score / comparisons
-        
+                adherence_scores["melodic"] = melodic_score / comparisons
+
         # Overall adherence
-        overall_adherence = np.mean(list(adherence_scores.values())) if adherence_scores else 0.5
-        
+        overall_adherence = (
+            np.mean(list(adherence_scores.values())) if adherence_scores else 0.5
+        )
+
         return {
-            'style_adherence': overall_adherence,
-            'features': generated_style,
-            'transitions': len(self.transition_matrices.get('pitch', {})),
-            'harmony': generated_style.get('harmonic', {})
+            "style_adherence": overall_adherence,
+            "features": generated_style,
+            "transitions": len(self.transition_matrices.get("pitch", {})),
+            "harmony": generated_style.get("harmonic", {}),
         }
-    
+
     def _compute_interval_distribution(self, score: stream.Score) -> Dict[str, float]:
         """Compute distribution of melodic intervals"""
         intervals = defaultdict(int)
         total = 0
-        
+
         notes = [n for n in score.flatten().notes if isinstance(n, note.Note)]
         for i in range(len(notes) - 1):
-            intv = interval.Interval(notes[i], notes[i+1])
+            intv = interval.Interval(notes[i], notes[i + 1])
             intervals[intv.name] += 1
             total += 1
-        
+
         # Normalize
         distribution = {}
         if total > 0:
             for intv_name, count in intervals.items():
                 distribution[intv_name] = count / total
-        
+
         return distribution
-    
+
     def _compute_rhythm_histogram(self, score: stream.Score) -> Dict[float, float]:
         """Compute histogram of rhythm values"""
         durations = defaultdict(int)
         total = 0
-        
+
         for n in score.flatten().notesAndRests:
             dur = n.duration.quarterLength
             durations[dur] += 1
             total += 1
-        
+
         # Normalize
         histogram = {}
         if total > 0:
             for dur, count in durations.items():
                 histogram[dur] = count / total
-        
+
         return histogram
-    
+
     def _extract_chord_vocabulary(self, score: stream.Score) -> List[str]:
         """Extract unique chord types used"""
         chord_types = set()
-        
+
         for ch in score.flatten().getElementsByClass(chord.Chord):
             chord_types.add(ch.pitchedCommonName)
-        
+
         return sorted(list(chord_types))
-    
+
     def _analyze_phrase_structure(self, score: stream.Score) -> List[int]:
         """Analyze phrase lengths"""
         return self._detect_phrase_structure(score)
-    
+
     def _identify_distinctive_features(self, style_data: Dict[str, Any]) -> List[str]:
         """Identify distinctive style features"""
         features = []
-        
+
         # Check melodic features
-        melodic = style_data.get('melodic', {})
-        if melodic.get('stepwise_motion', 0) > 0.8:
+        melodic = style_data.get("melodic", {})
+        if melodic.get("stepwise_motion", 0) > 0.8:
             features.append("Highly stepwise melodic motion")
-        if melodic.get('leap_frequency', 0) > 0.3:
+        if melodic.get("leap_frequency", 0) > 0.3:
             features.append("Frequent melodic leaps")
-        
+
         # Check harmonic features
-        harmonic = style_data.get('harmonic', {})
-        if harmonic.get('dissonance_level', 0) > 1.5:
+        harmonic = style_data.get("harmonic", {})
+        if harmonic.get("dissonance_level", 0) > 1.5:
             features.append("High harmonic dissonance")
-        if harmonic.get('chord_density', 0) < 0.5:
+        if harmonic.get("chord_density", 0) < 0.5:
             features.append("Sparse harmonic rhythm")
-        
+
         # Check rhythmic features
-        rhythmic = style_data.get('rhythmic', {})
-        if rhythmic.get('syncopation_level', 0) > 0.3:
+        rhythmic = style_data.get("rhythmic", {})
+        if rhythmic.get("syncopation_level", 0) > 0.3:
             features.append("Significant syncopation")
-        if rhythmic.get('rhythm_variety', 0) > 6:
+        if rhythmic.get("rhythm_variety", 0) > 6:
             features.append("Complex rhythmic vocabulary")
-        
+
         return features
-    
-    def _compare_to_known_styles(self, style_data: Dict[str, Any]) -> List[Tuple[str, float]]:
+
+    def _compare_to_known_styles(
+        self, style_data: Dict[str, Any]
+    ) -> List[Tuple[str, float]]:
         """Compare analyzed style to known composer styles"""
         similarities = []
-        
+
         for composer, profile in self.style_profiles.items():
             similarity = 0
             comparisons = 0
-            
+
             # Compare melodic characteristics
-            if 'melodic' in style_data and 'melodic' in profile:
-                if 'stepwise_motion' in style_data['melodic'] and 'stepwise_preference' in profile['melodic']:
-                    diff = abs(style_data['melodic']['stepwise_motion'] - profile['melodic']['stepwise_preference'])
+            if "melodic" in style_data and "melodic" in profile:
+                if (
+                    "stepwise_motion" in style_data["melodic"]
+                    and "stepwise_preference" in profile["melodic"]
+                ):
+                    diff = abs(
+                        style_data["melodic"]["stepwise_motion"]
+                        - profile["melodic"]["stepwise_preference"]
+                    )
                     similarity += 1 - diff
                     comparisons += 1
-            
+
             # Average similarity
             if comparisons > 0:
                 similarities.append((composer, similarity / comparisons))
-        
+
         # Sort by similarity
         similarities.sort(key=lambda x: x[1], reverse=True)
-        
+
         return similarities[:3]  # Top 3 matches

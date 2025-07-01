@@ -2,17 +2,32 @@
 FastAPI routes for OAuth2 authentication endpoints
 Implements authorization, token, and metadata endpoints
 """
+
 import logging
 from typing import Optional
 from urllib.parse import urlparse, parse_qs
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    status,
+)
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
 from .models import (
-    AuthorizationRequest, TokenRequest, TokenResponse,
-    GrantType, ResponseType, User, ClientRegistration
+    AuthorizationRequest,
+    TokenRequest,
+    TokenResponse,
+    GrantType,
+    ResponseType,
+    User,
+    ClientRegistration,
 )
 from .oauth2_provider import OAuth2Provider
 from .session_manager import SessionManager
@@ -37,22 +52,21 @@ async def get_session_manager(request: Request) -> SessionManager:
 
 
 async def get_current_user(
-    request: Request,
-    session_manager: SessionManager = Depends(get_session_manager)
+    request: Request, session_manager: SessionManager = Depends(get_session_manager)
 ) -> Optional[User]:
     """Get current user from session cookie"""
     session_id = request.cookies.get("session_id")
     if not session_id:
         return None
-    
+
     session = await session_manager.get_session(session_id)
     if not session:
         return None
-    
+
     # Get user from storage
     storage: OAuth2Storage = request.app.state.oauth2_storage
     user = await storage.get_user(session.user_id)
-    
+
     return user
 
 
@@ -73,7 +87,7 @@ class RegisterForm(BaseModel):
 # Routes
 @router.get("/.well-known/oauth-authorization-server")
 async def oauth_server_metadata(
-    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider)
+    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider),
 ):
     """OAuth2 Authorization Server Metadata endpoint (RFC 8414)"""
     return oauth2_provider.get_server_metadata()
@@ -81,7 +95,7 @@ async def oauth_server_metadata(
 
 @router.get("/.well-known/oauth-protected-resource")
 async def protected_resource_metadata(
-    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider)
+    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider),
 ):
     """OAuth2 Protected Resource Metadata endpoint"""
     return oauth2_provider.get_protected_resource_metadata()
@@ -97,14 +111,14 @@ async def authorize_get(
     code_challenge: str = Query(...),
     code_challenge_method: str = Query("S256"),
     nonce: Optional[str] = Query(None),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_current_user),
 ):
     """OAuth2 authorization endpoint - GET method (show consent form)"""
     if not current_user:
         # Redirect to login with return URL
         return_url = f"/auth/authorize?{Request.query_params}"
         return RedirectResponse(f"/auth/login?return_url={return_url}")
-    
+
     # For demo, we'll auto-approve. In production, show consent form
     html_content = f"""
     <html>
@@ -159,7 +173,7 @@ async def authorize_get(
     </body>
     </html>
     """
-    
+
     return HTMLResponse(content=html_content)
 
 
@@ -174,16 +188,16 @@ async def authorize_post(
     code_challenge_method: str = Form("S256"),
     action: str = Form(...),
     current_user: Optional[User] = Depends(get_current_user),
-    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider)
+    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider),
 ):
     """OAuth2 authorization endpoint - POST method (process consent)"""
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     if action != "approve":
         # User denied authorization
         return RedirectResponse(f"{redirect_uri}?error=access_denied&state={state}")
-    
+
     try:
         # Create authorization request
         auth_request = AuthorizationRequest(
@@ -193,18 +207,20 @@ async def authorize_post(
             scope=scope,
             state=state,
             code_challenge=code_challenge,
-            code_challenge_method=code_challenge_method
+            code_challenge_method=code_challenge_method,
         )
-        
+
         # Process authorization
         code, state = await oauth2_provider.authorize(auth_request, current_user)
-        
+
         # Redirect with authorization code
         return RedirectResponse(f"{redirect_uri}?code={code}&state={state}")
-        
+
     except ValueError as e:
         # Return error to redirect URI
-        return RedirectResponse(f"{redirect_uri}?error=invalid_request&error_description={str(e)}&state={state}")
+        return RedirectResponse(
+            f"{redirect_uri}?error=invalid_request&error_description={str(e)}&state={state}"
+        )
     except Exception as e:
         logger.error(f"Authorization error: {e}")
         return RedirectResponse(f"{redirect_uri}?error=server_error&state={state}")
@@ -221,7 +237,7 @@ async def token_endpoint(
     refresh_token: Optional[str] = Form(None),
     scope: Optional[str] = Form(None),
     request: Request = None,
-    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider)
+    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider),
 ):
     """OAuth2 token endpoint"""
     try:
@@ -232,7 +248,7 @@ async def token_endpoint(
                 username, password = parse_basic_auth(auth_header)
                 if username == client_id:
                     client_secret = password
-        
+
         # Create token request
         token_request = TokenRequest(
             grant_type=grant_type,
@@ -242,21 +258,18 @@ async def token_endpoint(
             client_secret=client_secret,
             code_verifier=code_verifier,
             refresh_token=refresh_token,
-            scope=scope
+            scope=scope,
         )
-        
+
         # Process token request
         token_response = await oauth2_provider.token(token_request)
-        
+
         return token_response.to_dict()
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail={
-                "error": "invalid_request",
-                "error_description": str(e)
-            }
+            detail={"error": "invalid_request", "error_description": str(e)},
         )
     except Exception as e:
         logger.error(f"Token endpoint error: {e}")
@@ -264,8 +277,8 @@ async def token_endpoint(
             status_code=500,
             detail={
                 "error": "server_error",
-                "error_description": "Internal server error"
-            }
+                "error_description": "Internal server error",
+            },
         )
 
 
@@ -276,17 +289,17 @@ async def revoke_token(
     client_id: str = Form(...),
     client_secret: Optional[str] = Form(None),
     request: Request = None,
-    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider)
+    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider),
 ):
     """OAuth2 token revocation endpoint (RFC 7009)"""
     try:
         # Validate client credentials
         storage: OAuth2Storage = request.app.state.oauth2_storage
         client = await storage.get_client(client_id)
-        
+
         if not client:
             raise HTTPException(status_code=401, detail="Invalid client")
-        
+
         if client.client_type == "confidential":
             # Handle Basic Auth
             if not client_secret and request.headers.get("Authorization"):
@@ -295,15 +308,17 @@ async def revoke_token(
                     username, password = parse_basic_auth(auth_header)
                     if username == client_id:
                         client_secret = password
-            
+
             if not client_secret or client_secret != client.client_secret:
-                raise HTTPException(status_code=401, detail="Invalid client credentials")
-        
+                raise HTTPException(
+                    status_code=401, detail="Invalid client credentials"
+                )
+
         # Revoke token
         await oauth2_provider.revoke_token(token, token_type_hint)
-        
+
         return Response(status_code=200)
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -352,64 +367,73 @@ async def login(
     remember_me: bool = Form(False),
     return_url: str = Form("/"),
     request: Request = None,
-    session_manager: SessionManager = Depends(get_session_manager)
+    session_manager: SessionManager = Depends(get_session_manager),
 ):
     """Process login (demo implementation)"""
     # Demo user validation - replace with real authentication
     demo_users = {
-        "alice": {"password": "password", "email": "alice@example.com", "full_name": "Alice Smith"},
-        "bob": {"password": "password", "email": "bob@example.com", "full_name": "Bob Jones"}
+        "alice": {
+            "password": "password",
+            "email": "alice@example.com",
+            "full_name": "Alice Smith",
+        },
+        "bob": {
+            "password": "password",
+            "email": "bob@example.com",
+            "full_name": "Bob Jones",
+        },
     }
-    
+
     if username not in demo_users or demo_users[username]["password"] != password:
-        return RedirectResponse("/auth/login?error=Invalid credentials", status_code=303)
-    
+        return RedirectResponse(
+            "/auth/login?error=Invalid credentials", status_code=303
+        )
+
     # Create user object
     storage: OAuth2Storage = request.app.state.oauth2_storage
     user = await storage.get_user_by_username(username)
-    
+
     if not user:
         # Create user on first login
         user = User(
             username=username,
             email=demo_users[username]["email"],
-            full_name=demo_users[username]["full_name"]
+            full_name=demo_users[username]["full_name"],
         )
         await storage.save_user(user)
-    
+
     # Create session
     session = await session_manager.create_session(
         user=user,
         ip_address=request.client.host,
-        user_agent=request.headers.get("User-Agent")
+        user_agent=request.headers.get("User-Agent"),
     )
-    
+
     # Create response with session cookie
     response = RedirectResponse(return_url, status_code=303)
     cookie_params = session_manager.create_session_cookie(session)
-    
+
     if remember_me:
         cookie_params["max_age"] = 30 * 24 * 60 * 60  # 30 days
-    
+
     response.set_cookie(**cookie_params)
-    
+
     return response
 
 
 @router.post("/logout")
 async def logout(
-    request: Request,
-    session_manager: SessionManager = Depends(get_session_manager)
+    request: Request, session_manager: SessionManager = Depends(get_session_manager)
 ):
     """Logout and clear session"""
     session_id = request.cookies.get("session_id")
-    
+
     if session_id:
         await session_manager.delete_session(session_id)
-    
+
     response = RedirectResponse("/auth/login", status_code=303)
     response.delete_cookie("session_id")
-    
+
     return response
 
 
@@ -420,27 +444,27 @@ async def register_client(
     client_type: str = Form("public"),
     scope: str = Form("read write"),
     current_user: User = Depends(SecurityMiddleware()),
-    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider)
+    oauth2_provider: OAuth2Provider = Depends(get_oauth2_provider),
 ):
     """Register a new OAuth2 client (requires admin scope)"""
     # Check admin permission
     if not current_user.has_permission("admin"):
         raise HTTPException(status_code=403, detail="Admin permission required")
-    
+
     # Parse redirect URIs
     uris = [uri.strip() for uri in redirect_uris.split(",")]
-    
+
     # Register client
     client = await oauth2_provider.register_client(
         client_name=client_name,
         redirect_uris=uris,
         client_type=client_type,
-        scope=scope
+        scope=scope,
     )
-    
+
     return {
         "client_id": client.client_id,
         "client_secret": client.client_secret,
         "client_type": client.client_type,
-        "redirect_uris": client.redirect_uris
+        "redirect_uris": client.redirect_uris,
     }
