@@ -18,33 +18,32 @@ from typing import Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 class LightweightTestOrchestrator:
     """Lightweight orchestrator for systems with limited resources"""
-    
+
     def __init__(self, config: Dict):
         self.config = config
         self.processes = {}
         self.start_time = None
         self.test_results = {
-            'started': None,
-            'completed': None,
-            'duration': None,
-            'server_restarts': 0,
-            'test_passed': False,
-            'failure_reasons': []
+            "started": None,
+            "completed": None,
+            "duration": None,
+            "server_restarts": 0,
+            "test_passed": False,
+            "failure_reasons": [],
         }
-        
+
     def run(self):
         """Run the lightweight test suite"""
         self.start_time = datetime.now()
-        self.test_results['started'] = self.start_time.isoformat()
-        
+        self.test_results["started"] = self.start_time.isoformat()
+
         logger.info("=" * 80)
         logger.info("STARTING LIGHTWEIGHT PRODUCTION TEST")
         logger.info("=" * 80)
@@ -53,69 +52,69 @@ class LightweightTestOrchestrator:
         logger.info(f"Memory Limit: {self.config.get('memory_limit_mb', 2048)}MB")
         logger.info("Using basic resilient server (no numpy required)")
         logger.info("=" * 80)
-        
+
         try:
             # Phase 1: Lightweight pre-flight checks
             logger.info("\nPhase 1: Pre-flight checks (lightweight)")
             if not self.preflight_checks_lite():
-                self.test_results['failure_reasons'].append("Pre-flight checks failed")
+                self.test_results["failure_reasons"].append("Pre-flight checks failed")
                 return False
-            
+
             # Phase 2: Start basic resilient server
             logger.info("\nPhase 2: Starting basic resilient server")
             if not self.start_basic_server():
-                self.test_results['failure_reasons'].append("Failed to start server")
+                self.test_results["failure_reasons"].append("Failed to start server")
                 return False
-            
+
             # Wait for server to be ready
             if not self.wait_for_server():
-                self.test_results['failure_reasons'].append("Server failed to become ready")
+                self.test_results["failure_reasons"].append(
+                    "Server failed to become ready"
+                )
                 return False
-            
+
             # Phase 3: Run lightweight stress test
             logger.info("\nPhase 3: Running lightweight stress test")
             test_passed = self.run_stress_test_lite()
-            
+
             # Phase 4: Collect results
             logger.info("\nPhase 4: Collecting results")
             self.collect_results()
-            
-            self.test_results['test_passed'] = test_passed
+
+            self.test_results["test_passed"] = test_passed
             return test_passed
-            
+
         except KeyboardInterrupt:
             logger.info("\nTest interrupted by user")
-            self.test_results['failure_reasons'].append("User interrupted")
+            self.test_results["failure_reasons"].append("User interrupted")
             return False
-            
+
         except Exception as e:
             logger.error(f"\nTest failed with error: {e}")
-            self.test_results['failure_reasons'].append(f"Exception: {str(e)}")
+            self.test_results["failure_reasons"].append(f"Exception: {str(e)}")
             return False
-            
+
         finally:
             # Cleanup
             self.cleanup()
-            
+
             # Generate final report
             self.generate_report()
-    
+
     def preflight_checks_lite(self) -> bool:
         """Lightweight pre-flight checks"""
         checks_passed = True
-        
+
         # Check Python version
         if sys.version_info < (3, 10):
             logger.error(f"Python 3.10+ required, found {sys.version}")
             checks_passed = False
         else:
             logger.info(f"✓ Python {sys.version_info.major}.{sys.version_info.minor}")
-        
+
         # Check only essential modules
-        required_modules = [
-            'music21', 'httpx', 'psutil', 'uvicorn', 'fastapi'
-        ]
-        
+        required_modules = ["music21", "httpx", "psutil", "uvicorn", "fastapi"]
+
         for module in required_modules:
             try:
                 __import__(module)
@@ -123,108 +122,118 @@ class LightweightTestOrchestrator:
             except ImportError:
                 logger.error(f"✗ Module {module} not found")
                 checks_passed = False
-        
+
         # Check port availability
         import socket
+
         for port in [8000, 8001]:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            result = sock.connect_ex(('localhost', port))
+            result = sock.connect_ex(("localhost", port))
             sock.close()
-            
+
             if result == 0:
                 logger.error(f"✗ Port {port} already in use")
                 checks_passed = False
             else:
                 logger.info(f"✓ Port {port} available")
-        
+
         # Check disk space (reduced requirement)
         import psutil
-        disk = psutil.disk_usage('/')
+
+        disk = psutil.disk_usage("/")
         free_gb = disk.free / 1024 / 1024 / 1024
-        
+
         if free_gb < 5:  # Reduced from 10GB
             logger.error(f"✗ Insufficient disk space: {free_gb:.1f}GB free (need 5GB)")
             checks_passed = False
         else:
             logger.info(f"✓ Disk space: {free_gb:.1f}GB free")
-        
+
         # Check memory (reduced requirement)
         memory = psutil.virtual_memory()
         available_gb = memory.available / 1024 / 1024 / 1024
-        
+
         if available_gb < 2:  # Reduced from 4GB
-            logger.error(f"✗ Insufficient memory: {available_gb:.1f}GB available (need 2GB)")
+            logger.error(
+                f"✗ Insufficient memory: {available_gb:.1f}GB available (need 2GB)"
+            )
             checks_passed = False
         else:
             logger.info(f"✓ Memory: {available_gb:.1f}GB available")
-        
+
         # Create necessary directories
-        for dir_path in ['stress_test_logs', 'test_results']:
+        for dir_path in ["stress_test_logs", "test_results"]:
             Path(dir_path).mkdir(exist_ok=True)
-        
+
         return checks_passed
-    
+
     def start_basic_server(self) -> bool:
         """Start the basic resilient server"""
         try:
             # Create lightweight server config
             server_config = {
-                'host': '0.0.0.0',
-                'port': 8000,
-                'max_request_size': 10 * 1024 * 1024,  # 10MB (reduced)
-                'request_timeout': 60,  # 1 minute (reduced)
-                'max_concurrent_requests': self.config['concurrent_users'],
-                'memory_limit_mb': 2048,  # 2GB (reduced)
+                "host": "0.0.0.0",
+                "port": 8000,
+                "max_request_size": 10 * 1024 * 1024,  # 10MB (reduced)
+                "request_timeout": 60,  # 1 minute (reduced)
+                "max_concurrent_requests": self.config["concurrent_users"],
+                "memory_limit_mb": 2048,  # 2GB (reduced)
             }
-            
-            with open('server_config_lite.json', 'w') as f:
+
+            with open("server_config_lite.json", "w") as f:
                 json.dump(server_config, f)
-            
+
             # Start basic resilient server
             env = os.environ.copy()
-            env['PYTHONUNBUFFERED'] = '1'
-            
-            self.processes['server'] = subprocess.Popen(
-                [sys.executable, '-m', 'music21_mcp.server_basic_resilient'],
+            env["PYTHONUNBUFFERED"] = "1"
+
+            self.processes["server"] = subprocess.Popen(
+                [sys.executable, "-m", "music21_mcp.server_basic_resilient"],
                 env=env,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
             )
-            
-            logger.info(f"Started basic resilient server with PID: {self.processes['server'].pid}")
+
+            logger.info(
+                f"Started basic resilient server with PID: {self.processes['server'].pid}"
+            )
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to start server: {e}")
             return False
-    
+
     def wait_for_server(self, timeout: int = 30) -> bool:
         """Wait for server to be ready"""
         import httpx
-        
+
         start_time = time.time()
-        
+
         while time.time() - start_time < timeout:
             try:
-                response = httpx.get('http://localhost:8000/health', timeout=2.0)
+                response = httpx.get("http://localhost:8000/health", timeout=2.0)
                 if response.status_code == 200:
                     logger.info("✓ Server is ready")
-                    
+
                     # Check detailed health
-                    response = httpx.get('http://localhost:8000/health/detailed', timeout=2.0)
+                    response = httpx.get(
+                        "http://localhost:8000/health/detailed", timeout=2.0
+                    )
                     health_data = response.json()
                     logger.info(f"  Memory: {health_data.get('memory_mb', 0):.0f}MB")
-                    logger.info(f"  Circuit breakers: {len(health_data.get('circuit_breakers', {}))}")
-                    
+                    logger.info(
+                        f"  Circuit breakers: {len(health_data.get('circuit_breakers', {}))}"
+                    )
+
                     return True
             except:
                 pass
-            
+
             time.sleep(1)
-            
+
         logger.error("✗ Server failed to become ready")
         return False
-    
+
     def run_stress_test_lite(self) -> bool:
         """Run lightweight stress test"""
         try:
@@ -382,80 +391,82 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 """
-            
+
             # Write stress test script
             stress_file = Path("lightweight_stress_test.py")
             stress_file.write_text(stress_script)
-            
+
             # Run stress test
             result = subprocess.run(
-                [sys.executable, str(stress_file)],
-                capture_output=True,
-                text=True
+                [sys.executable, str(stress_file)], capture_output=True, text=True
             )
-            
+
             print(result.stdout)
             if result.stderr:
                 print("Errors:", result.stderr)
-            
+
             return result.returncode == 0
-            
+
         except Exception as e:
             logger.error(f"Stress test failed: {e}")
             return False
-    
+
     def collect_results(self):
         """Collect test results"""
-        self.test_results['completed'] = datetime.now().isoformat()
-        self.test_results['duration'] = str(datetime.now() - self.start_time)
-        
+        self.test_results["completed"] = datetime.now().isoformat()
+        self.test_results["duration"] = str(datetime.now() - self.start_time)
+
         # Get final metrics
         try:
             import httpx
-            response = httpx.get('http://localhost:8000/metrics', timeout=2.0)
+
+            response = httpx.get("http://localhost:8000/metrics", timeout=2.0)
             if response.status_code == 200:
-                self.test_results['final_metrics'] = response.text
+                self.test_results["final_metrics"] = response.text
         except:
             pass
-    
+
     def cleanup(self):
         """Clean up processes"""
         logger.info("\nCleaning up...")
-        
+
         for name, process in self.processes.items():
             if process and process.poll() is None:
                 logger.info(f"Terminating {name} process")
                 process.terminate()
-                
+
                 try:
                     process.wait(timeout=5)
                 except subprocess.TimeoutExpired:
                     logger.warning(f"Force killing {name} process")
                     process.kill()
-    
+
     def generate_report(self):
         """Generate final test report"""
-        report_path = Path('test_results') / f"lite_test_{self.start_time.strftime('%Y%m%d_%H%M%S')}.json"
-        
-        with open(report_path, 'w') as f:
+        report_path = (
+            Path("test_results")
+            / f"lite_test_{self.start_time.strftime('%Y%m%d_%H%M%S')}.json"
+        )
+
+        with open(report_path, "w") as f:
             json.dump(self.test_results, f, indent=2)
-        
+
         # Print summary
         print("\n" + "=" * 80)
         print("LIGHTWEIGHT TEST SUMMARY")
         print("=" * 80)
         print(f"Duration: {self.test_results['duration']}")
         print(f"Result: {'PASSED' if self.test_results['test_passed'] else 'FAILED'}")
-        
-        if self.test_results['failure_reasons']:
+
+        if self.test_results["failure_reasons"]:
             print("\nFailure Reasons:")
-            for reason in self.test_results['failure_reasons']:
+            for reason in self.test_results["failure_reasons"]:
                 print(f"  - {reason}")
-        
-        if 'final_metrics' in self.test_results:
+
+        if "final_metrics" in self.test_results:
             print("\nFinal Metrics:")
-            print(self.test_results['final_metrics'])
-        
+            print(self.test_results["final_metrics"])
+
         print(f"\nFull report saved to: {report_path}")
         print("=" * 80)
 
@@ -463,35 +474,29 @@ if __name__ == "__main__":
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description='Run lightweight production test for Music21 MCP Server'
+        description="Run lightweight production test for Music21 MCP Server"
     )
-    
+
     parser.add_argument(
-        '--minutes',
-        type=int,
-        default=10,
-        help='Test duration in minutes (default: 10)'
+        "--minutes", type=int, default=10, help="Test duration in minutes (default: 10)"
     )
     parser.add_argument(
-        '--users',
-        type=int,
-        default=10,
-        help='Number of concurrent users (default: 10)'
+        "--users", type=int, default=10, help="Number of concurrent users (default: 10)"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Build configuration
     config = {
-        'duration_hours': args.minutes / 60.0,
-        'concurrent_users': args.users,
-        'memory_limit_mb': 2048  # 2GB limit
+        "duration_hours": args.minutes / 60.0,
+        "concurrent_users": args.users,
+        "memory_limit_mb": 2048,  # 2GB limit
     }
-    
+
     # Run test
     orchestrator = LightweightTestOrchestrator(config)
     success = orchestrator.run()
-    
+
     # Exit with appropriate code
     sys.exit(0 if success else 1)
 
