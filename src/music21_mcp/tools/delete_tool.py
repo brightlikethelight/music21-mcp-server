@@ -22,7 +22,7 @@ class DeleteScoreTool(BaseTool):
                 score_id: ID of score to delete, or '*' to delete all
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
+        score_id = kwargs.get("score_id", "")
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -66,8 +66,8 @@ class DeleteScoreTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
-        
+        score_id = kwargs.get("score_id", "")
+
         if not score_id:
             return "score_id cannot be empty"
 

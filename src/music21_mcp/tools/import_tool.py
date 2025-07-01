@@ -39,9 +39,9 @@ class ImportScoreTool(BaseTool):
                 source_type: Type of source ('file', 'corpus', 'text', 'auto')
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        source = kwargs.get('source', '')
-        source_type = kwargs.get('source_type', 'auto')
+        score_id = kwargs.get("score_id", "")
+        source = kwargs.get("source", "")
+        source_type = kwargs.get("source_type", "auto")
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -85,10 +85,10 @@ class ImportScoreTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
-        source = kwargs.get('source', '')
-        source_type = kwargs.get('source_type', 'auto')
-        
+        score_id = kwargs.get("score_id", "")
+        source = kwargs.get("source", "")
+        source_type = kwargs.get("source_type", "auto")
+
         if not score_id:
             return "score_id cannot be empty"
 

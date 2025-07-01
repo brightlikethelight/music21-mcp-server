@@ -161,8 +161,10 @@ class CounterpointAnalyzer:
         result = SpeciesAnalysis(species_type=species)
 
         # Align voices (filter to only Note objects)
-        cf_notes = [n for n in cantus_firmus.flatten().notes if hasattr(n, 'pitch')]
-        cp_notes = [n for n in counterpoint_voice.flatten().notes if hasattr(n, 'pitch')]
+        cf_notes = [n for n in cantus_firmus.flatten().notes if hasattr(n, "pitch")]
+        cp_notes = [
+            n for n in counterpoint_voice.flatten().notes if hasattr(n, "pitch")
+        ]
 
         if not cf_notes or not cp_notes:
             return result

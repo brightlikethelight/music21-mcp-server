@@ -131,12 +131,12 @@ class StyleImitationTool(BaseTool):
                 complexity: Generation complexity ('simple', 'medium', 'complex')
         """
         # Extract parameters from kwargs
-        style_source = kwargs.get('style_source')
-        composer = kwargs.get('composer')
-        generation_length = kwargs.get('generation_length', 16)
-        starting_note = kwargs.get('starting_note')
-        constraints = kwargs.get('constraints')
-        complexity = kwargs.get('complexity', 'medium')
+        style_source = kwargs.get("style_source")
+        composer = kwargs.get("composer")
+        generation_length = kwargs.get("generation_length", 16)
+        starting_note = kwargs.get("starting_note")
+        constraints = kwargs.get("constraints")
+        complexity = kwargs.get("complexity", "medium")
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -211,8 +211,8 @@ class StyleImitationTool(BaseTool):
                 detailed: Whether to include detailed statistics
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        detailed = kwargs.get('detailed', True)
+        score_id = kwargs.get("score_id", "")
+        detailed = kwargs.get("detailed", True)
         error = self.check_score_exists(score_id)
         if error:
             return self.create_error_response(error)
@@ -293,7 +293,9 @@ class StyleImitationTool(BaseTool):
                         all_notes[i + 1], note.Note
                     ):
                         try:
-                            intv = interval.Interval(noteStart=all_notes[i], noteEnd=all_notes[i + 1])
+                            intv = interval.Interval(
+                                noteStart=all_notes[i], noteEnd=all_notes[i + 1]
+                            )
                             intervals.append(intv.semitones)
                         except:
                             continue
@@ -501,8 +503,12 @@ class StyleImitationTool(BaseTool):
         melodic_data = profile.get("melodic", {}) if isinstance(profile, dict) else {}
         harmonic_data = profile.get("harmonic", {}) if isinstance(profile, dict) else {}
         rhythmic_data = profile.get("rhythmic", {}) if isinstance(profile, dict) else {}
-        texture_type = profile.get("texture", "homophonic") if isinstance(profile, dict) else "homophonic"
-        
+        texture_type = (
+            profile.get("texture", "homophonic")
+            if isinstance(profile, dict)
+            else "homophonic"
+        )
+
         style_data: Dict[str, Any] = {
             "melodic": melodic_data,
             "harmonic": harmonic_data,
@@ -518,7 +524,9 @@ class StyleImitationTool(BaseTool):
     ) -> None:
         """Build Markov transition matrices from score"""
         # Pitch transitions
-        pitch_transitions: Dict[int, Dict[int, float]] = defaultdict(lambda: defaultdict(int))
+        pitch_transitions: Dict[int, Dict[int, float]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         notes = [n for n in score.flatten().notes if isinstance(n, note.Note)]
 
         for i in range(len(notes) - 1):
@@ -531,12 +539,16 @@ class StyleImitationTool(BaseTool):
             total = sum(pitch_transitions[current].values())
             if total > 0:
                 for next_pitch in pitch_transitions[current]:
-                    pitch_transitions[current][next_pitch] = float(pitch_transitions[current][next_pitch]) / total
+                    pitch_transitions[current][next_pitch] = (
+                        float(pitch_transitions[current][next_pitch]) / total
+                    )
 
         self.transition_matrices["pitch"] = dict(pitch_transitions)
 
         # Rhythm transitions
-        rhythm_transitions: Dict[float, Dict[float, float]] = defaultdict(lambda: defaultdict(int))
+        rhythm_transitions: Dict[float, Dict[float, float]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         for i in range(len(notes) - 1):
             current = notes[i].duration.quarterLength
             next_dur = notes[i + 1].duration.quarterLength
@@ -547,7 +559,9 @@ class StyleImitationTool(BaseTool):
             total = sum(rhythm_transitions[current].values())
             if total > 0:
                 for next_dur in rhythm_transitions[current]:
-                    rhythm_transitions[current][next_dur] = float(rhythm_transitions[current][next_dur]) / total
+                    rhythm_transitions[current][next_dur] = (
+                        float(rhythm_transitions[current][next_dur]) / total
+                    )
 
         self.transition_matrices["rhythm"] = dict(rhythm_transitions)
 
@@ -718,6 +732,7 @@ class StyleImitationTool(BaseTool):
     ) -> stream.Score:
         """Apply style-specific refinements to generated music"""
         import copy
+
         refined_score = copy.deepcopy(score)
 
         if composer == "bach":
@@ -744,12 +759,14 @@ class StyleImitationTool(BaseTool):
                 if isinstance(notes[i], note.Note) and isinstance(
                     notes[i + 1], note.Note
                 ):
-                    if hasattr(notes[i], 'pitch') and hasattr(notes[i + 1], 'pitch'):
-                        interval_size = abs(notes[i].pitch.midi - notes[i + 1].pitch.midi)
+                    if hasattr(notes[i], "pitch") and hasattr(notes[i + 1], "pitch"):
+                        interval_size = abs(
+                            notes[i].pitch.midi - notes[i + 1].pitch.midi
+                        )
                     else:
                         continue
                     if interval_size == 4:  # Major third
-                        # Could add passing tone  
+                        # Could add passing tone
                         pass
         return score
 
@@ -895,7 +912,11 @@ class StyleImitationTool(BaseTool):
             comparisons = 0
 
             # Compare melodic characteristics
-            if "melodic" in style_data and isinstance(profile, dict) and "melodic" in profile:
+            if (
+                "melodic" in style_data
+                and isinstance(profile, dict)
+                and "melodic" in profile
+            ):
                 melodic_profile = profile["melodic"]
                 if (
                     "stepwise_motion" in style_data["melodic"]

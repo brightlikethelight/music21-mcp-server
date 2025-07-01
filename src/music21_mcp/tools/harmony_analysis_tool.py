@@ -41,11 +41,11 @@ class HarmonyAnalysisTool(BaseTool):
                 include_modulations: Include modulation detection
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        analysis_type = kwargs.get('analysis_type', 'comprehensive')
-        include_voice_leading = kwargs.get('include_voice_leading', True)
-        include_jazz_analysis = kwargs.get('include_jazz_analysis', False)
-        include_modulations = kwargs.get('include_modulations', True)
+        score_id = kwargs.get("score_id", "")
+        analysis_type = kwargs.get("analysis_type", "comprehensive")
+        include_voice_leading = kwargs.get("include_voice_leading", True)
+        include_jazz_analysis = kwargs.get("include_jazz_analysis", False)
+        include_modulations = kwargs.get("include_modulations", True)
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -77,9 +77,9 @@ class HarmonyAnalysisTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
-        analysis_type = kwargs.get('analysis_type', 'comprehensive')
-        
+        score_id = kwargs.get("score_id", "")
+        analysis_type = kwargs.get("analysis_type", "comprehensive")
+
         error = self.check_score_exists(score_id)
         if error:
             return error

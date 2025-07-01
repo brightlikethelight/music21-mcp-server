@@ -40,9 +40,9 @@ class ExportScoreTool(BaseTool):
                 output_path: Optional custom output path
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        format = kwargs.get('format', 'musicxml')
-        output_path = kwargs.get('output_path')
+        score_id = kwargs.get("score_id", "")
+        format = kwargs.get("format", "musicxml")
+        output_path = kwargs.get("output_path")
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -108,9 +108,9 @@ class ExportScoreTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
-        format = kwargs.get('format', 'musicxml')
-        
+        score_id = kwargs.get("score_id", "")
+        format = kwargs.get("format", "musicxml")
+
         error = self.check_score_exists(score_id)
         if error:
             return error

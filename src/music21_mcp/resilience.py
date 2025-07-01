@@ -50,7 +50,9 @@ class CircuitBreakerConfig:
 class CircuitBreaker:
     """Circuit breaker pattern implementation"""
 
-    def __init__(self, name: str, config: Optional[CircuitBreakerConfig] = None) -> None:
+    def __init__(
+        self, name: str, config: Optional[CircuitBreakerConfig] = None
+    ) -> None:
         self.name = name
         self.config = config or CircuitBreakerConfig()
         self.state = CircuitState.CLOSED
@@ -77,7 +79,9 @@ class CircuitBreaker:
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
-    async def _async_call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    async def _async_call(
+        self, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
         """Handle async function calls"""
         if not self._can_attempt():
             raise Exception(f"Circuit breaker {self.name} is OPEN")
@@ -309,7 +313,9 @@ class RateLimiter:
                 return True
             return False
 
-    async def acquire_async(self, tokens: int = 1, timeout: Optional[float] = None) -> bool:
+    async def acquire_async(
+        self, tokens: int = 1, timeout: Optional[float] = None
+    ) -> bool:
         """Async version with optional wait"""
         start_time = time.time()
 
@@ -412,7 +418,7 @@ class GracefulShutdown:
         self.tasks: Set[asyncio.Task] = set()
         self._original_handlers: Dict[int, Any] = {}
 
-    def __enter__(self) -> 'GracefulShutdown':
+    def __enter__(self) -> "GracefulShutdown":
         """Install signal handlers"""
         for sig in [signal.SIGTERM, signal.SIGINT]:
             self._original_handlers[sig] = signal.signal(sig, self._signal_handler)
@@ -509,7 +515,9 @@ class HealthCheck:
         self.last_check_time: Dict[str, float] = {}
         self.check_results: Dict[str, Dict[str, Any]] = {}
 
-    def register_check(self, name: str, check_func: Callable, interval: int = 30) -> None:
+    def register_check(
+        self, name: str, check_func: Callable, interval: int = 30
+    ) -> None:
         """Register a health check"""
         self.checks[name] = {"func": check_func, "interval": interval}
 
@@ -651,7 +659,7 @@ def get_circuit_breaker(
 def get_resource_pool(name: str, **kwargs: Any) -> ResourcePool:
     """Get or create a resource pool"""
     if name not in resource_pools:
-        factory = kwargs.pop('factory')
+        factory = kwargs.pop("factory")
         resource_pools[name] = ResourcePool(name, factory, **kwargs)
     return resource_pools[name]
 

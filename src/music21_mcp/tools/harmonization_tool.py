@@ -90,11 +90,11 @@ class HarmonizationTool(BaseTool):
                 voice_parts: Number of voices (2-4)
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        style = kwargs.get('style', 'classical')
-        constraints = kwargs.get('constraints')
-        include_explanations = kwargs.get('include_explanations', True)
-        voice_parts = kwargs.get('voice_parts', 4)
+        score_id = kwargs.get("score_id", "")
+        style = kwargs.get("style", "classical")
+        constraints = kwargs.get("constraints")
+        include_explanations = kwargs.get("include_explanations", True)
+        voice_parts = kwargs.get("voice_parts", 4)
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -170,10 +170,10 @@ class HarmonizationTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
-        style = kwargs.get('style', 'classical')
-        voice_parts = kwargs.get('voice_parts', 4)
-        
+        score_id = kwargs.get("score_id", "")
+        style = kwargs.get("style", "classical")
+        voice_parts = kwargs.get("voice_parts", 4)
+
         error = self.check_score_exists(score_id)
         if error:
             return error

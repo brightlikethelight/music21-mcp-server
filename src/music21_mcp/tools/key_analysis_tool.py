@@ -32,8 +32,8 @@ class KeyAnalysisTool(BaseTool):
                 algorithm: Which algorithm to use ('all', 'krumhansl', 'aarden', 'temperley', 'bellman')
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        algorithm = kwargs.get('algorithm', 'all')
+        score_id = kwargs.get("score_id", "")
+        algorithm = kwargs.get("algorithm", "all")
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -104,9 +104,9 @@ class KeyAnalysisTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
-        algorithm = kwargs.get('algorithm', 'all')
-        
+        score_id = kwargs.get("score_id", "")
+        algorithm = kwargs.get("algorithm", "all")
+
         error = self.check_score_exists(score_id)
         if error:
             return error

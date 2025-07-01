@@ -37,11 +37,11 @@ class PatternRecognitionTool(BaseTool):
                 include_transformations: Include inversions, retrogrades, etc.
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        pattern_type = kwargs.get('pattern_type', 'both')
-        min_pattern_length = kwargs.get('min_pattern_length', 3)
-        similarity_threshold = kwargs.get('similarity_threshold', 0.85)
-        include_transformations = kwargs.get('include_transformations', True)
+        score_id = kwargs.get("score_id", "")
+        pattern_type = kwargs.get("pattern_type", "both")
+        min_pattern_length = kwargs.get("min_pattern_length", 3)
+        similarity_threshold = kwargs.get("similarity_threshold", 0.85)
+        include_transformations = kwargs.get("include_transformations", True)
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -76,14 +76,16 @@ class PatternRecognitionTool(BaseTool):
 
             self.report_progress(1.0, "Analysis complete")
 
-            return self.create_success_response(message="Pattern recognition complete", **results)
+            return self.create_success_response(
+                message="Pattern recognition complete", **results
+            )
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
-        pattern_type = kwargs.get('pattern_type', 'both')
-        similarity_threshold = kwargs.get('similarity_threshold', 0.85)
-        
+        score_id = kwargs.get("score_id", "")
+        pattern_type = kwargs.get("pattern_type", "both")
+        similarity_threshold = kwargs.get("similarity_threshold", 0.85)
+
         error = self.check_score_exists(score_id)
         if error:
             return error
@@ -505,7 +507,8 @@ class PatternRecognitionTool(BaseTool):
 
         # Sort by significance and frequency
         patterns.sort(
-            key=lambda x: (x.get("occurrences", 0), x.get("musical_significance", 0)), reverse=True
+            key=lambda x: (x.get("occurrences", 0), x.get("musical_significance", 0)),
+            reverse=True,
         )
 
         return patterns

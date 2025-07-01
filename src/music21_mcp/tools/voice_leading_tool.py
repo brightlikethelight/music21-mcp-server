@@ -79,10 +79,10 @@ class VoiceLeadingAnalysisTool(BaseTool):
                 educational_mode: Include educational explanations
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        style = kwargs.get('style', 'strict')
-        include_suggestions = kwargs.get('include_suggestions', True)
-        educational_mode = kwargs.get('educational_mode', True)
+        score_id = kwargs.get("score_id", "")
+        style = kwargs.get("style", "strict")
+        include_suggestions = kwargs.get("include_suggestions", True)
+        educational_mode = kwargs.get("educational_mode", True)
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -153,9 +153,9 @@ class VoiceLeadingAnalysisTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
-        style = kwargs.get('style', 'strict')
-        
+        score_id = kwargs.get("score_id", "")
+        style = kwargs.get("style", "strict")
+
         error = self.check_score_exists(score_id)
         if error:
             return error

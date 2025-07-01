@@ -80,7 +80,7 @@ class MelodicMotive:
     transformations: List[PatternTransformation] = field(default_factory=list)
     importance_score: float = 0.0
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(tuple(self.intervals))
 
 
@@ -144,7 +144,7 @@ class MelodicSimilarity:
 class MelodicAnalyzer:
     """Advanced melodic pattern recognition engine"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.min_motive_length = 3
         self.similarity_threshold = 0.75
 
@@ -164,7 +164,7 @@ class MelodicAnalyzer:
         result = ContourAnalysis(overall_contour=ContourType.STATIC)
 
         # Extract pitches
-        notes = list(melody_line.flatten().notes)
+        notes = [n for n in melody_line.flatten().notes if hasattr(n, "pitch")]
         if len(notes) < 2:
             return result
 
@@ -294,7 +294,7 @@ class MelodicAnalyzer:
         Returns:
             List of PatternMatch objects
         """
-        patterns = []
+        patterns: List[MelodicPattern] = []
         notes = list(melody.flatten().notes)
 
         if len(notes) < pattern_length * 2:
@@ -1698,7 +1698,7 @@ class MelodicAnalyzer:
         highest_avg_pitch = -1
 
         for part in score.parts:
-            notes = list(part.flatten().notes)
+            notes = [n for n in part.flatten().notes if hasattr(n, "pitch")]
             if notes:
                 # Check if mostly single notes (not chords)
                 single_notes = [n for n in notes if n.isNote]

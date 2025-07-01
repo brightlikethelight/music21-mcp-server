@@ -27,10 +27,10 @@ class ChordAnalysisTool(BaseTool):
                 segment_length: Segment length for chordify (in quarter notes)
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        include_roman_numerals = kwargs.get('include_roman_numerals', True)
-        include_inversions = kwargs.get('include_inversions', True)
-        segment_length = kwargs.get('segment_length', 0.5)
+        score_id = kwargs.get("score_id", "")
+        include_roman_numerals = kwargs.get("include_roman_numerals", True)
+        include_inversions = kwargs.get("include_inversions", True)
+        segment_length = kwargs.get("segment_length", 0.5)
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -113,7 +113,7 @@ class ChordAnalysisTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
+        score_id = kwargs.get("score_id", "")
         return self.check_score_exists(score_id)
 
     def _analyze_chord(

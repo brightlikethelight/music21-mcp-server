@@ -119,12 +119,12 @@ class CounterpointGeneratorTool(BaseTool):
                 mode: Modal context ('major', 'minor', 'dorian', 'phrygian', etc.)
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        species = kwargs.get('species', 'first')
-        voice_position = kwargs.get('voice_position', 'above')
-        rule_set = kwargs.get('rule_set', 'strict')
-        custom_rules = kwargs.get('custom_rules')
-        mode = kwargs.get('mode', 'major')
+        score_id = kwargs.get("score_id", "")
+        species = kwargs.get("species", "first")
+        voice_position = kwargs.get("voice_position", "above")
+        rule_set = kwargs.get("rule_set", "strict")
+        custom_rules = kwargs.get("custom_rules")
+        mode = kwargs.get("mode", "major")
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -211,11 +211,11 @@ class CounterpointGeneratorTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
-        species = kwargs.get('species', 'first')
-        voice_position = kwargs.get('voice_position', 'above')
-        rule_set = kwargs.get('rule_set', 'strict')
-        
+        score_id = kwargs.get("score_id", "")
+        species = kwargs.get("species", "first")
+        voice_position = kwargs.get("voice_position", "above")
+        rule_set = kwargs.get("rule_set", "strict")
+
         error = self.check_score_exists(score_id)
         if error:
             return error

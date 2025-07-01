@@ -26,9 +26,9 @@ class ScoreInfoTool(BaseTool):
                 include_structure: Include structural analysis
         """
         # Extract parameters from kwargs
-        score_id = kwargs.get('score_id', '')
-        include_instruments = kwargs.get('include_instruments', True)
-        include_structure = kwargs.get('include_structure', True)
+        score_id = kwargs.get("score_id", "")
+        include_instruments = kwargs.get("include_instruments", True)
+        include_structure = kwargs.get("include_structure", True)
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -75,7 +75,7 @@ class ScoreInfoTool(BaseTool):
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
-        score_id = kwargs.get('score_id', '')
+        score_id = kwargs.get("score_id", "")
         return self.check_score_exists(score_id)
 
     def _extract_metadata(self, score: stream.Score) -> Dict[str, Any]:
