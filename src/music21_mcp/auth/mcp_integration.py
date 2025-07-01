@@ -7,7 +7,17 @@ from typing import Dict, Optional, Any
 from functools import wraps
 
 from fastapi import Depends, HTTPException, Request, status
-from mcp import Tool
+
+# Try to import MCP, but make it optional
+try:
+    from mcp import Tool
+    HAS_MCP = True
+except ImportError:
+    HAS_MCP = False
+    # Create a dummy Tool class for compatibility
+    class Tool:
+        def __init__(self, *args, **kwargs):
+            pass
 
 from .security import SecurityMiddleware, require_scope
 from .models import AccessToken, User

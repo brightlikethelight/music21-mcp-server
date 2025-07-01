@@ -20,7 +20,18 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 import psutil
-from mcp.server.fastmcp import FastMCP
+
+# Try to import MCP, but make it optional
+try:
+    from mcp.server.fastmcp import FastMCP
+    HAS_MCP = True
+except ImportError:
+    HAS_MCP = False
+    # Create a dummy FastMCP class for compatibility
+    class FastMCP:
+        def __init__(self, *args, **kwargs):
+            raise ImportError("MCP package is not installed. Please install with: pip install mcp")
+
 from music21 import (
     analysis, chord, converter, corpus, expressions, harmony, interval,
     key, meter, note, pitch, roman, scale, stream, tempo, voiceLeading
