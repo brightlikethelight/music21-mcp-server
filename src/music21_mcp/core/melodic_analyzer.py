@@ -294,7 +294,7 @@ class MelodicAnalyzer:
         Returns:
             List of PatternMatch objects
         """
-        patterns: List[MelodicPattern] = []
+        patterns: List[Dict[str, Any]] = []
         notes = list(melody.flatten().notes)
 
         if len(notes) < pattern_length * 2:

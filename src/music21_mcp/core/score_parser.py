@@ -215,7 +215,7 @@ class BaseParser(ABC):
 
     @abstractmethod
     async def parse(
-        self, content: Union[str, bytes], encoding: str = "utf-8", **options
+        self, content: Union[str, bytes], encoding: str = "utf-8", **options: Any
     ) -> stream.Score:
         """Parse content into a music21 Score object"""
         pass
@@ -226,10 +226,10 @@ class BaseParser(ABC):
         pass
 
     async def parse_with_recovery(
-        self, content: Union[str, bytes], encoding: str = "utf-8", **options
+        self, content: Union[str, bytes], encoding: str = "utf-8", **options: Any
     ) -> Tuple[stream.Score, List[str]]:
         """Parse with error recovery, returning score and any warnings"""
-        warnings = []
+        warnings: List[str] = []
 
         try:
             # First try normal parsing
