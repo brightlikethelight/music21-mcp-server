@@ -10,20 +10,11 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlencode, urlparse
 
-from .models import (
-    AuthorizationCode,
-    AuthorizationRequest,
-    AccessToken,
-    RefreshToken,
-    ClientRegistration,
-    TokenRequest,
-    TokenResponse,
-    GrantType,
-    User,
-    OAuth2ServerMetadata,
-    OAuth2ProtectedResourceMetadata,
-)
-from .storage import OAuth2Storage, InMemoryOAuth2Storage
+from .models import (AccessToken, AuthorizationCode, AuthorizationRequest,
+                     ClientRegistration, GrantType,
+                     OAuth2ProtectedResourceMetadata, OAuth2ServerMetadata,
+                     RefreshToken, TokenRequest, TokenResponse, User)
+from .storage import InMemoryOAuth2Storage, OAuth2Storage
 
 logger = logging.getLogger(__name__)
 

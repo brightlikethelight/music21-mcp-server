@@ -4,19 +4,13 @@ Supports both in-memory and Redis-based storage
 """
 
 import json
+import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Dict, Optional
-import logging
 
-from .models import (
-    ClientRegistration,
-    AuthorizationCode,
-    AccessToken,
-    RefreshToken,
-    User,
-    UserSession,
-)
+from .models import (AccessToken, AuthorizationCode, ClientRegistration,
+                     RefreshToken, User, UserSession)
 
 logger = logging.getLogger(__name__)
 

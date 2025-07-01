@@ -5,12 +5,13 @@ Handles session creation, validation, and cleanup with Redis support
 
 import asyncio
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Set
-from contextlib import asynccontextmanager
 
-from .models import UserSession, User
-from .storage import SessionStorage, InMemorySessionStorage, RedisSessionStorage
+from .models import User, UserSession
+from .storage import (InMemorySessionStorage, RedisSessionStorage,
+                      SessionStorage)
 
 logger = logging.getLogger(__name__)
 

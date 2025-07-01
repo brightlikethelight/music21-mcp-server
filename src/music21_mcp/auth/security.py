@@ -7,8 +7,9 @@ import hashlib
 import logging
 import secrets
 from typing import Optional, Tuple
+
 from fastapi import HTTPException, Request, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .models import AccessToken
 from .oauth2_provider import OAuth2Provider

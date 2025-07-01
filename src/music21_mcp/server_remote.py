@@ -8,39 +8,26 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, Request, Depends, HTTPException
+import uvicorn
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import uvicorn
-
-# Import existing MCP server
-from .server import create_server, ScoreManager
 
 # Import auth components
-from .auth import (
-    OAuth2Provider,
-    OAuth2Config,
-    SessionManager,
-    SessionConfig,
-    SecurityMiddleware,
-)
-from .auth.storage import (
-    OAuth2Storage,
-    SessionStorage,
-    InMemoryOAuth2Storage,
-    InMemorySessionStorage,
-)
+from .auth import (OAuth2Config, OAuth2Provider, SecurityMiddleware,
+                   SessionConfig, SessionManager)
+from .auth.mcp_integration import (AuthenticatedMCPServer, MCPAuthContext,
+                                   MCPSessionManager, mcp_auth_required)
 from .auth.routes import router as auth_router
-from .auth.mcp_integration import (
-    AuthenticatedMCPServer,
-    MCPSessionManager,
-    mcp_auth_required,
-    MCPAuthContext,
-)
+from .auth.storage import (InMemoryOAuth2Storage, InMemorySessionStorage,
+                           OAuth2Storage, SessionStorage)
+# Import existing MCP server
+from .server import ScoreManager, create_server
 
 # Try Redis import
 try:
     import redis.asyncio as redis
+
     from .auth.storage import RedisOAuth2Storage, RedisSessionStorage
 
     REDIS_AVAILABLE = True

@@ -4,8 +4,8 @@ Provides secure remote access to MCP tools via OAuth2
 """
 
 import logging
-from typing import Dict, Optional, Any
 from functools import wraps
+from typing import Any, Dict, Optional
 
 from fastapi import Depends, HTTPException, Request, status
 
@@ -23,8 +23,8 @@ except ImportError:
             pass
 
 
-from .security import SecurityMiddleware, require_scope
 from .models import AccessToken, User
+from .security import SecurityMiddleware, require_scope
 from .storage import OAuth2Storage
 
 logger = logging.getLogger(__name__)

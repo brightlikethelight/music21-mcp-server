@@ -2,12 +2,13 @@
 OAuth2 and session models following OAuth 2.1 specification
 """
 
+import secrets
+import uuid
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List, Optional, Set
+
 from pydantic import BaseModel, Field, validator
-import secrets
-import uuid
 
 
 class GrantType(str, Enum):

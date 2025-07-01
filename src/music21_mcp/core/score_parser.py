@@ -15,7 +15,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import aiofiles
 import chardet
 import httpx
-from music21 import abcFormat, converter, environment, expressions, midi, stream
+from music21 import (abcFormat, converter, environment, expressions, midi,
+                     stream)
 
 logger = logging.getLogger(__name__)
 

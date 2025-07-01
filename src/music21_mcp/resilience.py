@@ -8,9 +8,10 @@ import functools
 import gc
 import logging
 import os
-import psutil
+import queue
 import resource
 import signal
+import threading
 import time
 import traceback
 import weakref
@@ -21,8 +22,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-import threading
-import queue
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
