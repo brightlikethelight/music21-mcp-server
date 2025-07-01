@@ -22,16 +22,20 @@ class KeyAnalysisTool(BaseTool):
         "bellman": "Bellman-Budge",
     }
 
-    async def execute(self, score_id: str, algorithm: str = "all") -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Analyze the key of a score using various algorithms
 
         Args:
-            score_id: ID of the score to analyze
-            algorithm: Which algorithm to use ('all', 'krumhansl', 'aarden', 'temperley', 'bellman')
+            **kwargs: Keyword arguments including:
+                score_id: ID of the score to analyze
+                algorithm: Which algorithm to use ('all', 'krumhansl', 'aarden', 'temperley', 'bellman')
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        algorithm = kwargs.get('algorithm', 'all')
         # Validate inputs
-        error = self.validate_inputs(score_id=score_id, algorithm=algorithm)
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -98,8 +102,11 @@ class KeyAnalysisTool(BaseTool):
                     algorithm=self.ALGORITHMS.get(algorithm, algorithm),
                 )
 
-    def validate_inputs(self, score_id: str, algorithm: str) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
+        algorithm = kwargs.get('algorithm', 'all')
+        
         error = self.check_score_exists(score_id)
         if error:
             return error

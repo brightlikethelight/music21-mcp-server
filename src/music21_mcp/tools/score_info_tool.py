@@ -15,22 +15,22 @@ logger = logging.getLogger(__name__)
 class ScoreInfoTool(BaseTool):
     """Tool for extracting comprehensive score information and metadata"""
 
-    async def execute(
-        self,
-        score_id: str,
-        include_instruments: bool = True,
-        include_structure: bool = True,
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Get comprehensive information about a score
 
         Args:
-            score_id: ID of the score to analyze
-            include_instruments: Include instrument analysis
-            include_structure: Include structural analysis
+            **kwargs: Keyword arguments including:
+                score_id: ID of the score to analyze
+                include_instruments: Include instrument analysis
+                include_structure: Include structural analysis
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        include_instruments = kwargs.get('include_instruments', True)
+        include_structure = kwargs.get('include_structure', True)
         # Validate inputs
-        error = self.validate_inputs(score_id=score_id)
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -73,8 +73,9 @@ class ScoreInfoTool(BaseTool):
 
             return self.create_success_response(**info)
 
-    def validate_inputs(self, score_id: str, **kwargs) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
         return self.check_score_exists(score_id)
 
     def _extract_metadata(self, score: stream.Score) -> Dict[str, Any]:

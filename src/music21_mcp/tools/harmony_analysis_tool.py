@@ -28,26 +28,26 @@ class HarmonyAnalysisTool(BaseTool):
         super().__init__(score_manager)
         self.analyzer = HarmonicAnalyzer()
 
-    async def execute(
-        self,
-        score_id: str,
-        analysis_type: str = "comprehensive",
-        include_voice_leading: bool = True,
-        include_jazz_analysis: bool = False,
-        include_modulations: bool = True,
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Perform advanced harmonic analysis
 
         Args:
-            score_id: ID of the score to analyze
-            analysis_type: Type of analysis ('comprehensive', 'functional', 'roman', 'cadences')
-            include_voice_leading: Include voice leading analysis
-            include_jazz_analysis: Include jazz harmony analysis
-            include_modulations: Include modulation detection
+            **kwargs: Keyword arguments including:
+                score_id: ID of the score to analyze
+                analysis_type: Type of analysis ('comprehensive', 'functional', 'roman', 'cadences')
+                include_voice_leading: Include voice leading analysis
+                include_jazz_analysis: Include jazz harmony analysis
+                include_modulations: Include modulation detection
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        analysis_type = kwargs.get('analysis_type', 'comprehensive')
+        include_voice_leading = kwargs.get('include_voice_leading', True)
+        include_jazz_analysis = kwargs.get('include_jazz_analysis', False)
+        include_modulations = kwargs.get('include_modulations', True)
         # Validate inputs
-        error = self.validate_inputs(score_id=score_id, analysis_type=analysis_type)
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -75,10 +75,11 @@ class HarmonyAnalysisTool(BaseTool):
                     f"Unknown analysis type: {analysis_type}"
                 )
 
-    def validate_inputs(
-        self, score_id: str, analysis_type: str, **kwargs
-    ) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
+        analysis_type = kwargs.get('analysis_type', 'comprehensive')
+        
         error = self.check_score_exists(score_id)
         if error:
             return error

@@ -15,24 +15,24 @@ logger = logging.getLogger(__name__)
 class ChordAnalysisTool(BaseTool):
     """Tool for analyzing chord progressions with Roman numeral analysis"""
 
-    async def execute(
-        self,
-        score_id: str,
-        include_roman_numerals: bool = True,
-        include_inversions: bool = True,
-        segment_length: float = 0.5,
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Analyze chord progressions in a score
 
         Args:
-            score_id: ID of the score to analyze
-            include_roman_numerals: Include Roman numeral analysis
-            include_inversions: Include chord inversions in analysis
-            segment_length: Segment length for chordify (in quarter notes)
+            **kwargs: Keyword arguments including:
+                score_id: ID of the score to analyze
+                include_roman_numerals: Include Roman numeral analysis
+                include_inversions: Include chord inversions in analysis
+                segment_length: Segment length for chordify (in quarter notes)
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        include_roman_numerals = kwargs.get('include_roman_numerals', True)
+        include_inversions = kwargs.get('include_inversions', True)
+        segment_length = kwargs.get('segment_length', 0.5)
         # Validate inputs
-        error = self.validate_inputs(score_id=score_id)
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -111,8 +111,9 @@ class ChordAnalysisTool(BaseTool):
 
             return result
 
-    def validate_inputs(self, score_id: str, **kwargs) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
         return self.check_score_exists(score_id)
 
     def _analyze_chord(

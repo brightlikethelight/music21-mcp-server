@@ -117,33 +117,28 @@ class StyleImitationTool(BaseTool):
         self.rhythm_patterns = {}
         self.harmonic_progressions = {}
 
-    async def execute(
-        self,
-        style_source: Optional[str] = None,
-        composer: Optional[str] = None,
-        generation_length: int = 16,
-        starting_note: Optional[str] = None,
-        constraints: Optional[List[str]] = None,
-        complexity: str = "medium",
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Generate music in a specific style
 
         Args:
-            style_source: Score ID to analyze for style
-            composer: Pre-defined composer style to use
-            generation_length: Number of measures to generate
-            starting_note: Starting pitch (e.g., 'C4')
-            constraints: List of constraints (e.g., ['key:C', 'range:C3-C6'])
-            complexity: Generation complexity ('simple', 'medium', 'complex')
+            **kwargs: Keyword arguments including:
+                style_source: Score ID to analyze for style
+                composer: Pre-defined composer style to use
+                generation_length: Number of measures to generate
+                starting_note: Starting pitch (e.g., 'C4')
+                constraints: List of constraints (e.g., ['key:C', 'range:C3-C6'])
+                complexity: Generation complexity ('simple', 'medium', 'complex')
         """
+        # Extract parameters from kwargs
+        style_source = kwargs.get('style_source')
+        composer = kwargs.get('composer')
+        generation_length = kwargs.get('generation_length', 16)
+        starting_note = kwargs.get('starting_note')
+        constraints = kwargs.get('constraints')
+        complexity = kwargs.get('complexity', 'medium')
         # Validate inputs
-        error = self.validate_inputs(
-            style_source=style_source,
-            composer=composer,
-            generation_length=generation_length,
-            complexity=complexity,
-        )
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -206,16 +201,18 @@ class StyleImitationTool(BaseTool):
                 harmonic_language=generation_analysis["harmony"],
             )
 
-    async def analyze_style(
-        self, score_id: str, detailed: bool = True
-    ) -> Dict[str, Any]:
+    async def analyze_style(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Analyze the style characteristics of a score
 
         Args:
-            score_id: ID of score to analyze
-            detailed: Whether to include detailed statistics
+            **kwargs: Keyword arguments including:
+                score_id: ID of score to analyze
+                detailed: Whether to include detailed statistics
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        detailed = kwargs.get('detailed', True)
         error = self.check_score_exists(score_id)
         if error:
             return self.create_error_response(error)

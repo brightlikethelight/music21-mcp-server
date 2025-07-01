@@ -29,19 +29,22 @@ class ExportScoreTool(BaseTool):
         "text": {"extensions": [".txt"], "method": "text"},
     }
 
-    async def execute(
-        self, score_id: str, format: str = "musicxml", output_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Export a score to various formats
 
         Args:
-            score_id: ID of the score to export
-            format: Export format (midi, musicxml, abc, lilypond, pdf, etc.)
-            output_path: Optional custom output path
+            **kwargs: Keyword arguments including:
+                score_id: ID of the score to export
+                format: Export format (midi, musicxml, abc, lilypond, pdf, etc.)
+                output_path: Optional custom output path
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        format = kwargs.get('format', 'musicxml')
+        output_path = kwargs.get('output_path')
         # Validate inputs
-        error = self.validate_inputs(score_id=score_id, format=format)
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -103,8 +106,11 @@ class ExportScoreTool(BaseTool):
                         pass
                 raise
 
-    def validate_inputs(self, score_id: str, format: str, **kwargs) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
+        format = kwargs.get('format', 'musicxml')
+        
         error = self.check_score_exists(score_id)
         if error:
             return error

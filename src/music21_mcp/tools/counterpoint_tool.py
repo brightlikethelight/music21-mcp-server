@@ -105,33 +105,28 @@ class CounterpointGeneratorTool(BaseTool):
             },
         }
 
-    async def execute(
-        self,
-        score_id: str,
-        species: str = "first",
-        voice_position: str = "above",
-        rule_set: str = "strict",
-        custom_rules: Optional[List[str]] = None,
-        mode: str = "major",
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Generate counterpoint for a given cantus firmus
 
         Args:
-            score_id: ID of the cantus firmus score
-            species: Species type ('first', 'second', 'third', 'fourth', 'fifth')
-            voice_position: Position relative to CF ('above', 'below')
-            rule_set: Rule strictness ('strict', 'relaxed', 'custom')
-            custom_rules: List of specific rules to enforce if rule_set is 'custom'
-            mode: Modal context ('major', 'minor', 'dorian', 'phrygian', etc.)
+            **kwargs: Keyword arguments including:
+                score_id: ID of the cantus firmus score
+                species: Species type ('first', 'second', 'third', 'fourth', 'fifth')
+                voice_position: Position relative to CF ('above', 'below')
+                rule_set: Rule strictness ('strict', 'relaxed', 'custom')
+                custom_rules: List of specific rules to enforce if rule_set is 'custom'
+                mode: Modal context ('major', 'minor', 'dorian', 'phrygian', etc.)
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        species = kwargs.get('species', 'first')
+        voice_position = kwargs.get('voice_position', 'above')
+        rule_set = kwargs.get('rule_set', 'strict')
+        custom_rules = kwargs.get('custom_rules')
+        mode = kwargs.get('mode', 'major')
         # Validate inputs
-        error = self.validate_inputs(
-            score_id=score_id,
-            species=species,
-            voice_position=voice_position,
-            rule_set=rule_set,
-        )
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -214,10 +209,13 @@ class CounterpointGeneratorTool(BaseTool):
                 explanations=self._generate_explanations(species_enum, rule_report),
             )
 
-    def validate_inputs(
-        self, score_id: str, species: str, voice_position: str, rule_set: str, **kwargs
-    ) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
+        species = kwargs.get('species', 'first')
+        voice_position = kwargs.get('voice_position', 'above')
+        rule_set = kwargs.get('rule_set', 'strict')
+        
         error = self.check_score_exists(score_id)
         if error:
             return error

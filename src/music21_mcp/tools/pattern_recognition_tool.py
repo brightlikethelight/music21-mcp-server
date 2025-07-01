@@ -24,30 +24,26 @@ class PatternRecognitionTool(BaseTool):
     4. Contour analysis with similarity scoring
     """
 
-    async def execute(
-        self,
-        score_id: str,
-        pattern_type: str = "both",
-        min_pattern_length: int = 3,
-        similarity_threshold: float = 0.85,
-        include_transformations: bool = True,
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Find patterns in a musical score
 
         Args:
-            score_id: ID of the score to analyze
-            pattern_type: Type of patterns to find ('melodic', 'rhythmic', 'both')
-            min_pattern_length: Minimum length for a pattern
-            similarity_threshold: Threshold for fuzzy matching (0-1)
-            include_transformations: Include inversions, retrogrades, etc.
+            **kwargs: Keyword arguments including:
+                score_id: ID of the score to analyze
+                pattern_type: Type of patterns to find ('melodic', 'rhythmic', 'both')
+                min_pattern_length: Minimum length for a pattern
+                similarity_threshold: Threshold for fuzzy matching (0-1)
+                include_transformations: Include inversions, retrogrades, etc.
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        pattern_type = kwargs.get('pattern_type', 'both')
+        min_pattern_length = kwargs.get('min_pattern_length', 3)
+        similarity_threshold = kwargs.get('similarity_threshold', 0.85)
+        include_transformations = kwargs.get('include_transformations', True)
         # Validate inputs
-        error = self.validate_inputs(
-            score_id=score_id,
-            pattern_type=pattern_type,
-            similarity_threshold=similarity_threshold,
-        )
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -82,10 +78,12 @@ class PatternRecognitionTool(BaseTool):
 
             return self.create_success_response(**results)
 
-    def validate_inputs(
-        self, score_id: str, pattern_type: str, similarity_threshold: float, **kwargs
-    ) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
+        pattern_type = kwargs.get('pattern_type', 'both')
+        similarity_threshold = kwargs.get('similarity_threshold', 0.85)
+        
         error = self.check_score_exists(score_id)
         if error:
             return error

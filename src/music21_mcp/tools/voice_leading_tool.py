@@ -67,24 +67,24 @@ class VoiceLeadingAnalysisTool(BaseTool):
             },
         }
 
-    async def execute(
-        self,
-        score_id: str,
-        style: str = "strict",
-        include_suggestions: bool = True,
-        educational_mode: bool = True,
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Analyze voice leading in a score
 
         Args:
-            score_id: ID of the score to analyze
-            style: Analysis style ('strict' for counterpoint, 'free' for general)
-            include_suggestions: Include improvement suggestions
-            educational_mode: Include educational explanations
+            **kwargs: Keyword arguments including:
+                score_id: ID of the score to analyze
+                style: Analysis style ('strict' for counterpoint, 'free' for general)
+                include_suggestions: Include improvement suggestions
+                educational_mode: Include educational explanations
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        style = kwargs.get('style', 'strict')
+        include_suggestions = kwargs.get('include_suggestions', True)
+        educational_mode = kwargs.get('educational_mode', True)
         # Validate inputs
-        error = self.validate_inputs(score_id=score_id, style=style)
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -151,8 +151,11 @@ class VoiceLeadingAnalysisTool(BaseTool):
 
             return result
 
-    def validate_inputs(self, score_id: str, style: str, **kwargs) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
+        style = kwargs.get('style', 'strict')
+        
         error = self.check_score_exists(score_id)
         if error:
             return error

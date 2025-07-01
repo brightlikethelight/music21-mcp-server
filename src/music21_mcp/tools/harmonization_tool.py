@@ -77,28 +77,26 @@ class HarmonizationTool(BaseTool):
             ],
         }
 
-    async def execute(
-        self,
-        score_id: str,
-        style: str = "classical",
-        constraints: Optional[List[str]] = None,
-        include_explanations: bool = True,
-        voice_parts: int = 4,
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Harmonize a melody in the specified style
 
         Args:
-            score_id: ID of the melody score to harmonize
-            style: Harmonization style ('classical', 'jazz', 'pop', 'modal')
-            constraints: List of constraints (e.g., ['diatonic_only', 'no_parallels'])
-            include_explanations: Include explanations for harmonic choices
-            voice_parts: Number of voices (2-4)
+            **kwargs: Keyword arguments including:
+                score_id: ID of the melody score to harmonize
+                style: Harmonization style ('classical', 'jazz', 'pop', 'modal')
+                constraints: List of constraints (e.g., ['diatonic_only', 'no_parallels'])
+                include_explanations: Include explanations for harmonic choices
+                voice_parts: Number of voices (2-4)
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        style = kwargs.get('style', 'classical')
+        constraints = kwargs.get('constraints')
+        include_explanations = kwargs.get('include_explanations', True)
+        voice_parts = kwargs.get('voice_parts', 4)
         # Validate inputs
-        error = self.validate_inputs(
-            score_id=score_id, style=style, voice_parts=voice_parts
-        )
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -170,10 +168,12 @@ class HarmonizationTool(BaseTool):
                 confidence_ratings=harmonization.get("confidence_ratings", []),
             )
 
-    def validate_inputs(
-        self, score_id: str, style: str, voice_parts: int, **kwargs
-    ) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
+        style = kwargs.get('style', 'classical')
+        voice_parts = kwargs.get('voice_parts', 4)
+        
         error = self.check_score_exists(score_id)
         if error:
             return error

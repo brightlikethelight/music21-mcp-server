@@ -28,21 +28,22 @@ class ImportScoreTool(BaseTool):
         ".mei",
     }
 
-    async def execute(
-        self, score_id: str, source: str, source_type: Optional[str] = "auto"
-    ) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Import a musical score from various sources
 
         Args:
-            score_id: Unique identifier for the score
-            source: File path, corpus path, or note sequence
-            source_type: Type of source ('file', 'corpus', 'text', 'auto')
+            **kwargs: Keyword arguments including:
+                score_id: Unique identifier for the score
+                source: File path, corpus path, or note sequence
+                source_type: Type of source ('file', 'corpus', 'text', 'auto')
         """
+        # Extract parameters from kwargs
+        score_id = kwargs.get('score_id', '')
+        source = kwargs.get('source', '')
+        source_type = kwargs.get('source_type', 'auto')
         # Validate inputs
-        error = self.validate_inputs(
-            score_id=score_id, source=source, source_type=source_type
-        )
+        error = self.validate_inputs(**kwargs)
         if error:
             return self.create_error_response(error)
 
@@ -82,10 +83,12 @@ class ImportScoreTool(BaseTool):
                 score_id=score_id, source_type=source_type, **metadata
             )
 
-    def validate_inputs(
-        self, score_id: str, source: str, source_type: str
-    ) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
+        score_id = kwargs.get('score_id', '')
+        source = kwargs.get('source', '')
+        source_type = kwargs.get('source_type', 'auto')
+        
         if not score_id:
             return "score_id cannot be empty"
 
