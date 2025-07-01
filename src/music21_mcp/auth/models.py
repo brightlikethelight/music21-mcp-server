@@ -6,7 +6,7 @@ import secrets
 import uuid
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 from pydantic import BaseModel, Field, validator
 
@@ -66,13 +66,13 @@ class ClientRegistration(BaseModel):
     updated_at: Optional[datetime] = None
 
     @validator("client_secret", always=True)
-    def set_client_secret(cls, v, values):
+    def set_client_secret(cls, v: Optional[str], values: Dict[str, Any]) -> Optional[str]:
         if values.get("client_type") == ClientType.CONFIDENTIAL and v is None:
             return secrets.token_urlsafe(32)
         return v
 
     @validator("redirect_uris")
-    def validate_redirect_uris(cls, v):
+    def validate_redirect_uris(cls, v: List[str]) -> List[str]:
         if not v:
             raise ValueError("At least one redirect URI is required")
         for uri in v:
@@ -96,7 +96,7 @@ class AuthorizationRequest(BaseModel):
     nonce: Optional[str] = None
 
     @validator("code_challenge")
-    def validate_code_challenge(cls, v):
+    def validate_code_challenge(cls, v: str) -> str:
         if len(v) < 43:  # Base64 URL encoded SHA256 is 43 chars
             raise ValueError("Code challenge too short")
         return v
@@ -137,7 +137,7 @@ class TokenRequest(BaseModel):
     scope: Optional[str] = None  # For client_credentials
 
     @validator("code_verifier")
-    def validate_code_verifier(cls, v, values):
+    def validate_code_verifier(cls, v: Optional[str], values: Dict[str, Any]) -> Optional[str]:
         if values.get("grant_type") == GrantType.AUTHORIZATION_CODE:
             if not v:
                 raise ValueError("Code verifier is required for PKCE")
@@ -146,7 +146,7 @@ class TokenRequest(BaseModel):
         return v
 
     @validator("code")
-    def validate_code(cls, v, values):
+    def validate_code(cls, v: Optional[str], values: Dict[str, Any]) -> Optional[str]:
         if values.get("grant_type") == GrantType.AUTHORIZATION_CODE and not v:
             raise ValueError("Code is required for authorization_code grant")
         return v
@@ -227,7 +227,7 @@ class UserSession(BaseModel):
     def is_expired(self) -> bool:
         return datetime.utcnow() > self.expires_at
 
-    def refresh(self, duration_minutes: int = 30):
+    def refresh(self, duration_minutes: int = 30) -> None:
         """Refresh session expiration (sliding expiration)"""
         self.last_accessed = datetime.utcnow()
         self.expires_at = datetime.utcnow() + timedelta(minutes=duration_minutes)

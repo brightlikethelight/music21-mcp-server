@@ -7,7 +7,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Generator, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class BaseTool(ABC):
         self._progress_callback: Optional[Callable] = None
 
     @abstractmethod
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Execute the tool operation
 
@@ -40,7 +40,7 @@ class BaseTool(ABC):
         pass
 
     @abstractmethod
-    def validate_inputs(self, **kwargs) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """
         Validate input parameters
 
@@ -49,17 +49,17 @@ class BaseTool(ABC):
         """
         pass
 
-    def set_progress_callback(self, callback: Callable[[float, str], None]):
+    def set_progress_callback(self, callback: Callable[[float, str], None]) -> None:
         """Set callback for progress reporting (percent, message)"""
         self._progress_callback = callback
 
-    def report_progress(self, percent: float, message: str = ""):
+    def report_progress(self, percent: float, message: str = "") -> None:
         """Report progress if callback is set"""
         if self._progress_callback:
             self._progress_callback(percent, message)
 
     @contextmanager
-    def error_handling(self, operation: str):
+    def error_handling(self, operation: str) -> Generator[None, None, None]:
         """Context manager for consistent error handling"""
         try:
             start_time = time.time()
@@ -81,7 +81,7 @@ class BaseTool(ABC):
         return response
 
     def create_success_response(
-        self, message: str = "Operation completed successfully", **kwargs
+        self, message: str = "Operation completed successfully", **kwargs: Any
     ) -> Dict[str, Any]:
         """Create standardized success response"""
         response = {"status": "success", "message": message}
@@ -94,6 +94,6 @@ class BaseTool(ABC):
             return f"Score with ID '{score_id}' not found"
         return None
 
-    def get_score(self, score_id: str):
+    def get_score(self, score_id: str) -> Any:
         """Get score from manager"""
         return self.score_manager.get(score_id)

@@ -25,7 +25,7 @@ class OAuth2Storage(ABC):
     """Abstract base class for OAuth2 storage"""
 
     @abstractmethod
-    async def save_client(self, client: ClientRegistration):
+    async def save_client(self, client: ClientRegistration) -> None:
         """Save client registration"""
         pass
 
@@ -35,7 +35,7 @@ class OAuth2Storage(ABC):
         pass
 
     @abstractmethod
-    async def save_authorization_code(self, code: AuthorizationCode):
+    async def save_authorization_code(self, code: AuthorizationCode) -> None:
         """Save authorization code"""
         pass
 
@@ -45,12 +45,12 @@ class OAuth2Storage(ABC):
         pass
 
     @abstractmethod
-    async def mark_authorization_code_used(self, code: str):
+    async def mark_authorization_code_used(self, code: str) -> None:
         """Mark authorization code as used"""
         pass
 
     @abstractmethod
-    async def save_access_token(self, token: AccessToken):
+    async def save_access_token(self, token: AccessToken) -> None:
         """Save access token"""
         pass
 
@@ -60,12 +60,12 @@ class OAuth2Storage(ABC):
         pass
 
     @abstractmethod
-    async def revoke_access_token(self, token: str):
+    async def revoke_access_token(self, token: str) -> None:
         """Revoke access token"""
         pass
 
     @abstractmethod
-    async def save_refresh_token(self, token: RefreshToken):
+    async def save_refresh_token(self, token: RefreshToken) -> None:
         """Save refresh token"""
         pass
 
@@ -75,12 +75,12 @@ class OAuth2Storage(ABC):
         pass
 
     @abstractmethod
-    async def revoke_refresh_token(self, token: str):
+    async def revoke_refresh_token(self, token: str) -> None:
         """Revoke refresh token"""
         pass
 
     @abstractmethod
-    async def save_user(self, user: User):
+    async def save_user(self, user: User) -> None:
         """Save user"""
         pass
 

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class DeleteScoreTool(BaseTool):
     """Tool for deleting scores from memory"""
 
-    async def execute(self, score_id: str) -> Dict[str, Any]:
+    async def execute(self, score_id: str, **kwargs: Any) -> Dict[str, Any]:
         """
         Delete a score or all scores from memory
 
@@ -61,7 +61,7 @@ class DeleteScoreTool(BaseTool):
                     message=f"Deleted score '{score_id}'", deleted_count=1
                 )
 
-    def validate_inputs(self, score_id: str) -> Optional[str]:
+    def validate_inputs(self, score_id: str, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
         if not score_id:
             return "score_id cannot be empty"
