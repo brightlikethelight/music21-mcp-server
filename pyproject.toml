@@ -127,6 +127,10 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
+[tool.isort]
+profile = "black"
+line_length = 88
+
 [[tool.mypy.overrides]]
 module = "music21.*"
 ignore_missing_imports = true
