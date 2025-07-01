@@ -265,7 +265,7 @@ class MidiParser(BaseParser):
         encoding: str = "utf-8",
         preserve_track_info: bool = True,
         quantize: bool = False,
-        **options,
+        **options: Any,
     ) -> stream.Score:
         """Parse MIDI content with preservation of performance data"""
 
@@ -323,7 +323,7 @@ class MidiParser(BaseParser):
 
         return header == b"MThd"
 
-    def _preserve_midi_metadata(self, score: stream.Score, midi_file: midi.MidiFile):
+    def _preserve_midi_metadata(self, score: stream.Score, midi_file: midi.MidiFile) -> None:
         """Preserve additional MIDI metadata in the score"""
         # Store MIDI-specific data
         score.metadata.custom["midi_format"] = midi_file.format
@@ -367,7 +367,7 @@ class MusicXMLParser(BaseParser):
         content: Union[str, bytes],
         encoding: str = "utf-8",
         compressed: bool = False,
-        **options,
+        **options: Any,
     ) -> stream.Score:
         """Parse MusicXML content"""
 
@@ -486,7 +486,7 @@ class ABCParser(BaseParser):
         content: Union[str, bytes],
         encoding: str = "utf-8",
         expand_repeats: bool = True,
-        **options,
+        **options: Any,
     ) -> stream.Score:
         """Parse ABC notation content"""
 
@@ -548,7 +548,7 @@ class ABCParser(BaseParser):
 
         return "\n".join(processed_lines)
 
-    def _process_ornaments(self, score: stream.Score):
+    def _process_ornaments(self, score: stream.Score) -> None:
         """Add ornaments based on ABC notation"""
         # ABC ornaments are typically indicated with special symbols
         # This is a simplified implementation
@@ -687,7 +687,7 @@ class ScoreParserFactory:
 class SmartScoreParser:
     """High-level parser with format detection and error recovery"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.detector = FormatDetector()
         self.factory = ScoreParserFactory()
         self._parser_cache = {}
