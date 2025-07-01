@@ -1,0 +1,326 @@
+# Default values for music21-mcp
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Application configuration
+app:
+  name: music21-mcp-server
+  version: "1.0.0"
+  
+# Image configuration
+image:
+  registry: docker.io
+  repository: music21-mcp-server
+  tag: "latest"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Deployment configuration
+replicaCount: 2
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+  - host: music21-mcp.example.com
+    paths:
+    - path: /
+      pathType: Prefix
+  tls:
+  - secretName: music21-mcp-tls
+    hosts:
+    - music21-mcp.example.com
+
+# Resources configuration
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "200m"
+  limits:
+    memory: "1Gi"
+    cpu: "1000m"
+
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+
+# Application configuration
+config:
+  # Server configuration
+  host: "0.0.0.0"
+  port: 8000
+  logLevel: "INFO"
+  maxFileSize: 50
+  
+  # OAuth2 configuration
+  oauth2:
+    accessTokenExpireMinutes: 60
+    refreshTokenExpireDays: 30
+    requirePkce: true
+    allowPublicClients: true
+    supportedScopes:
+    - read
+    - write
+    - admin
+  
+  # Session configuration
+  session:
+    ttlMinutes: 30
+    maxPerUser: 5
+    cleanupIntervalMinutes: 15
+    enableSlidingExpiration: true
+  
+  # CORS configuration
+  cors:
+    origins:
+    - "http://localhost:3000"
+    - "https://yourdomain.com"
+  
+  # Demo configuration
+  demo:
+    enabled: false  # Disable in production
+
+# Secrets configuration
+secrets:
+  # Redis password
+  redisPassword: ""
+  # JWT signing secret
+  jwtSecret: ""
+  # External API keys
+  externalApiKey: ""
+  # Database credentials
+  dbUsername: ""
+  dbPassword: ""
+
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: ""
+  accessModes:
+  - ReadWriteMany
+  size: 10Gi
+  annotations: {}
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Service account
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# RBAC configuration
+rbac:
+  create: true
+  rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - music21-mcp-server
+        topologyKey: kubernetes.io/hostname
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 12
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "changeme123"
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+  replica:
+    replicaCount: 1
+  metrics:
+    enabled: true
+
+# Nginx configuration
+nginx:
+  enabled: false  # Using ingress instead
+  replicaCount: 2
+  image:
+    repository: nginx
+    tag: alpine
+  service:
+    type: LoadBalancer
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    servicemonitor:
+      enabled: true
+      namespace: monitoring
+      labels: {}
+  grafana:
+    enabled: true
+    dashboard:
+      enabled: true
+
+# Cert-manager configuration
+certManager:
+  enabled: true
+  clusterIssuer:
+    name: letsencrypt-prod
+    email: admin@example.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+# Network policies
+networkPolicy:
+  enabled: false
+  ingress:
+    enabled: true
+    from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  egress:
+    enabled: true
+    to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# Tests configuration
+tests:
+  enabled: true
+  image:
+    repository: busybox
+    tag: latest
+  resources:
+    requests:
+      memory: "32Mi"
+      cpu: "10m"
+    limits:
+      memory: "64Mi"
+      cpu: "50m"

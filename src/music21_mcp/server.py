@@ -1,411 +1,346 @@
+#!/usr/bin/env python3
 """
-Music21 MCP Server - Simplified and Stable Version
-Provides core music analysis functionality through MCP protocol
+Music21 MCP Server - Production-Ready Consolidated Version
+Combines all features from various server implementations into a single, clean server
 """
+import asyncio
+import gc
+import json
 import logging
 import os
+import signal
+import sys
 import tempfile
-from typing import Any, Dict, Optional
+import time
+import traceback
+import uuid
+from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 
+import psutil
 from mcp.server.fastmcp import FastMCP
-from music21 import converter, corpus, note, stream
+from music21 import (
+    analysis, chord, converter, corpus, expressions, harmony, interval,
+    key, meter, note, pitch, roman, scale, stream, tempo, voiceLeading
+)
+
+# Import all tools
+from .tools import (
+    ImportScoreTool, ListScoresTool, KeyAnalysisTool,
+    ChordAnalysisTool, ScoreInfoTool, ExportScoreTool,
+    DeleteScoreTool, HarmonyAnalysisTool, VoiceLeadingAnalysisTool,
+    PatternRecognitionTool, HarmonizationTool,
+    CounterpointGeneratorTool, StyleImitationTool
+)
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Create FastMCP server instance
-mcp = FastMCP("Music21 Server")
+# Server Configuration
+class ServerConfig:
+    def __init__(self):
+        self.max_scores = 100
+        self.max_score_size_mb = 50
+        self.memory_limit_mb = 2048
+        self.gc_threshold_mb = 1500
+        self.cache_ttl_seconds = 3600
+        self.rate_limit_per_minute = 100
+        self.circuit_breaker_threshold = 5
+        self.circuit_breaker_timeout = 60
 
-# Simple in-memory score storage
-score_manager = {}
+config = ServerConfig()
 
-
-@mcp.tool()
-async def import_score(
-    score_id: str,
-    source: str,
-    source_type: Optional[str] = "auto"
-) -> Dict[str, Any]:
-    """
-    Import a musical score from various sources.
+# Simple resilience implementations
+class SimpleCircuitBreaker:
+    """Lightweight circuit breaker without external dependencies"""
+    def __init__(self, name: str, threshold: int = 5, timeout: int = 60):
+        self.name = name
+        self.threshold = threshold
+        self.timeout = timeout
+        self.failures = 0
+        self.last_failure = None
+        self.state = "closed"
     
-    Args:
-        score_id: Unique identifier for the score
-        source: File path, corpus path (e.g., 'bach/bwv66.6'), or note sequence
-        source_type: Type of source ('file', 'corpus', 'text', 'auto')
+    def record_success(self):
+        if self.state == "half_open":
+            self.state = "closed"
+            self.failures = 0
+            logger.info(f"Circuit {self.name} closed")
     
-    Returns:
-        Import status with basic metadata
-    """
-    try:
-        score = None
-        
-        # Auto-detect source type if needed
-        if source_type == "auto":
-            if os.path.exists(source):
-                source_type = "file"
-            elif '/' in source and not os.path.exists(source):
-                source_type = "corpus"
-            elif ' ' in source and all(
-                n.replace('#', '').replace('-', '').replace('b', '').isalnum() 
-                for n in source.split()
-            ):
-                source_type = "text"
-        
-        # Import based on source type
-        if source_type == "file" and os.path.exists(source):
-            score = converter.parse(source)
-        elif source_type == "corpus":
-            try:
-                score = corpus.parse(source)
-            except:
-                return {"status": "error", "message": f"Corpus work '{source}' not found"}
-        elif source_type == "text":
-            # Create score from note names
-            score = stream.Score()
-            part = stream.Part()
-            for note_str in source.split():
-                try:
-                    n = note.Note(note_str)
-                    part.append(n)
-                except:
-                    return {"status": "error", "message": f"Invalid note: {note_str}"}
-            score.append(part)
-        else:
-            # Try converter as fallback
-            try:
-                score = converter.parse(source)
-            except:
-                return {"status": "error", "message": "Could not parse source"}
-        
-        if score is None:
-            return {"status": "error", "message": "Failed to import score"}
-        
-        # Store the score
-        score_manager[score_id] = score
-        
-        # Get basic metadata
-        num_notes = len(list(score.flatten().notes))
-        num_measures = len(list(score.flatten().getElementsByClass('Measure')))
-        num_parts = len(score.parts) if hasattr(score, 'parts') else 1
-        
-        return {
-            "status": "success",
-            "score_id": score_id,
-            "num_notes": num_notes,
-            "num_measures": num_measures,
-            "num_parts": num_parts,
-            "source_type": source_type
-        }
-        
-    except Exception as e:
-        logger.error(f"Import error: {e}")
-        return {"status": "error", "message": str(e)}
-
-
-@mcp.tool()
-async def list_scores() -> Dict[str, Any]:
-    """
-    List all imported scores.
+    def record_failure(self):
+        self.failures += 1
+        self.last_failure = time.time()
+        if self.failures >= self.threshold:
+            self.state = "open"
+            logger.warning(f"Circuit {self.name} opened after {self.failures} failures")
     
-    Returns:
-        List of score IDs with basic info
-    """
-    try:
-        scores_list = []
-        for score_id, score in score_manager.items():
-            scores_list.append({
-                "score_id": score_id,
-                "num_notes": len(list(score.flatten().notes)),
-                "num_parts": len(score.parts) if hasattr(score, 'parts') else 1
-            })
-        
-        return {
-            "status": "success",
-            "scores": scores_list,
-            "total_count": len(scores_list)
-        }
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+    def can_execute(self) -> bool:
+        if self.state == "closed":
+            return True
+        if self.state == "open":
+            if time.time() - self.last_failure > self.timeout:
+                self.state = "half_open"
+                logger.info(f"Circuit {self.name} half-open")
+                return True
+            return False
+        return self.state == "half_open"
 
+class SimpleRateLimiter:
+    """Token bucket rate limiter"""
+    def __init__(self, rate: float, burst: int):
+        self.rate = rate
+        self.burst = burst
+        self.tokens = burst
+        self.last_update = time.time()
+    
+    def acquire(self) -> bool:
+        now = time.time()
+        elapsed = now - self.last_update
+        self.last_update = now
+        
+        # Add tokens based on elapsed time
+        self.tokens = min(self.burst, self.tokens + elapsed * self.rate)
+        
+        if self.tokens >= 1:
+            self.tokens -= 1
+            return True
+        return False
 
-@mcp.tool()
-async def analyze_key(
-    score_id: str,
-    method: Optional[str] = "default"
-) -> Dict[str, Any]:
-    """
-    Analyze the key of a score.
+class ScoreManager:
+    """Manages music scores with memory-aware caching"""
+    def __init__(self, max_scores: int = 100):
+        self.scores: Dict[str, Any] = {}
+        self.access_times: Dict[str, float] = {}
+        self.max_scores = max_scores
+        self.lock = asyncio.Lock()
     
-    Args:
-        score_id: ID of the score to analyze
-        method: Analysis method ('default', 'krumhansl', 'aarden')
-    
-    Returns:
-        Key analysis with confidence score
-    """
-    try:
-        if score_id not in score_manager:
-            return {"status": "error", "message": f"Score '{score_id}' not found"}
-        
-        score = score_manager[score_id]
-        
-        # Analyze key
-        if method == "default":
-            key = score.analyze('key')
-        else:
-            key = score.analyze(f'key.{method}')
-        
-        # Get confidence if available
-        confidence = getattr(key, 'correlationCoefficient', 0.5)
-        
-        # Get alternative keys
-        alternatives = []
-        if hasattr(key, 'alternateKeys'):
-            for alt_key in key.alternateKeys[:3]:
-                alt_conf = getattr(alt_key, 'correlationCoefficient', 0.3)
-                alternatives.append({
-                    "key": str(alt_key),
-                    "confidence": float(alt_conf)
-                })
-        
-        return {
-            "status": "success",
-            "score_id": score_id,
-            "key": str(key),
-            "confidence": float(confidence),
-            "method": method,
-            "alternatives": alternatives
-        }
-        
-    except Exception as e:
-        logger.error(f"Key analysis error: {e}")
-        return {"status": "error", "message": str(e)}
-
-
-@mcp.tool()
-async def analyze_chords(
-    score_id: str,
-    include_roman_numerals: Optional[bool] = False
-) -> Dict[str, Any]:
-    """
-    Analyze chords in a score.
-    
-    Args:
-        score_id: ID of the score to analyze
-        include_roman_numerals: Whether to include Roman numeral analysis
-    
-    Returns:
-        Chord analysis with progression
-    """
-    try:
-        if score_id not in score_manager:
-            return {"status": "error", "message": f"Score '{score_id}' not found"}
-        
-        score = score_manager[score_id]
-        
-        # Use chordify to extract chords
-        chordified = score.chordify()
-        chords = list(chordified.flatten().getElementsByClass('Chord'))
-        
-        # Get chord progression (first 20 chords)
-        progression = []
-        for i, chord in enumerate(chords[:20]):
-            chord_info = {
-                "index": i,
-                "pitches": [str(p) for p in chord.pitches],
-                "root": str(chord.root()) if chord.root() else None,
-                "quality": chord.quality if hasattr(chord, 'quality') else None,
-                "measure": chord.measureNumber if hasattr(chord, 'measureNumber') else None
-            }
+    async def add_score(self, score_id: str, score: Any):
+        async with self.lock:
+            # Check memory before adding
+            if self._get_memory_usage_mb() > config.gc_threshold_mb:
+                await self._cleanup_old_scores()
             
-            # Add Roman numeral if requested
-            if include_roman_numerals:
-                try:
-                    key = score.analyze('key')
-                    from music21 import roman
-                    rn = roman.romanNumeralFromChord(chord, key)
-                    chord_info["roman_numeral"] = str(rn.romanNumeralAlone)
-                except:
-                    chord_info["roman_numeral"] = None
+            # Remove oldest if at capacity
+            if len(self.scores) >= self.max_scores:
+                oldest = min(self.access_times.items(), key=lambda x: x[1])
+                del self.scores[oldest[0]]
+                del self.access_times[oldest[0]]
             
-            progression.append(chord_info)
+            self.scores[score_id] = score
+            self.access_times[score_id] = time.time()
+    
+    async def get_score(self, score_id: str) -> Optional[Any]:
+        async with self.lock:
+            if score_id in self.scores:
+                self.access_times[score_id] = time.time()
+                return self.scores[score_id]
+            return None
+    
+    async def remove_score(self, score_id: str) -> bool:
+        async with self.lock:
+            if score_id in self.scores:
+                del self.scores[score_id]
+                del self.access_times[score_id]
+                return True
+            return False
+    
+    async def list_scores(self) -> List[Dict[str, Any]]:
+        async with self.lock:
+            return [
+                {
+                    "id": score_id,
+                    "last_accessed": self.access_times[score_id],
+                    "title": getattr(self.scores[score_id].metadata, 'title', 'Untitled')
+                }
+                for score_id in self.scores
+            ]
+    
+    def _get_memory_usage_mb(self) -> float:
+        """Get current process memory usage in MB"""
+        process = psutil.Process()
+        return process.memory_info().rss / 1024 / 1024
+    
+    async def _cleanup_old_scores(self):
+        """Remove old scores to free memory"""
+        logger.info("Running memory cleanup...")
+        cutoff_time = time.time() - config.cache_ttl_seconds
+        
+        to_remove = [
+            score_id for score_id, access_time in self.access_times.items()
+            if access_time < cutoff_time
+        ]
+        
+        for score_id in to_remove:
+            del self.scores[score_id]
+            del self.access_times[score_id]
+        
+        # Force garbage collection
+        gc.collect()
+        logger.info(f"Cleaned up {len(to_remove)} old scores")
+
+# Create FastMCP server
+mcp = FastMCP("Music21 MCP Server - Production")
+
+# Initialize components
+score_manager = ScoreManager(max_scores=config.max_scores)
+rate_limiter = SimpleRateLimiter(rate=config.rate_limit_per_minute/60, burst=10)
+
+# Circuit breakers for different operations
+circuit_breakers = {
+    "import": SimpleCircuitBreaker("import", config.circuit_breaker_threshold, config.circuit_breaker_timeout),
+    "analysis": SimpleCircuitBreaker("analysis", config.circuit_breaker_threshold, config.circuit_breaker_timeout),
+    "export": SimpleCircuitBreaker("export", config.circuit_breaker_threshold, config.circuit_breaker_timeout),
+    "generation": SimpleCircuitBreaker("generation", config.circuit_breaker_threshold, config.circuit_breaker_timeout)
+}
+
+# Health check tool (server-specific)
+@mcp.tool()
+async def health_check() -> Dict[str, Any]:
+    """Check server health and resource usage"""
+    process = psutil.Process()
+    memory = process.memory_info()
+    
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "uptime_seconds": (datetime.now() - datetime.fromtimestamp(process.create_time())).total_seconds(),
+        "memory": {
+            "used_mb": memory.rss / 1024 / 1024,
+            "limit_mb": config.memory_limit_mb,
+            "percent": (memory.rss / 1024 / 1024) / config.memory_limit_mb * 100
+        },
+        "scores": {
+            "count": len(score_manager.scores),
+            "max": config.max_scores
+        },
+        "circuit_breakers": {
+            name: cb.state for name, cb in circuit_breakers.items()
+        }
+    }
+
+@mcp.tool()
+async def cleanup_memory() -> Dict[str, Any]:
+    """Force memory cleanup and garbage collection"""
+    try:
+        before = psutil.Process().memory_info().rss / 1024 / 1024
+        
+        # Clear old scores
+        await score_manager._cleanup_old_scores()
+        
+        # Force multiple GC passes
+        for _ in range(3):
+            gc.collect()
+        
+        after = psutil.Process().memory_info().rss / 1024 / 1024
         
         return {
             "status": "success",
-            "score_id": score_id,
-            "total_chords": len(chords),
-            "chord_progression": progression,
-            "includes_roman_numerals": include_roman_numerals
+            "memory_before_mb": round(before, 2),
+            "memory_after_mb": round(after, 2),
+            "freed_mb": round(before - after, 2),
+            "scores_remaining": len(score_manager.scores)
         }
-        
     except Exception as e:
-        logger.error(f"Chord analysis error: {e}")
-        return {"status": "error", "message": str(e)}
+        logger.error(f"Cleanup failed: {str(e)}")
+        return {"error": str(e)}
 
+# Graceful shutdown handler
+def shutdown_handler(signum, frame):
+    logger.info("Received shutdown signal, cleaning up...")
+    # Cleanup any resources
+    sys.exit(0)
 
-@mcp.tool()
-async def get_score_info(score_id: str) -> Dict[str, Any]:
-    """
-    Get detailed information about a score.
-    
-    Args:
-        score_id: ID of the score
-    
-    Returns:
-        Comprehensive score metadata
-    """
-    try:
-        if score_id not in score_manager:
-            return {"status": "error", "message": f"Score '{score_id}' not found"}
-        
-        score = score_manager[score_id]
-        
-        # Extract metadata
-        metadata = score.metadata if hasattr(score, 'metadata') else None
-        
-        info = {
-            "status": "success",
-            "score_id": score_id,
-            # Basic metadata
-            "title": metadata.title if metadata and hasattr(metadata, 'title') else None,
-            "composer": metadata.composer if metadata and hasattr(metadata, 'composer') else None,
-            "date": str(metadata.date) if metadata and hasattr(metadata, 'date') else None,
-            # Structure
-            "num_parts": len(score.parts) if hasattr(score, 'parts') else 1,
-            "num_measures": len(list(score.flatten().getElementsByClass('Measure'))),
-            "num_notes": len(list(score.flatten().notes)),
-            "duration_quarters": float(score.duration.quarterLength) if hasattr(score, 'duration') else 0,
-            # Time signatures
-            "time_signatures": [],
-            # Key signatures
-            "key_signatures": [],
-            # Tempo markings
-            "tempo_markings": []
-        }
-        
-        # Get time signatures
-        for ts in score.flatten().getElementsByClass('TimeSignature'):
-            info["time_signatures"].append({
-                "measure": ts.measureNumber if hasattr(ts, 'measureNumber') else None,
-                "signature": str(ts)
-            })
-        
-        # Get key signatures
-        for ks in score.flatten().getElementsByClass('KeySignature'):
-            info["key_signatures"].append({
-                "measure": ks.measureNumber if hasattr(ks, 'measureNumber') else None,
-                "sharps": ks.sharps
-            })
-        
-        # Get tempo markings
-        for tempo in score.flatten().getElementsByClass('MetronomeMark'):
-            info["tempo_markings"].append({
-                "measure": tempo.measureNumber if hasattr(tempo, 'measureNumber') else None,
-                "bpm": tempo.number,
-                "unit": str(tempo.referent)
-            })
-        
-        return info
-        
-    except Exception as e:
-        logger.error(f"Score info error: {e}")
-        return {"status": "error", "message": str(e)}
+signal.signal(signal.SIGINT, shutdown_handler)
+signal.signal(signal.SIGTERM, shutdown_handler)
 
-
-@mcp.tool() 
-async def export_score(
-    score_id: str,
-    format: str = "musicxml",
-    file_path: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    Export a score to various formats.
+# Initialize and register all tools
+def initialize_tools():
+    """Initialize all tool instances with circuit breakers"""
+    tool_instances = {
+        'import': ImportScoreTool(score_manager),
+        'list': ListScoresTool(score_manager),
+        'key_analysis': KeyAnalysisTool(score_manager),
+        'chord_analysis': ChordAnalysisTool(score_manager),
+        'score_info': ScoreInfoTool(score_manager),
+        'export': ExportScoreTool(score_manager),
+        'delete': DeleteScoreTool(score_manager),
+        'harmony_analysis': HarmonyAnalysisTool(score_manager),
+        'voice_leading': VoiceLeadingAnalysisTool(score_manager),
+        'pattern_recognition': PatternRecognitionTool(score_manager),
+        'harmonization': HarmonizationTool(score_manager),
+        'counterpoint': CounterpointGeneratorTool(score_manager),
+        'style_imitation': StyleImitationTool(score_manager)
+    }
     
-    Args:
-        score_id: ID of the score to export
-        format: Export format ('musicxml', 'midi', 'lilypond', 'abc', 'pdf')
-        file_path: Output file path (auto-generated if not provided)
-    
-    Returns:
-        Export status with file path
-    """
-    try:
-        if score_id not in score_manager:
-            return {"status": "error", "message": f"Score '{score_id}' not found"}
-        
-        score = score_manager[score_id]
-        
-        # Generate file path if not provided
-        if not file_path:
-            suffix = {
-                'musicxml': '.xml',
-                'midi': '.mid',
-                'lilypond': '.ly',
-                'abc': '.abc',
-                'pdf': '.pdf'
-            }.get(format, '.xml')
-            
-            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
-                file_path = f.name
-        
-        # Export
-        score.write(format, fp=file_path)
-        
-        # Check if file was created
-        if os.path.exists(file_path):
-            file_size = os.path.getsize(file_path)
-            return {
-                "status": "success",
-                "score_id": score_id,
-                "format": format,
-                "file_path": file_path,
-                "file_size": file_size
-            }
+    # Wrap each tool with resilience features
+    for name, tool in tool_instances.items():
+        # Determine circuit breaker category
+        if name in ['import', 'export', 'delete']:
+            cb_name = name
+        elif name in ['harmonization', 'counterpoint', 'style_imitation']:
+            cb_name = 'generation'
         else:
-            return {"status": "error", "message": "Export failed - file not created"}
+            cb_name = 'analysis'
         
-    except Exception as e:
-        logger.error(f"Export error: {e}")
-        return {"status": "error", "message": str(e)}
-
-
-@mcp.tool()
-async def delete_score(score_id: str) -> Dict[str, Any]:
-    """
-    Delete a score from memory.
+        # Get the circuit breaker for this tool
+        cb = circuit_breakers.get(cb_name, circuit_breakers['analysis'])
+        
+        # Register the tool's execute method with MCP
+        tool_func = create_resilient_tool(tool, cb, rate_limiter)
+        mcp.tool(name=tool.name)(tool_func)
     
-    Args:
-        score_id: ID of the score to delete
+    logger.info(f"Initialized {len(tool_instances)} tools with resilience features")
+
+def create_resilient_tool(tool, circuit_breaker, rate_limiter):
+    """Create a resilient wrapper for a tool"""
+    async def resilient_execute(**kwargs):
+        # Rate limiting
+        if not rate_limiter.acquire():
+            return {"error": "Rate limit exceeded, please try again later"}
+        
+        # Circuit breaker
+        if not circuit_breaker.can_execute():
+            return {"error": f"Service temporarily unavailable, retry in {circuit_breaker.timeout}s"}
+        
+        try:
+            # Execute the tool
+            result = await tool.execute(**kwargs)
+            circuit_breaker.record_success()
+            return result
+        except Exception as e:
+            circuit_breaker.record_failure()
+            logger.error(f"Tool {tool.name} failed: {str(e)}")
+            return {"error": str(e)}
     
-    Returns:
-        Deletion status
-    """
-    try:
-        if score_id not in score_manager:
-            return {"status": "error", "message": f"Score '{score_id}' not found"}
-        
-        del score_manager[score_id]
-        
-        return {
-            "status": "success",
-            "message": f"Score '{score_id}' deleted",
-            "remaining_scores": len(score_manager)
-        }
-        
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+    # Copy metadata
+    resilient_execute.__name__ = tool.name
+    resilient_execute.__doc__ = tool.description
+    
+    return resilient_execute
 
-
+# Main entry point
 def main():
-    """Main entry point for the server"""
-    logger.info("Starting Music21 MCP Server (Simplified Version)...")
-    logger.info(f"Available tools: {', '.join(tool.name for tool in mcp.tools)}")
+    logger.info(f"Starting Music21 MCP Server (Production)")
+    logger.info(f"Configuration: {json.dumps(config.__dict__, indent=2)}")
+    
+    # Initialize all tools
+    initialize_tools()
     
     # Run the server
-    mcp.run()
-
+    try:
+        mcp.run()
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user")
+    except Exception as e:
+        logger.error(f"Server error: {str(e)}")
+        logger.error(traceback.format_exc())
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

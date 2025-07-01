@@ -4,150 +4,379 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
 
 jobs:
-  test:
+  lint:
+    name: Lint and Type Check
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11', '3.12']
-
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Cache pip dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml', '**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
     
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest black mypy flake8 pytest-cov
+        python -m pip install -e .
+        python -m pip install flake8 black isort mypy types-requests types-redis
     
-    - name: Lint with flake8
+    - name: Run Black formatter check
       run: |
-        # Stop the build if there are Python syntax errors or undefined names
+        black --check --diff src/
+    
+    - name: Run import sorting check
+      run: |
+        isort --check-only --diff src/
+    
+    - name: Run flake8 linter
+      run: |
         flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Exit-zero treats all errors as warnings
         flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
     
-    - name: Format check with black
+    - name: Run MyPy type checker
       run: |
-        black --check src/ tests/ || true
+        mypy src/music21_mcp/ --ignore-missing-imports --no-strict-optional
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
     
-    - name: Type check with mypy
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install system dependencies
       run: |
-        mypy src/ --ignore-missing-imports || true
-    
-    - name: Test with pytest (Basic)
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          libffi-dev \
+          libssl-dev \
+          libasound2-dev \
+          libportaudio2 \
+          libportaudiocpp0 \
+          portaudio19-dev \
+          espeak \
+          espeak-data \
+          libespeak1 \
+          libespeak-dev \
+          ffmpeg
+
+    - name: Install dependencies
       run: |
-        pytest tests/test_mcp_client.py -v
-    
-    - name: Test with pytest (Comprehensive)
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install -e .
+        python -m pip install pytest pytest-cov pytest-asyncio pytest-mock
+        python -m pip install redis fastapi uvicorn music21
+
+    - name: Configure music21 for offline use
       run: |
-        python -c "import music21; print('music21 version:', music21.__version__)"
-        python test_everything.py || true
-    
-    - name: Run example scripts
+        python -c "
+        import music21
+        from music21 import environment
+        env = environment.Environment()
+        env['directoryScratch'] = '/tmp/music21'
+        env['autoDownload'] = 'deny'
+        print('Music21 configured for offline use')
+        "
+
+    - name: Run unit tests
+      env:
+        REDIS_URL: redis://localhost:6379/0
+        LOG_LEVEL: DEBUG
+        ENABLE_DEMO_USERS: true
+        JWT_SECRET: test-secret-for-ci-only
       run: |
-        python examples/basic_usage.py || true
-        python examples/complete_workflow.py || true
+        python -m pytest tests/unit/ -v --cov=src/music21_mcp --cov-report=xml --cov-report=html
+
+    - name: Run OAuth2 tests
+      env:
+        REDIS_URL: redis://localhost:6379/1
+        LOG_LEVEL: DEBUG
+        ENABLE_DEMO_USERS: true
+        JWT_SECRET: test-secret-for-ci-only
+      run: |
+        python -m pytest tests/test_oauth2.py -v --cov=src/music21_mcp/auth --cov-append
+
+    - name: Run integration tests
+      env:
+        REDIS_URL: redis://localhost:6379/2
+        LOG_LEVEL: DEBUG
+        ENABLE_DEMO_USERS: true
+        JWT_SECRET: test-secret-for-ci-only
+      run: |
+        python -m pytest tests/integration/ -v --cov=src/music21_mcp --cov-append
+
+    - name: Run comprehensive tool tests
+      env:
+        REDIS_URL: redis://localhost:6379/3
+        LOG_LEVEL: DEBUG
+        ENABLE_DEMO_USERS: true
+        JWT_SECRET: test-secret-for-ci-only
+      run: |
+        python -m pytest tests/test_tools_comprehensive.py -v --cov=src/music21_mcp/tools --cov-append
+
+    - name: Run server tests
+      env:
+        REDIS_URL: redis://localhost:6379/4
+        LOG_LEVEL: DEBUG
+        ENABLE_DEMO_USERS: true
+        JWT_SECRET: test-secret-for-ci-only
+      run: |
+        python -m pytest tests/test_server_pytest.py -v --cov=src/music21_mcp --cov-append
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report-${{ matrix.python-version }}
+        path: htmlcov/
 
   security:
+    name: Security Scan
     runs-on: ubuntu-latest
+    needs: lint
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Install bandit
-      run: |
-        pip install bandit[toml]
-    
-    - name: Run security scan
-      run: |
-        bandit -r src/ -f json -o bandit-report.json || true
-      continue-on-error: true
-    
-    - name: Upload security report
-      uses: actions/upload-artifact@v4
-      with:
-        name: bandit-report
-        path: bandit-report.json
-      if: always()
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
-    
-    - name: Check documentation
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
       run: |
-        # Check that all referenced files exist
-        test -f docs/getting-started.md || echo "⚠️ getting-started.md missing"
-        test -f docs/architecture.md || echo "⚠️ architecture.md missing"
-        test -f CONTRIBUTING.md || echo "⚠️ CONTRIBUTING.md missing"
-        test -f examples/README.md || echo "⚠️ examples/README.md missing"
-        
-        # Check for broken internal links (basic check)
-        grep -l "docs/" README.md && echo "✅ README links to docs" || true
-        grep -l "examples/" README.md && echo "✅ README links to examples" || true
-        
-        echo "✅ Documentation check completed"
+        python -m pip install --upgrade pip
+        python -m pip install -e .
+        python -m pip install safety bandit semgrep
+
+    - name: Run safety check
+      run: |
+        safety check --json || true
+
+    - name: Run bandit security linter
+      run: |
+        bandit -r src/ -f json || true
+
+    - name: Run semgrep
+      run: |
+        semgrep --config=auto src/ --json || true
 
   build:
+    name: Build and Test Distribution
     runs-on: ubuntu-latest
-    needs: [test, security, docs]
-    if: success()
-    
+    needs: [lint, test]
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
     
-    - name: Build package
+    - name: Install build dependencies
       run: |
-        pip install --upgrade pip build
+        python -m pip install --upgrade pip build twine
+    
+    - name: Build distribution
+      run: |
         python -m build
     
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+    - name: Check distribution
+      run: |
+        twine check dist/*
+    
+    - name: Store distribution packages
+      uses: actions/upload-artifact@v3
       with:
-        name: dist
+        name: distribution-packages
         path: dist/
 
-  release:
-    needs: build
+  docker:
+    name: Docker Build and Test
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        docker build --target production -t music21-mcp-server:test .
+
+    - name: Test Docker image
+      run: |
+        # Start Redis for testing
+        docker run -d --name redis-test -p 6379:6379 redis:7-alpine
+        
+        # Wait for Redis to be ready
+        sleep 10
+        
+        # Test the image
+        docker run --rm --network host \
+          -e REDIS_URL=redis://localhost:6379/0 \
+          -e LOG_LEVEL=INFO \
+          -e ENABLE_DEMO_USERS=true \
+          -e JWT_SECRET=test-secret \
+          music21-mcp-server:test python -c "
+        import sys
+        sys.path.insert(0, '/app/src')
+        from music21_mcp.server_remote import create_app
+        app = create_app()
+        print('✅ Server created successfully')
+        "
+        
+        # Cleanup
+        docker stop redis-test
+
+    - name: Run container security scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'music21-mcp-server:test'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  kubernetes:
+    name: Kubernetes Validation
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Validate Kubernetes manifests
+      run: |
+        # Validate YAML syntax
+        for file in k8s/*.yaml; do
+          echo "Validating $file"
+          kubectl apply --dry-run=client -f "$file" || exit 1
+        done
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: '3.12.0'
+
+    - name: Validate Helm chart
+      run: |
+        cd helm/music21-mcp
+        helm dependency update
+        helm lint .
+        helm template test . --debug
+
+    - name: Run Helm dry-run
+      run: |
+        cd helm/music21-mcp
+        helm install test . --dry-run --debug
+
+  stress-test:
+    name: Stress Test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, docker]
     
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Check if release needed
-      id: check_release
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
       run: |
-        echo "Checking if release is needed..."
-        # Add release logic here if needed
+        python -m pip install --upgrade pip
+        python -m pip install -e .
+        python -m pip install pytest pytest-asyncio music21
+
+    - name: Configure music21 for offline use
+      run: |
+        python -c "
+        import music21
+        from music21 import environment
+        env = environment.Environment()
+        env['directoryScratch'] = '/tmp/music21'
+        env['autoDownload'] = 'deny'
+        print('Music21 configured for offline use')
+        "
+
+    - name: Run simple stress test
+      env:
+        REDIS_URL: redis://localhost:6379/0
+        LOG_LEVEL: INFO
+        ENABLE_DEMO_USERS: true
+        JWT_SECRET: test-secret-for-stress-test
+      run: |
+        python -m pytest tests/performance/simple_stress_test.py -v
+
+    - name: Run production readiness test
+      env:
+        REDIS_URL: redis://localhost:6379/1
+        LOG_LEVEL: INFO
+        ENABLE_DEMO_USERS: true
+        JWT_SECRET: test-secret-for-production-test
+      run: |
+        python tests/performance/run_production_test_lite.py

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test MCP client integration - simulates how Claude Desktop or Cursor would interact
+Test MCP client integration - simulates how MCP client or Cursor would interact
 """
 import asyncio
 import json
@@ -24,12 +24,12 @@ class MCPClientTester:
         self.server_path = Path(__file__).parent.parent / "src" / "music21_mcp" / "server.py"
         
     async def test_stdio_connection(self):
-        """Test connection via stdio (how Claude Desktop connects)"""
+        """Test connection via stdio (how MCP client connects)"""
         if not HAS_MCP_CLIENT:
             print("Skipping - MCP client not available")
             return
             
-        print("🔌 Testing STDIO Connection (Claude Desktop style)...")
+        print("🔌 Testing STDIO Connection (MCP client style)...")
         
         # Create client connected to our server via stdio
         async with stdio_client(
@@ -63,8 +63,8 @@ class MCPClientTester:
                 print(f"   ✅ Key analysis: {analysis}")
     
     async def test_claude_desktop_config(self):
-        """Generate and test Claude Desktop configuration"""
-        print("\n📱 Claude Desktop Configuration:")
+        """Generate and test MCP client configuration"""
+        print("\n📱 MCP client Configuration:")
         
         config = {
             "mcpServers": {
@@ -76,7 +76,7 @@ class MCPClientTester:
             }
         }
         
-        config_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        config_path = Path.home() / "Library" / "Application Support" / "Claude" / "mcp_config.json"
         print(f"\n   Configuration to add to: {config_path}")
         print(json.dumps(config, indent=2))
         
@@ -185,7 +185,7 @@ async def main():
     # Test STDIO connection
     await tester.test_stdio_connection()
     
-    # Test Claude Desktop config
+    # Test MCP client config
     await tester.test_claude_desktop_config()
     
     # Test Cursor integration

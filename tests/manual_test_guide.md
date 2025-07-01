@@ -11,13 +11,13 @@ python -m music21_mcp.server --stdio
 python -m music21_mcp.server
 ```
 
-### 2. Claude Desktop Integration
-1. Copy configuration to Claude Desktop:
+### 2. MCP client Integration
+1. Copy configuration to MCP client:
    ```bash
-   cp claude_desktop_config.json ~/Library/Application\ Support/Claude/claude_desktop_config.json
+   cp mcp_config.json ~/Library/Application\ Support/Claude/mcp_config.json
    ```
 
-2. Restart Claude Desktop
+2. Restart MCP client
 
 3. Test in Claude:
    ```
@@ -30,7 +30,7 @@ python -m music21_mcp.server
 
 #### Test Score Import
 ```python
-# In Claude Desktop, try:
+# In MCP client, try:
 "Import a C major scale as 'test_scale'"
 "List all imported scores"
 "Analyze the key of 'test_scale'"
@@ -120,7 +120,7 @@ Simulate a complete workflow:
 ## 🔴 Red Flags to Watch For
 
 1. **Server doesn't start in STDIO mode** - Critical MCP issue
-2. **Claude Desktop can't discover tools** - Protocol problem
+2. **MCP client can't discover tools** - Protocol problem
 3. **Import succeeds but analysis fails** - Data structure issue
 4. **Memory usage grows unbounded** - Memory leak
 5. **Errors not reported properly** - Exception handling issue
@@ -129,7 +129,7 @@ Simulate a complete workflow:
 ## ✅ Success Criteria
 
 - [ ] Server starts in both STDIO and HTTP modes
-- [ ] Claude Desktop can discover and call all tools
+- [ ] MCP client can discover and call all tools
 - [ ] Real MIDI/MusicXML files import successfully
 - [ ] All analysis tools produce meaningful results
 - [ ] Error handling is graceful and informative
@@ -154,7 +154,7 @@ Real Music Tests:
 - Contemporary: [ ] Pass [ ] Fail
 
 Integration:
-- Claude Desktop: [ ] Pass [ ] Fail
+- MCP client: [ ] Pass [ ] Fail
 - Cursor IDE: [ ] Pass [ ] Fail
 
 Performance:

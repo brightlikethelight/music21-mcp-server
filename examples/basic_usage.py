@@ -189,7 +189,7 @@ async def main():
         print("  - Try other examples in this directory")
         print("  - Experiment with your own MIDI/XML files")
         print("  - Check out the comprehensive API docs")
-        print("  - Integrate with Claude Desktop for AI-powered analysis")
+        print("  - Integrate with MCP client for AI-powered analysis")
         
     except Exception as e:
         print(f"\n❌ Example failed with error: {e}")

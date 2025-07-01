@@ -89,9 +89,6 @@ Pipfile.lock
 # poetry
 poetry.lock
 
-# pdm
-.pdm.toml
-
 # PEP 582
 __pypackages__/
 
@@ -135,27 +132,37 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# PyCharm
+# IDE
 .idea/
-
-# VS Code
 .vscode/
+*.swp
+*.swo
+*~
 
-# macOS
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Music21 specific
-music21/
-*.mid
+# Project specific
+test_results/
+stress_test_logs/
+server.log
 *.midi
+*.mid
 *.xml
 *.mxl
-*.musicxml
-*.pdf
-*.png
-*.svg
-*.ly
+*.abc
+test_corpus/
+temp/
+tmp/
+cache/
 
-# MCP server specific
-mcp.log
-mcp_server.log
+# Claude specific (to be removed)
+claude_desktop_config.json
+.claude/
+EOF < /dev/null

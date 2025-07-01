@@ -8,7 +8,7 @@ Before you begin, ensure you have:
 
 - Python 3.8 or higher installed
 - Basic familiarity with Python async/await
-- (Optional) Claude Desktop for MCP integration
+- (Optional) MCP client for MCP integration
 
 ## Installation
 
@@ -141,14 +141,14 @@ Export to various formats:
 await export_score("score_id", format="midi", output_path="output.mid")
 ```
 
-## Claude Desktop Integration
+## MCP client Integration
 
-### 1. Configure Claude Desktop
+### 1. Configure MCP client
 
-Add to your Claude Desktop config file:
+Add to your MCP client config file:
 
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**macOS**: `~/Library/Application Support/Claude/mcp_config.json`
+**Windows**: `%APPDATA%\Claude\mcp_config.json`
 
 ```json
 {
@@ -162,9 +162,9 @@ Add to your Claude Desktop config file:
 }
 ```
 
-### 2. Restart Claude Desktop
+### 2. Restart MCP client
 
-After saving the configuration, restart Claude Desktop.
+After saving the configuration, restart MCP client.
 
 ### 3. Use in Claude
 

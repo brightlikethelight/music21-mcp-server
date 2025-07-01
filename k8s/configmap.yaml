@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: music21-mcp-config
+  namespace: music21-mcp
+  labels:
+    app.kubernetes.io/name: music21-mcp-server
+    app.kubernetes.io/component: config
+data:
+  # Application configuration
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  LOG_LEVEL: "INFO"
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  
+  # OAuth2 configuration
+  OAUTH2_ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+  OAUTH2_REFRESH_TOKEN_EXPIRE_DAYS: "30"
+  OAUTH2_REQUIRE_PKCE: "true"
+  OAUTH2_ALLOW_PUBLIC_CLIENTS: "true"
+  
+  # Session configuration
+  SESSION_TTL_MINUTES: "30"
+  SESSION_MAX_PER_USER: "5"
+  SESSION_CLEANUP_INTERVAL_MINUTES: "15"
+  
+  # CORS configuration
+  CORS_ORIGINS: "http://localhost:3000,https://yourdomain.com"
+  
+  # Application settings
+  MAX_FILE_SIZE_MB: "50"
+  ENABLE_DEMO_USERS: "false"  # Disable in production
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: music21-mcp
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/component: config
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+        use epoll;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+        
+        access_log /var/log/nginx/access.log main;
+        error_log /var/log/nginx/error.log warn;
+        
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        client_max_body_size 50M;
+        
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1000;
+        gzip_comp_level 6;
+        gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+        
+        limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=auth:10m rate=5r/s;
+        
+        upstream music21_backend {
+            server music21-mcp-service:8000;
+            keepalive 32;
+        }
+        
+        server {
+            listen 80;
+            server_name _;
+            
+            location /health {
+                proxy_pass http://music21_backend;
+                proxy_set_header Host $host;
+                access_log off;
+            }
+            
+            location /auth/ {
+                limit_req zone=auth burst=20 nodelay;
+                proxy_pass http://music21_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            location /mcp/ {
+                limit_req zone=api burst=50 nodelay;
+                proxy_pass http://music21_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_buffering off;
+            }
+            
+            location / {
+                limit_req zone=api burst=30 nodelay;
+                proxy_pass http://music21_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+    }

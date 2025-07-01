@@ -100,8 +100,6 @@ change analysis throughout a score.
 
 Closes #45
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ```bash
