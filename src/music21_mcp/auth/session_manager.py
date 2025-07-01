@@ -10,8 +10,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Optional, Set
 
 from .models import User, UserSession
-from .storage import (InMemorySessionStorage, RedisSessionStorage,
-                      SessionStorage)
+from .storage import InMemorySessionStorage, RedisSessionStorage, SessionStorage
 
 logger = logging.getLogger(__name__)
 

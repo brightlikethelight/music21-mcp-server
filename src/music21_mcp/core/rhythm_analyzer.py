@@ -9,8 +9,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from music21 import (articulations, chord, expressions, meter, note, stream,
-                     tempo)
+from music21 import articulations, chord, expressions, meter, note, stream, tempo
 from scipy.stats import entropy
 
 logger = logging.getLogger(__name__)

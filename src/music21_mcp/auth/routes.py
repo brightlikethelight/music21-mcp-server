@@ -7,13 +7,28 @@ import logging
 from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
-from fastapi import (APIRouter, Depends, Form, HTTPException, Query, Request,
-                     Response, status)
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    status,
+)
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
-from .models import (AuthorizationRequest, ClientRegistration, GrantType,
-                     ResponseType, TokenRequest, TokenResponse, User)
+from .models import (
+    AuthorizationRequest,
+    ClientRegistration,
+    GrantType,
+    ResponseType,
+    TokenRequest,
+    TokenResponse,
+    User,
+)
 from .oauth2_provider import OAuth2Provider
 from .security import SecurityMiddleware, parse_basic_auth, require_scope
 from .session_manager import SessionManager

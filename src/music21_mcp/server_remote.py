@@ -14,13 +14,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 # Import auth components
-from .auth import (OAuth2Config, OAuth2Provider, SecurityMiddleware,
-                   SessionConfig, SessionManager)
-from .auth.mcp_integration import (AuthenticatedMCPServer, MCPAuthContext,
-                                   MCPSessionManager, mcp_auth_required)
+from .auth import (
+    OAuth2Config,
+    OAuth2Provider,
+    SecurityMiddleware,
+    SessionConfig,
+    SessionManager,
+)
+from .auth.mcp_integration import (
+    AuthenticatedMCPServer,
+    MCPAuthContext,
+    MCPSessionManager,
+    mcp_auth_required,
+)
 from .auth.routes import router as auth_router
-from .auth.storage import (InMemoryOAuth2Storage, InMemorySessionStorage,
-                           OAuth2Storage, SessionStorage)
+from .auth.storage import (
+    InMemoryOAuth2Storage,
+    InMemorySessionStorage,
+    OAuth2Storage,
+    SessionStorage,
+)
+
 # Import existing MCP server
 from .server import ScoreManager, create_server
 

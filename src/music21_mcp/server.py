@@ -37,16 +37,41 @@ except ImportError:
             )
 
 
-from music21 import (analysis, chord, converter, corpus, expressions, harmony,
-                     interval, key, meter, note, pitch, roman, scale, stream,
-                     tempo, voiceLeading)
+from music21 import (
+    analysis,
+    chord,
+    converter,
+    corpus,
+    expressions,
+    harmony,
+    interval,
+    key,
+    meter,
+    note,
+    pitch,
+    roman,
+    scale,
+    stream,
+    tempo,
+    voiceLeading,
+)
 
 # Import all tools
-from .tools import (ChordAnalysisTool, CounterpointGeneratorTool,
-                    DeleteScoreTool, ExportScoreTool, HarmonizationTool,
-                    HarmonyAnalysisTool, ImportScoreTool, KeyAnalysisTool,
-                    ListScoresTool, PatternRecognitionTool, ScoreInfoTool,
-                    StyleImitationTool, VoiceLeadingAnalysisTool)
+from .tools import (
+    ChordAnalysisTool,
+    CounterpointGeneratorTool,
+    DeleteScoreTool,
+    ExportScoreTool,
+    HarmonizationTool,
+    HarmonyAnalysisTool,
+    ImportScoreTool,
+    KeyAnalysisTool,
+    ListScoresTool,
+    PatternRecognitionTool,
+    ScoreInfoTool,
+    StyleImitationTool,
+    VoiceLeadingAnalysisTool,
+)
 
 # Configure logging
 logging.basicConfig(

@@ -9,8 +9,14 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Dict, Optional
 
-from .models import (AccessToken, AuthorizationCode, ClientRegistration,
-                     RefreshToken, User, UserSession)
+from .models import (
+    AccessToken,
+    AuthorizationCode,
+    ClientRegistration,
+    RefreshToken,
+    User,
+    UserSession,
+)
 
 logger = logging.getLogger(__name__)
 

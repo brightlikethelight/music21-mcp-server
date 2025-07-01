@@ -8,8 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from music21 import (chord, expressions, interval, key, note, pitch, roman,
-                     stream)
+from music21 import chord, expressions, interval, key, note, pitch, roman, stream
 
 logger = logging.getLogger(__name__)
 

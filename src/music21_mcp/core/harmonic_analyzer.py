@@ -9,8 +9,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from music21 import (chord, harmony, interval, key, note, roman, stream,
-                     voiceLeading)
+from music21 import chord, harmony, interval, key, note, roman, stream, voiceLeading
 
 
 class HarmonicFunction(Enum):
