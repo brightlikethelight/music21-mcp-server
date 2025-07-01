@@ -50,34 +50,34 @@ class CircuitBreakerConfig:
 class CircuitBreaker:
     """Circuit breaker pattern implementation"""
 
-    def __init__(self, name: str, config: CircuitBreakerConfig = None):
+    def __init__(self, name: str, config: Optional[CircuitBreakerConfig] = None) -> None:
         self.name = name
         self.config = config or CircuitBreakerConfig()
         self.state = CircuitState.CLOSED
         self.failure_count = 0
         self.success_count = 0
-        self.last_failure_time = None
-        self.next_attempt_time = None
-        self.failure_history = deque(maxlen=100)
+        self.last_failure_time: Optional[float] = None
+        self.next_attempt_time: Optional[float] = None
+        self.failure_history: deque = deque(maxlen=100)
         self._lock = threading.Lock()
 
-    def __call__(self, func):
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """Decorator for protecting functions"""
 
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             if asyncio.iscoroutinefunction(func):
                 return await self._async_call(func, *args, **kwargs)
             else:
                 return await asyncio.to_thread(self._sync_call, func, *args, **kwargs)
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             return self._sync_call(func, *args, **kwargs)
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
-    async def _async_call(self, func, *args, **kwargs):
+    async def _async_call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Handle async function calls"""
         if not self._can_attempt():
             raise Exception(f"Circuit breaker {self.name} is OPEN")
@@ -86,11 +86,12 @@ class CircuitBreaker:
             result = await func(*args, **kwargs)
             self._on_success()
             return result
-        except self.config.expected_exception as e:
-            self._on_failure(e)
+        except Exception as e:
+            if isinstance(e, self.config.expected_exception):
+                self._on_failure(e)
             raise
 
-    def _sync_call(self, func, *args, **kwargs):
+    def _sync_call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Handle sync function calls"""
         if not self._can_attempt():
             raise Exception(f"Circuit breaker {self.name} is OPEN")
@@ -99,8 +100,9 @@ class CircuitBreaker:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-        except self.config.expected_exception as e:
-            self._on_failure(e)
+        except Exception as e:
+            if isinstance(e, self.config.expected_exception):
+                self._on_failure(e)
             raise
 
     def _can_attempt(self) -> bool:
@@ -119,7 +121,7 @@ class CircuitBreaker:
             # HALF_OPEN state
             return True
 
-    def _on_success(self):
+    def _on_success(self) -> None:
         """Handle successful call"""
         with self._lock:
             if self.state == CircuitState.HALF_OPEN:
@@ -134,7 +136,7 @@ class CircuitBreaker:
             elif self.state == CircuitState.CLOSED:
                 self.failure_count = max(0, self.failure_count - 1)
 
-    def _on_failure(self, error: Exception):
+    def _on_failure(self, error: Exception) -> None:
         """Handle failed call"""
         with self._lock:
             self.failure_count += 1
@@ -173,12 +175,12 @@ class ResourcePool:
     def __init__(
         self,
         name: str,
-        factory: Callable,
+        factory: Callable[[], Any],
         max_size: int = 10,
         min_size: int = 2,
-        health_check: Optional[Callable] = None,
+        health_check: Optional[Callable[[Any], bool]] = None,
         max_idle_time: int = 300,
-    ):
+    ) -> None:
         self.name = name
         self.factory = factory
         self.max_size = max_size
@@ -186,8 +188,8 @@ class ResourcePool:
         self.health_check = health_check
         self.max_idle_time = max_idle_time
 
-        self._pool = queue.Queue(maxsize=max_size)
-        self._all_resources = weakref.WeakSet()
+        self._pool: queue.Queue = queue.Queue(maxsize=max_size)
+        self._all_resources: weakref.WeakSet = weakref.WeakSet()
         self._size = 0
         self._lock = threading.Lock()
         self._shutdown = False
@@ -196,7 +198,7 @@ class ResourcePool:
         for _ in range(min_size):
             self._create_resource()
 
-    def _create_resource(self):
+    def _create_resource(self) -> None:
         """Create a new resource"""
         try:
             resource = self.factory()
@@ -210,7 +212,7 @@ class ResourcePool:
             logger.error(f"Failed to create resource for pool {self.name}: {e}")
 
     @contextmanager
-    def acquire(self, timeout: float = 30.0):
+    def acquire(self, timeout: float = 30.0) -> Any:
         """Acquire a resource from the pool"""
         if self._shutdown:
             raise RuntimeError(f"Pool {self.name} is shut down")
@@ -267,7 +269,7 @@ class ResourcePool:
                 except queue.Full:
                     self._size -= 1
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the pool"""
         self._shutdown = True
 
@@ -288,7 +290,7 @@ class RateLimiter:
     def __init__(self, rate: float, burst: int):
         self.rate = rate  # Tokens per second
         self.burst = burst  # Max tokens
-        self.tokens = burst
+        self.tokens: float = burst
         self.last_update = time.time()
         self._lock = threading.Lock()
 
@@ -307,7 +309,7 @@ class RateLimiter:
                 return True
             return False
 
-    async def acquire_async(self, tokens: int = 1, timeout: float = None) -> bool:
+    async def acquire_async(self, tokens: int = 1, timeout: Optional[float] = None) -> bool:
         """Async version with optional wait"""
         start_time = time.time()
 
@@ -342,17 +344,17 @@ class MemoryGuard:
         self.check_interval = check_interval
         self.process = psutil.Process()
         self._monitoring = False
-        self._callbacks = []
+        self._callbacks: List[Callable[[float], None]] = []
 
-    def add_callback(self, callback: Callable[[float], None]):
+    def add_callback(self, callback: Callable[[float], None]) -> None:
         """Add callback for memory warnings"""
         self._callbacks.append(callback)
 
     def get_memory_usage(self) -> float:
         """Get current memory usage in MB"""
-        return self.process.memory_info().rss / 1024 / 1024
+        return float(self.process.memory_info().rss / 1024 / 1024)
 
-    async def start_monitoring(self):
+    async def start_monitoring(self) -> None:
         """Start memory monitoring"""
         self._monitoring = True
 
@@ -382,7 +384,7 @@ class MemoryGuard:
                 logger.error(f"Memory monitoring error: {e}")
                 await asyncio.sleep(self.check_interval)
 
-    async def _emergency_cleanup(self):
+    async def _emergency_cleanup(self) -> None:
         """Emergency memory cleanup"""
         logger.warning("Performing emergency memory cleanup")
 
@@ -396,7 +398,7 @@ class MemoryGuard:
         if current_mb > self.hard_limit_mb:
             logger.critical("Memory still critical after cleanup")
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop memory monitoring"""
         self._monitoring = False
 
@@ -408,30 +410,30 @@ class GracefulShutdown:
         self.timeout = timeout
         self.shutdown_event = asyncio.Event()
         self.tasks: Set[asyncio.Task] = set()
-        self._original_handlers = {}
+        self._original_handlers: Dict[int, Any] = {}
 
-    def __enter__(self):
+    def __enter__(self) -> 'GracefulShutdown':
         """Install signal handlers"""
         for sig in [signal.SIGTERM, signal.SIGINT]:
             self._original_handlers[sig] = signal.signal(sig, self._signal_handler)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Restore original handlers"""
         for sig, handler in self._original_handlers.items():
             signal.signal(sig, handler)
 
-    def _signal_handler(self, signum, frame):
+    def _signal_handler(self, signum: int, frame: Any) -> None:
         """Handle shutdown signal"""
         logger.info(f"Received signal {signum}, starting graceful shutdown")
         self.shutdown_event.set()
 
-    def track_task(self, task: asyncio.Task):
+    def track_task(self, task: asyncio.Task) -> None:
         """Track a task for graceful shutdown"""
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
 
-    async def wait_for_shutdown(self):
+    async def wait_for_shutdown(self) -> None:
         """Wait for shutdown signal"""
         await self.shutdown_event.wait()
 
@@ -460,14 +462,14 @@ class RequestContext:
         self.request_id = request_id
         self.timeout = timeout
         self.start_time = time.time()
-        self.resources = []
-        self.metadata = {}
+        self.resources: List[Any] = []
+        self.metadata: Dict[str, Any] = {}
 
-    def add_resource(self, resource: Any):
+    def add_resource(self, resource: Any) -> None:
         """Track a resource for cleanup"""
         self.resources.append(resource)
 
-    def set_metadata(self, key: str, value: Any):
+    def set_metadata(self, key: str, value: Any) -> None:
         """Set request metadata"""
         self.metadata[key] = value
 
@@ -479,7 +481,7 @@ class RequestContext:
         """Check if request has expired"""
         return self.get_elapsed_time() > self.timeout
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Clean up request resources"""
         for resource in self.resources:
             try:
@@ -502,12 +504,12 @@ class RequestContext:
 class HealthCheck:
     """System health checking"""
 
-    def __init__(self):
-        self.checks = {}
-        self.last_check_time = {}
-        self.check_results = {}
+    def __init__(self) -> None:
+        self.checks: Dict[str, Dict[str, Any]] = {}
+        self.last_check_time: Dict[str, float] = {}
+        self.check_results: Dict[str, Dict[str, Any]] = {}
 
-    def register_check(self, name: str, check_func: Callable, interval: int = 30):
+    def register_check(self, name: str, check_func: Callable, interval: int = 30) -> None:
         """Register a health check"""
         self.checks[name] = {"func": check_func, "interval": interval}
 
@@ -539,7 +541,9 @@ class HealthCheck:
                     }
 
                 self.last_check_time[name] = now
-                self.check_results[name] = results.get(name)
+                result = results.get(name)
+                if result is not None:
+                    self.check_results[name] = result
 
         return results
 
@@ -561,13 +565,13 @@ class HealthCheck:
 class AutoRecovery:
     """Automatic recovery mechanisms"""
 
-    def __init__(self):
-        self.recovery_strategies = {}
-        self.recovery_history = deque(maxlen=100)
+    def __init__(self) -> None:
+        self.recovery_strategies: Dict[type, Dict[str, Any]] = {}
+        self.recovery_history: deque = deque(maxlen=100)
 
     def register_strategy(
         self, error_type: type, strategy: Callable, max_retries: int = 3
-    ):
+    ) -> None:
         """Register a recovery strategy for an error type"""
         self.recovery_strategies[error_type] = {
             "strategy": strategy,
@@ -619,7 +623,7 @@ class AutoRecovery:
                 }
             )
 
-            return success
+            return bool(success)
 
         except Exception as e:
             logger.error(f"Recovery strategy failed: {e}")
@@ -636,7 +640,7 @@ auto_recovery = AutoRecovery()
 
 
 def get_circuit_breaker(
-    name: str, config: CircuitBreakerConfig = None
+    name: str, config: Optional[CircuitBreakerConfig] = None
 ) -> CircuitBreaker:
     """Get or create a circuit breaker"""
     if name not in circuit_breakers:
@@ -644,10 +648,11 @@ def get_circuit_breaker(
     return circuit_breakers[name]
 
 
-def get_resource_pool(name: str, **kwargs) -> ResourcePool:
+def get_resource_pool(name: str, **kwargs: Any) -> ResourcePool:
     """Get or create a resource pool"""
     if name not in resource_pools:
-        resource_pools[name] = ResourcePool(name, **kwargs)
+        factory = kwargs.pop('factory')
+        resource_pools[name] = ResourcePool(name, factory, **kwargs)
     return resource_pools[name]
 
 
@@ -659,10 +664,10 @@ def get_rate_limiter(name: str, rate: float, burst: int) -> RateLimiter:
 
 
 # Decorators for easy use
-def with_circuit_breaker(name: str, **config_kwargs):
+def with_circuit_breaker(name: str, **config_kwargs: Any) -> Callable:
     """Decorator to add circuit breaker to a function"""
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         config = CircuitBreakerConfig(**config_kwargs)
         breaker = get_circuit_breaker(name, config)
         return breaker(func)
@@ -670,20 +675,20 @@ def with_circuit_breaker(name: str, **config_kwargs):
     return decorator
 
 
-def with_rate_limit(name: str, rate: float, burst: int):
+def with_rate_limit(name: str, rate: float, burst: int) -> Callable:
     """Decorator to add rate limiting to a function"""
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         limiter = get_rate_limiter(name, rate, burst)
 
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             if not await limiter.acquire_async(timeout=5.0):
                 raise Exception(f"Rate limit exceeded for {name}")
             return await func(*args, **kwargs)
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             if not limiter.acquire():
                 raise Exception(f"Rate limit exceeded for {name}")
             return func(*args, **kwargs)
@@ -693,12 +698,12 @@ def with_rate_limit(name: str, rate: float, burst: int):
     return decorator
 
 
-def with_timeout(seconds: int):
+def with_timeout(seconds: int) -> Callable:
     """Decorator to add timeout to async functions"""
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
 
         return wrapper

@@ -129,7 +129,7 @@ class FugueAnalysis:
 class CounterpointAnalyzer:
     """Advanced counterpoint and voice leading analysis engine"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.consonant_intervals = {
             1,
             3,
@@ -160,9 +160,9 @@ class CounterpointAnalyzer:
         """
         result = SpeciesAnalysis(species_type=species)
 
-        # Align voices
-        cf_notes = list(cantus_firmus.flatten().notes)
-        cp_notes = list(counterpoint_voice.flatten().notes)
+        # Align voices (filter to only Note objects)
+        cf_notes = [n for n in cantus_firmus.flatten().notes if hasattr(n, 'pitch')]
+        cp_notes = [n for n in counterpoint_voice.flatten().notes if hasattr(n, 'pitch')]
 
         if not cf_notes or not cp_notes:
             return result

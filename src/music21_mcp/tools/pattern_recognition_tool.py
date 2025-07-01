@@ -76,7 +76,7 @@ class PatternRecognitionTool(BaseTool):
 
             self.report_progress(1.0, "Analysis complete")
 
-            return self.create_success_response(**results)
+            return self.create_success_response(message="Pattern recognition complete", **results)
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """Validate input parameters"""
@@ -104,7 +104,7 @@ class PatternRecognitionTool(BaseTool):
         include_transformations: bool,
     ) -> Dict[str, Any]:
         """Find melodic patterns including sequences and motifs"""
-        results = {
+        results: Dict[str, Any] = {
             "sequences": [],
             "motifs": [],
             "contour_patterns": [],
@@ -165,7 +165,7 @@ class PatternRecognitionTool(BaseTool):
         self, score: stream.Score, min_length: int, threshold: float
     ) -> Dict[str, Any]:
         """Find rhythmic patterns"""
-        results = {
+        results: Dict[str, Any] = {
             "rhythmic_motifs": [],
             "metric_patterns": [],
             "syncopations": [],
@@ -228,7 +228,7 @@ class PatternRecognitionTool(BaseTool):
 
     def _find_sequences(self, melody: List, min_length: int) -> List[Dict]:
         """Find melodic sequences (exact transpositions)"""
-        sequences = []
+        sequences: List[Dict[str, Any]] = []
 
         if len(melody) < min_length * 2:
             return sequences
@@ -291,7 +291,7 @@ class PatternRecognitionTool(BaseTool):
         include_transformations: bool,
     ) -> List[Dict]:
         """Find recurring melodic motifs with fuzzy matching"""
-        motifs = []
+        motifs: List[Dict[str, Any]] = []
 
         if len(melody) < min_length:
             return motifs
@@ -347,7 +347,7 @@ class PatternRecognitionTool(BaseTool):
                 processed.add(i)
 
         # Sort by frequency
-        motifs.sort(key=lambda x: x["occurrences"], reverse=True)
+        motifs.sort(key=lambda x: x.get("occurrences", 0), reverse=True)
 
         return motifs
 
@@ -479,8 +479,8 @@ class PatternRecognitionTool(BaseTool):
                 intervals.append("P1")
 
         # Find recurring patterns
-        pattern_counts = defaultdict(int)
-        pattern_positions = defaultdict(list)
+        pattern_counts: Dict[Tuple[str, ...], int] = defaultdict(int)
+        pattern_positions: Dict[Tuple[str, ...], List[int]] = defaultdict(list)
 
         for length in range(min_length, min(len(intervals), 8)):
             for start in range(len(intervals) - length + 1):
@@ -505,12 +505,12 @@ class PatternRecognitionTool(BaseTool):
 
         # Sort by significance and frequency
         patterns.sort(
-            key=lambda x: (x["occurrences"], x["musical_significance"]), reverse=True
+            key=lambda x: (x.get("occurrences", 0), x.get("musical_significance", 0)), reverse=True
         )
 
         return patterns
 
-    def _assess_interval_pattern_significance(self, pattern: Tuple[str]) -> float:
+    def _assess_interval_pattern_significance(self, pattern: Tuple[str, ...]) -> float:
         """Assess musical significance of an interval pattern"""
         significance = 0.5
 
@@ -538,7 +538,7 @@ class PatternRecognitionTool(BaseTool):
         self, rhythm_stream: List[Dict], min_length: int, threshold: float
     ) -> List[Dict]:
         """Find recurring rhythmic patterns"""
-        motifs = []
+        motifs: List[Dict[str, Any]] = []
 
         if len(rhythm_stream) < min_length:
             return motifs
@@ -641,7 +641,7 @@ class PatternRecognitionTool(BaseTool):
 
         return patterns
 
-    def _get_strong_beats(self, time_sig) -> List[int]:
+    def _get_strong_beats(self, time_sig: Any) -> List[int]:
         """Identify strong beats in a time signature"""
         if time_sig.numerator == 4:
             return [1, 3]
@@ -658,7 +658,7 @@ class PatternRecognitionTool(BaseTool):
                 strong.append(time_sig.numerator // 2 + 1)
             return strong
 
-    def _classify_meter(self, time_sig) -> str:
+    def _classify_meter(self, time_sig: Any) -> str:
         """Classify the type of meter"""
         if time_sig.numerator in [2, 4]:
             return "simple_duple"
@@ -710,7 +710,7 @@ class PatternRecognitionTool(BaseTool):
 
     def _detect_cross_rhythms(self, score: stream.Score) -> List[Dict]:
         """Detect polyrhythms between parts"""
-        cross_rhythms = []
+        cross_rhythms: List[Dict[str, Any]] = []
 
         try:
             if len(score.parts) < 2:
@@ -863,7 +863,7 @@ class PatternRecognitionTool(BaseTool):
 
     def _get_common_intervals(self, melodies: List[List]) -> List[Dict]:
         """Get most common melodic intervals"""
-        interval_counts = defaultdict(int)
+        interval_counts: Dict[str, int] = defaultdict(int)
 
         for melody in melodies:
             for i in range(len(melody) - 1):
@@ -890,7 +890,7 @@ class PatternRecognitionTool(BaseTool):
         total_duration = score.duration.quarterLength
 
         if total_duration > 0:
-            return round(total_notes / total_duration, 2)
+            return float(round(total_notes / total_duration, 2))
         return 0.0
 
     def _identify_transformations(self, similar_patterns: List[Dict]) -> List[str]:
