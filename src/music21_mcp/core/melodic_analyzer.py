@@ -233,7 +233,7 @@ class MelodicAnalyzer:
         all_motives = []
 
         for part in melodic_parts:
-            notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
+            notes = [n for n in part.flatten().notes if hasattr(n, "pitch")]
             if len(notes) < min_length:
                 continue
 
@@ -295,7 +295,7 @@ class MelodicAnalyzer:
             List of PatternMatch objects
         """
         patterns: List[Dict[str, Any]] = []
-        notes = [n for n in melody.flatten().notes if hasattr(n, 'pitch')]
+        notes = [n for n in melody.flatten().notes if hasattr(n, "pitch")]
 
         if len(notes) < pattern_length * 2:
             return patterns
@@ -357,7 +357,7 @@ class MelodicAnalyzer:
         """
         result = CrossCulturalAnalysis()
 
-        notes = [n for n in melody.flatten().notes if hasattr(n, 'pitch')]
+        notes = [n for n in melody.flatten().notes if hasattr(n, "pitch")]
         if not notes:
             return result
 
@@ -553,7 +553,7 @@ class MelodicAnalyzer:
             development["complexity_curve"].append(complexity_point)
 
         # Find climax points
-        all_notes = [n for n in melody.flatten().notes if hasattr(n, 'pitch')]
+        all_notes = [n for n in melody.flatten().notes if hasattr(n, "pitch")]
         if all_notes:
             pitches = [n.pitch.midi for n in all_notes]
             climax_indices = signal.find_peaks(pitches, prominence=5)[0]
@@ -742,7 +742,7 @@ class MelodicAnalyzer:
 
         for part in score.parts:
             # Check if part is likely melodic (not just chords)
-            notes = [n for n in part.flatten().notes if hasattr(n, 'pitch')]
+            notes = [n for n in part.flatten().notes if hasattr(n, "pitch")]
             if not notes:
                 continue
 
@@ -1528,8 +1528,8 @@ class MelodicAnalyzer:
         self, melody1: stream.Stream, melody2: stream.Stream, method: str
     ) -> float:
         """Calculate similarity between two melodies"""
-        notes1 = [n for n in melody1.flatten().notes if hasattr(n, 'pitch')]
-        notes2 = [n for n in melody2.flatten().notes if hasattr(n, 'pitch')]
+        notes1 = [n for n in melody1.flatten().notes if hasattr(n, "pitch")]
+        notes2 = [n for n in melody2.flatten().notes if hasattr(n, "pitch")]
 
         if not notes1 or not notes2:
             return 0.0
@@ -1629,10 +1629,10 @@ class MelodicAnalyzer:
         """Identify types of variations applied"""
         variation_types = []
 
-        theme_notes = [n for n in theme.flatten().notes if hasattr(n, 'pitch')]
+        theme_notes = [n for n in theme.flatten().notes if hasattr(n, "pitch")]
 
         for var in variations:
-            var_notes = [n for n in var.flatten().notes if hasattr(n, 'pitch')]
+            var_notes = [n for n in var.flatten().notes if hasattr(n, "pitch")]
 
             # Check for different variation techniques
             types = []

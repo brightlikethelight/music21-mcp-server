@@ -99,7 +99,7 @@ class SessionStorage(ABC):
     """Abstract base class for session storage"""
 
     @abstractmethod
-    async def save_session(self, session: UserSession):
+    async def save_session(self, session: UserSession) -> None:
         """Save user session"""
         pass
 
@@ -109,12 +109,12 @@ class SessionStorage(ABC):
         pass
 
     @abstractmethod
-    async def delete_session(self, session_id: str):
+    async def delete_session(self, session_id: str) -> None:
         """Delete session"""
         pass
 
     @abstractmethod
-    async def cleanup_expired_sessions(self):
+    async def cleanup_expired_sessions(self) -> None:
         """Clean up expired sessions"""
         pass
 
@@ -122,7 +122,7 @@ class SessionStorage(ABC):
 class InMemoryOAuth2Storage(OAuth2Storage):
     """In-memory implementation of OAuth2 storage (for development)"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.clients: Dict[str, ClientRegistration] = {}
         self.authorization_codes: Dict[str, AuthorizationCode] = {}
         self.access_tokens: Dict[str, AccessToken] = {}
@@ -130,41 +130,41 @@ class InMemoryOAuth2Storage(OAuth2Storage):
         self.users: Dict[str, User] = {}
         self.username_to_user_id: Dict[str, str] = {}
 
-    async def save_client(self, client: ClientRegistration):
+    async def save_client(self, client: ClientRegistration) -> None:
         self.clients[client.client_id] = client
 
     async def get_client(self, client_id: str) -> Optional[ClientRegistration]:
         return self.clients.get(client_id)
 
-    async def save_authorization_code(self, code: AuthorizationCode):
+    async def save_authorization_code(self, code: AuthorizationCode) -> None:
         self.authorization_codes[code.code] = code
 
     async def get_authorization_code(self, code: str) -> Optional[AuthorizationCode]:
         return self.authorization_codes.get(code)
 
-    async def mark_authorization_code_used(self, code: str):
+    async def mark_authorization_code_used(self, code: str) -> None:
         if code in self.authorization_codes:
             self.authorization_codes[code].used = True
 
-    async def save_access_token(self, token: AccessToken):
+    async def save_access_token(self, token: AccessToken) -> None:
         self.access_tokens[token.token] = token
 
     async def get_access_token(self, token: str) -> Optional[AccessToken]:
         return self.access_tokens.get(token)
 
-    async def revoke_access_token(self, token: str):
+    async def revoke_access_token(self, token: str) -> None:
         self.access_tokens.pop(token, None)
 
-    async def save_refresh_token(self, token: RefreshToken):
+    async def save_refresh_token(self, token: RefreshToken) -> None:
         self.refresh_tokens[token.token] = token
 
     async def get_refresh_token(self, token: str) -> Optional[RefreshToken]:
         return self.refresh_tokens.get(token)
 
-    async def revoke_refresh_token(self, token: str):
+    async def revoke_refresh_token(self, token: str) -> None:
         self.refresh_tokens.pop(token, None)
 
-    async def save_user(self, user: User):
+    async def save_user(self, user: User) -> None:
         self.users[user.user_id] = user
         self.username_to_user_id[user.username] = user.user_id
 
@@ -181,19 +181,19 @@ class InMemoryOAuth2Storage(OAuth2Storage):
 class InMemorySessionStorage(SessionStorage):
     """In-memory session storage (for development)"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sessions: Dict[str, UserSession] = {}
 
-    async def save_session(self, session: UserSession):
+    async def save_session(self, session: UserSession) -> None:
         self.sessions[session.session_id] = session
 
     async def get_session(self, session_id: str) -> Optional[UserSession]:
         return self.sessions.get(session_id)
 
-    async def delete_session(self, session_id: str):
+    async def delete_session(self, session_id: str) -> None:
         self.sessions.pop(session_id, None)
 
-    async def cleanup_expired_sessions(self):
+    async def cleanup_expired_sessions(self) -> None:
         """Remove expired sessions"""
         expired = []
         for session_id, session in self.sessions.items():

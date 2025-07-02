@@ -323,7 +323,9 @@ class MidiParser(BaseParser):
 
         return header == b"MThd"
 
-    def _preserve_midi_metadata(self, score: stream.Score, midi_file: midi.MidiFile) -> None:
+    def _preserve_midi_metadata(
+        self, score: stream.Score, midi_file: midi.MidiFile
+    ) -> None:
         """Preserve additional MIDI metadata in the score"""
         # Store MIDI-specific data
         score.metadata.custom["midi_format"] = midi_file.format

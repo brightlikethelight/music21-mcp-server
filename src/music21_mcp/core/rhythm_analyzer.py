@@ -120,8 +120,8 @@ class RhythmAnalyzer:
         "bossa": [0.75, 0.25, 0.75, 0.25],
     }
 
-    def __init__(self):
-        self.cache = {}
+    def __init__(self) -> None:
+        self.cache: Dict[str, Any] = {}
 
     async def analyze_rhythm(
         self,
@@ -149,7 +149,7 @@ class RhythmAnalyzer:
         meter_analysis = await self._analyze_meter(score)
 
         # Extract rhythm patterns
-        patterns = []
+        patterns: List[RhythmicPattern] = []
         if include_patterns:
             patterns = await self._extract_rhythmic_patterns(
                 score, pattern_min_length, pattern_min_occurrences
@@ -188,7 +188,7 @@ class RhythmAnalyzer:
     async def _analyze_tempo(self, score: stream.Score) -> TempoAnalysis:
         """Analyze tempo characteristics"""
         # Extract tempo markings
-        tempo_markings = []
+        tempo_markings: List[Any] = []
         for element in score.flatten():
             if isinstance(element, tempo.TempoIndication):
                 tempo_markings.append(
@@ -218,7 +218,7 @@ class RhythmAnalyzer:
                 )
 
         # Analyze tempo changes
-        tempo_changes = []
+        tempo_changes: List[Dict[str, Any]] = []
         for i in range(1, len(tempo_markings)):
             prev = tempo_markings[i - 1]
             curr = tempo_markings[i]
@@ -291,7 +291,7 @@ class RhythmAnalyzer:
     ) -> Optional[float]:
         """Detect tempo from note durations using autocorrelation"""
         # Get all note onsets
-        onsets = []
+        onsets: List[float] = []
         for n in score.flatten().notes:
             if isinstance(n, (note.Note, chord.Chord)):
                 onsets.append(float(n.offset))
@@ -321,7 +321,7 @@ class RhythmAnalyzer:
 
             # Sanity check
             if 30 <= tempo <= 300:
-                return tempo
+                return float(tempo)
 
         return None
 
@@ -377,7 +377,7 @@ class RhythmAnalyzer:
             factors.append(min(1.0, len(tempo_indications) / 10.0))
 
         # Average all factors
-        return np.mean(factors) if factors else 0.0
+        return float(np.mean(factors)) if factors else 0.0
 
     def _get_tempo_character(self, bpm: float) -> str:
         """Get tempo character description"""
@@ -670,8 +670,8 @@ class RhythmAnalyzer:
 
         # Extract rhythm sequences from each part
         for part in score.parts:
-            rhythm_sequence = []
-            current_measure_rhythms = []
+            rhythm_sequence: List[Any] = []
+            current_measure_rhythms: List[Any] = []
             current_measure_num = None
 
             for element in part.flatten():
@@ -994,7 +994,7 @@ class RhythmAnalyzer:
             e["strength"] * e["duration"] for e in syncopation_events
         )
 
-        return min(1.0, weighted_syncopation / total_duration)
+        return min(1.0, float(weighted_syncopation / total_duration))
 
     async def _analyze_groove(self, score: stream.Score) -> Dict[str, Any]:
         """Analyze groove and swing characteristics"""
@@ -1140,17 +1140,17 @@ class RhythmAnalyzer:
             repetition_factor = min(1.0, len(patterns) / 5.0)
             pocket_factors.append(repetition_factor)
 
-        return np.mean(pocket_factors) if pocket_factors else 0.5
+        return float(np.mean(pocket_factors)) if pocket_factors else 0.5
 
     async def _detect_polyrhythms(self, score: stream.Score) -> List[Dict[str, Any]]:
         """Detect polyrhythmic patterns between parts"""
-        polyrhythms = []
+        polyrhythms: List[Dict[str, Any]] = []
 
         if len(score.parts) < 2:
             return polyrhythms
 
         # Compare rhythmic patterns between parts
-        part_patterns = []
+        part_patterns: List[Dict[str, Any]] = []
 
         for part in score.parts[:4]:  # Limit to first 4 parts for efficiency
             # Extract characteristic rhythm
@@ -1174,9 +1174,10 @@ class RhythmAnalyzer:
                 cycle1 = part_patterns[i]["cycle_length"]
                 cycle2 = part_patterns[j]["cycle_length"]
 
-                if cycle1 and cycle2 and cycle1 != cycle2:
+                if cycle1 is not None and cycle2 is not None and cycle1 != cycle2:
                     # Check if they form a polyrhythm
-                    ratio = max(cycle1, cycle2) / min(cycle1, cycle2)
+                    c1, c2 = float(cycle1), float(cycle2)
+                    ratio = max(c1, c2) / min(c1, c2)
 
                     # Common polyrhythms
                     common_ratios = {
@@ -1224,7 +1225,7 @@ class RhythmAnalyzer:
 
     async def _create_rhythm_histogram(self, score: stream.Score) -> Dict[str, int]:
         """Create histogram of rhythm values"""
-        histogram = Counter()
+        histogram: Counter[str] = Counter()
 
         for n in score.flatten().notesAndRests:
             # Convert duration to standard note value

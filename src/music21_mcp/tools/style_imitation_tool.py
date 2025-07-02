@@ -289,12 +289,12 @@ class StyleImitationTool(BaseTool):
             if all_notes:
                 intervals = []
                 for i in range(len(all_notes) - 1):
-                    if isinstance(all_notes[i], note.Note) and isinstance(
-                        all_notes[i + 1], note.Note
-                    ):
+                    current_note = all_notes[i]
+                    next_note = all_notes[i + 1]
+                    if isinstance(current_note, note.Note) and isinstance(next_note, note.Note):
                         try:
                             intv = interval.Interval(
-                                noteStart=all_notes[i], noteEnd=all_notes[i + 1]
+                                noteStart=current_note, noteEnd=next_note
                             )
                             intervals.append(intv.semitones)
                         except:
@@ -313,7 +313,7 @@ class StyleImitationTool(BaseTool):
                         abs(i) for i in intervals
                     )
                     style_data["melodic"]["contour_changes"] = (
-                        self._count_contour_changes(intervals)
+                        self._count_contour_changes([int(i) for i in intervals])
                     )
 
             # Harmonic analysis
@@ -340,22 +340,24 @@ class StyleImitationTool(BaseTool):
             if durations:
                 style_data["rhythmic"]["avg_duration"] = np.mean(durations)
                 style_data["rhythmic"]["rhythm_variety"] = len(set(durations))
+                note_list = [n for n in all_notes if isinstance(n, note.Note)]
                 style_data["rhythmic"]["syncopation_level"] = (
-                    self._calculate_syncopation(all_notes)
+                    self._calculate_syncopation(note_list)
                 )
                 style_data["rhythmic"]["common_patterns"] = (
-                    self._extract_rhythm_patterns(all_notes)
+                    self._extract_rhythm_patterns(note_list)
                 )
 
             # Textural analysis
             parts = score.parts
             if len(parts) > 0:
                 style_data["textural"]["voice_count"] = len(parts)
+                parts_list = list(parts)
                 style_data["textural"]["density_profile"] = (
-                    self._analyze_texture_density(parts)
+                    self._analyze_texture_density(parts_list)
                 )
                 style_data["textural"]["voice_independence"] = (
-                    self._calculate_voice_independence(parts)
+                    self._calculate_voice_independence(parts_list)
                 )
 
             # Formal analysis
@@ -600,7 +602,8 @@ class StyleImitationTool(BaseTool):
         if constraints:
             for constraint in constraints:
                 if constraint.startswith("key:"):
-                    key_constraint = constraint.split(":")[1]
+                    # TODO: Implement key constraint
+                    _ = constraint.split(":")[1]
                 elif constraint.startswith("range:"):
                     range_constraint = constraint.split(":")[1]
 
@@ -696,7 +699,8 @@ class StyleImitationTool(BaseTool):
                 return float(random.choice(durations))
 
         # Use style-based generation
-        avg_dur = style_data.get("rhythmic", {}).get("avg_duration", 1.0)
+        # TODO: Use average duration from style data
+        # avg_dur = style_data.get("rhythmic", {}).get("avg_duration", 1.0)
 
         if complexity == "simple":
             return random.choice([0.5, 1.0])
@@ -756,15 +760,12 @@ class StyleImitationTool(BaseTool):
         for part in score.parts:
             notes = list(part.flatten().notes)
             for i in range(len(notes) - 1):
-                if isinstance(notes[i], note.Note) and isinstance(
-                    notes[i + 1], note.Note
-                ):
-                    if hasattr(notes[i], "pitch") and hasattr(notes[i + 1], "pitch"):
-                        interval_size = abs(
-                            notes[i].pitch.midi - notes[i + 1].pitch.midi
-                        )
-                    else:
-                        continue
+                current_note = notes[i]
+                next_note = notes[i + 1]
+                if isinstance(current_note, note.Note) and isinstance(next_note, note.Note):
+                    interval_size = abs(
+                        current_note.pitch.midi - next_note.pitch.midi
+                    )
                     if interval_size == 4:  # Major third
                         # Could add passing tone
                         pass

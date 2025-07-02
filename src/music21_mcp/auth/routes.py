@@ -5,7 +5,6 @@ Implements authorization, token, and metadata endpoints
 
 import logging
 from typing import Optional
-from urllib.parse import parse_qs, urlparse
 
 from fastapi import (
     APIRouter,
@@ -15,22 +14,19 @@ from fastapi import (
     Query,
     Request,
     Response,
-    status,
 )
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
 from .models import (
     AuthorizationRequest,
-    ClientRegistration,
     GrantType,
     ResponseType,
     TokenRequest,
-    TokenResponse,
     User,
 )
 from .oauth2_provider import OAuth2Provider
-from .security import SecurityMiddleware, parse_basic_auth, require_scope
+from .security import SecurityMiddleware, parse_basic_auth
 from .session_manager import SessionManager
 from .storage import OAuth2Storage
 
@@ -143,14 +139,14 @@ async def authorize_get(
                 <p><strong>Application:</strong> {client_id}</p>
                 <p><strong>Redirect URI:</strong> {redirect_uri}</p>
             </div>
-            
+
             <div class="scopes">
                 <h3>This application is requesting access to:</h3>
                 <div class="scope-item">✓ {scope}</div>
             </div>
-            
+
             <p>Logged in as: <strong>{current_user.username}</strong></p>
-            
+
             <form method="POST" action="/auth/authorize">
                 <input type="hidden" name="response_type" value="{response_type}">
                 <input type="hidden" name="client_id" value="{client_id}">
@@ -159,7 +155,7 @@ async def authorize_get(
                 <input type="hidden" name="state" value="{state}">
                 <input type="hidden" name="code_challenge" value="{code_challenge}">
                 <input type="hidden" name="code_challenge_method" value="{code_challenge_method}">
-                
+
                 <div class="buttons">
                     <button type="submit" name="action" value="approve" class="approve">
                         Approve

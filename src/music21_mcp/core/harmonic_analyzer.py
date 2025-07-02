@@ -249,8 +249,8 @@ class HarmonicAnalyzer:
         # Analyze each voice pair
         for i in range(len(parts)):
             for j in range(i + 1, len(parts)):
-                voice1_notes = list(parts[i].flatten().notes)
-                voice2_notes = list(parts[j].flatten().notes)
+                voice1_notes = [n for n in parts[i].flatten().notes if isinstance(n, note.Note)]
+                voice2_notes = [n for n in parts[j].flatten().notes if isinstance(n, note.Note)]
 
                 # Align voices by offset
                 aligned_pairs = self._align_voices(voice1_notes, voice2_notes)
@@ -269,9 +269,12 @@ class HarmonicAnalyzer:
                         errors = self._check_voice_leading_errors(vl, strict)
                         for error in errors:
                             error["voices"] = f"{i+1}-{j+1}"
-                            error["measure"] = self._get_offset_measure(
-                                curr_pair[0].offset, score
-                            )
+                            if curr_pair[0] is not None:
+                                error["measure"] = self._get_offset_measure(
+                                    float(curr_pair[0].offset), score
+                                )
+                            else:
+                                error["measure"] = 0
                             result.errors.append(error)
 
                         # Analyze motion type
@@ -281,7 +284,7 @@ class HarmonicAnalyzer:
                                 {
                                     "voices": f"{i+1}-{j+1}",
                                     "measure": self._get_offset_measure(
-                                        curr_pair[0].offset, score
+                                        float(curr_pair[0].offset) if curr_pair[0] is not None else 0.0, score
                                     ),
                                     "interval": motion["interval"],
                                     "perfect": motion["perfect"],
@@ -289,12 +292,13 @@ class HarmonicAnalyzer:
                             )
 
                         # Check voice crossing
-                        if curr_pair[0].pitch > curr_pair[1].pitch:
+                        if (curr_pair[0] is not None and curr_pair[1] is not None and 
+                            curr_pair[0].pitch > curr_pair[1].pitch):
                             result.voice_crossings.append(
                                 {
                                     "voices": f"{i+1}-{j+1}",
                                     "measure": self._get_offset_measure(
-                                        curr_pair[0].offset, score
+                                        float(curr_pair[0].offset), score
                                     ),
                                     "pitches": [
                                         str(curr_pair[0].pitch),
@@ -305,18 +309,18 @@ class HarmonicAnalyzer:
 
         # Analyze voice ranges
         for i, part in enumerate(parts):
-            notes = list(part.flatten().notes)
+            notes = [n for n in part.flatten().notes if isinstance(n, note.Note)]
             if notes:
                 result.voice_ranges[f"voice_{i+1}"] = {
                     "lowest": min(n.pitch.midi for n in notes),
                     "highest": max(n.pitch.midi for n in notes),
-                    "average": np.mean([n.pitch.midi for n in notes]),
+                    "average": float(np.mean([n.pitch.midi for n in notes])),
                     "tessitura": self._calculate_tessitura(notes),
                 }
 
         # Calculate overall scores
         result.smoothness_score = self._calculate_smoothness(score)
-        result.independence_score = self._calculate_independence(parts)
+        result.independence_score = self._calculate_independence(list(parts))
 
         return result
 
@@ -358,7 +362,7 @@ class HarmonicAnalyzer:
             # Check for substitutions
             if i > 0:
                 prev_ch = chords[i - 1]
-                sub = self._detect_substitution(prev_ch, ch, i, chords)
+                sub = self._detect_substitution(prev_ch, ch, i, chords, score)
                 if sub:
                     result.substitutions.append(sub)
 
@@ -408,7 +412,7 @@ class HarmonicAnalyzer:
         Returns:
             List of HarmonicSequence objects
         """
-        sequences = []
+        sequences: List[HarmonicSequence] = []
 
         # Get chord progression
         chords = list(score.flatten().getElementsByClass(chord.Chord))
@@ -458,7 +462,7 @@ class HarmonicAnalyzer:
                         root1 = chords[occurrences[i - 1]["start_index"]].root()
                         root2 = chords[occurrences[i]["start_index"]].root()
                         if root1 and root2:
-                            intervals.append(interval.Interval(root1, root2).semitones)
+                            intervals.append(int(interval.Interval(root1, root2).semitones))
 
                     sequences.append(
                         HarmonicSequence(
@@ -509,7 +513,7 @@ class HarmonicAnalyzer:
         key_regions = []
 
         for i in range(0, len(measures) - window_size + 1):
-            window = stream.Stream()
+            window: stream.Stream = stream.Stream()
             for j in range(i, i + window_size):
                 window.append(measures[j])
 
@@ -801,7 +805,7 @@ class HarmonicAnalyzer:
         self, voice1: List[note.Note], voice2: List[note.Note]
     ) -> List[Tuple[Optional[note.Note], Optional[note.Note]]]:
         """Align two voices by offset"""
-        aligned = []
+        aligned: List[Tuple[Optional[note.Note], Optional[note.Note]]] = []
         i, j = 0, 0
 
         while i < len(voice1) or j < len(voice2):
@@ -811,11 +815,11 @@ class HarmonicAnalyzer:
             elif j >= len(voice2):
                 aligned.append((voice1[i], None))
                 i += 1
-            elif abs(voice1[i].offset - voice2[j].offset) < 0.1:
+            elif abs(float(voice1[i].offset) - float(voice2[j].offset)) < 0.1:
                 aligned.append((voice1[i], voice2[j]))
                 i += 1
                 j += 1
-            elif voice1[i].offset < voice2[j].offset:
+            elif float(voice1[i].offset) < float(voice2[j].offset):
                 aligned.append((voice1[i], None))
                 i += 1
             else:
@@ -887,7 +891,7 @@ class HarmonicAnalyzer:
         perfect = False
         if motion_type == "parallel" and vl.v1n1 and vl.v2n1:
             interval_obj = interval.Interval(vl.v1n1, vl.v2n1)
-            perfect = interval_obj.isPerfectConsonance()
+            perfect = interval_obj.isConsonant() and interval_obj.name in ['P1', 'P4', 'P5', 'P8']
 
         return {
             "type": motion_type,
@@ -922,13 +926,12 @@ class HarmonicAnalyzer:
         note_count = 0
 
         for part in score.parts:
-            notes = list(part.flatten().notes)
+            notes = [n for n in part.flatten().notes if isinstance(n, note.Note)]
             for i in range(len(notes) - 1):
-                if notes[i].isNote and notes[i + 1].isNote:
-                    # Smaller intervals = smoother
-                    semitones = abs(notes[i].pitch.midi - notes[i + 1].pitch.midi)
-                    total_movement += min(semitones, 12)  # Cap at octave
-                    note_count += 1
+                # Smaller intervals = smoother
+                semitones = abs(notes[i].pitch.midi - notes[i + 1].pitch.midi)
+                total_movement += min(semitones, 12)  # Cap at octave
+                note_count += 1
 
         if note_count == 0:
             return 0.0
@@ -959,18 +962,18 @@ class HarmonicAnalyzer:
                     rhythm_independence = 1 - (same_rhythm / min_len)
                     independence_scores.append(rhythm_independence)
 
-        return np.mean(independence_scores) if independence_scores else 0.5
+        return float(np.mean(independence_scores)) if independence_scores else 0.5
 
     def _get_chord_measure(self, chord: chord.Chord, score: stream.Score) -> int:
         """Get measure number for chord"""
-        return self._get_offset_measure(chord.offset, score)
+        return self._get_offset_measure(float(chord.offset), score)
 
     def _get_jazz_chord_symbol(self, ch: chord.Chord) -> str:
         """Convert chord to jazz symbol"""
         try:
             # Try to get harmony symbol
             harmony_obj = harmony.chordSymbolFromChord(ch)
-            return harmony_obj.figure
+            return str(harmony_obj.figure)
         except:
             # Fallback to basic symbol
             return ch.pitchedCommonName
@@ -993,7 +996,7 @@ class HarmonicAnalyzer:
 
     def _get_extensions(self, ch: chord.Chord) -> List[str]:
         """Get chord extensions"""
-        extensions = []
+        extensions: List[str] = []
         root = ch.root()
 
         if not root:
@@ -1012,7 +1015,7 @@ class HarmonicAnalyzer:
 
     def _get_alterations(self, ch: chord.Chord) -> List[str]:
         """Get chord alterations"""
-        alterations = []
+        alterations: List[str] = []
 
         # This would need more sophisticated analysis
         # For now, return empty list
@@ -1037,6 +1040,7 @@ class HarmonicAnalyzer:
         curr: chord.Chord,
         index: int,
         all_chords: List[chord.Chord],
+        score: stream.Score,
     ) -> Optional[Dict[str, Any]]:
         """Detect chord substitution"""
         # Tritone substitution
@@ -1044,7 +1048,7 @@ class HarmonicAnalyzer:
             root_interval = interval.Interval(prev.root(), curr.root())
             if root_interval.semitones == 6:  # Tritone
                 return {
-                    "measure": self._get_chord_measure(curr, None),
+                    "measure": self._get_chord_measure(curr, score),
                     "type": ChordSubstitutionType.TRITONE,
                     "original": self._get_jazz_chord_symbol(prev),
                     "substitute": self._get_jazz_chord_symbol(curr),
@@ -1089,12 +1093,14 @@ class HarmonicAnalyzer:
         self, score: stream.Score, chords: List[chord.Chord]
     ) -> List[Dict[str, Any]]:
         """Detect modal interchange (borrowed chords)"""
-        interchanges = []
+        interchanges: List[Dict[str, Any]] = []
 
-        if not self.current_key:
-            self.current_key = score.analyze("key")
-
-        parallel_key = self.current_key.parallel()
+        current_key = self.current_key or score.analyze("key")
+        if not current_key:
+            return interchanges
+            
+        self.current_key = current_key
+        parallel_key = current_key.parallel()
 
         for i, ch in enumerate(chords):
             # Check if chord belongs to parallel mode
@@ -1118,7 +1124,7 @@ class HarmonicAnalyzer:
                             "function_in_parallel": rn_parallel.figure,
                             "modal_color": (
                                 "darker"
-                                if self.current_key.mode == "major"
+                                if current_key.mode == "major"
                                 else "brighter"
                             ),
                         }
@@ -1170,7 +1176,7 @@ class HarmonicAnalyzer:
         sequences.sort(key=lambda s: (len(s.occurrences), len(s.pattern)), reverse=True)
 
         filtered = []
-        used_positions = set()
+        used_positions: set[int] = set()
 
         for seq in sequences:
             # Check if this sequence overlaps with already selected ones
@@ -1269,7 +1275,7 @@ class HarmonicAnalyzer:
 
     def _find_tonicizations(self, score: stream.Score) -> List[Dict[str, Any]]:
         """Find brief tonicizations"""
-        tonicizations = []
+        tonicizations: List[Dict[str, Any]] = []
 
         # Look for secondary dominants and their resolutions
         # This would overlap with secondary dominant detection

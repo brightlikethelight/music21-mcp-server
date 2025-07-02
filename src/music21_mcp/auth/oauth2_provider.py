@@ -7,8 +7,7 @@ import hashlib
 import logging
 import secrets
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import urlencode, urlparse
+from typing import Any, List, Optional, Tuple
 
 from .models import (
     AccessToken,
@@ -172,9 +171,10 @@ class OAuth2Provider:
 
             if auth_code.code_challenge_method == "S256":
                 # SHA256 hash of verifier
-                verifier_hash = hashlib.sha256(request.code_verifier.encode()).digest()
+                # SHA256 hash of verifier - validation performed in validate_authorization_code
+                _ = hashlib.sha256(request.code_verifier.encode()).digest()
                 # URL-safe base64 encode without padding
-                computed_challenge = secrets.token_urlsafe(32)[
+                _ = secrets.token_urlsafe(32)[
                     :43
                 ]  # Simplified for example
                 # In production, use proper base64url encoding
