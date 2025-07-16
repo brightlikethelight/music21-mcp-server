@@ -123,7 +123,7 @@ class HarmonyAnalysisTool(BaseTool):
             # Modulation detection
             if include_modulations:
                 self.report_progress(0.8, "Detecting modulations")
-                modulation_result = await self.analyzer.detect_modulations(score)
+                modulation_result = await self.analyzer.analyze_modulations(score)
                 results["modulations"] = self._serialize_modulation_analysis(
                     modulation_result
                 )
@@ -349,12 +349,18 @@ class HarmonyAnalysisTool(BaseTool):
 
     def _serialize_modulation_analysis(self, analysis) -> Dict[str, Any]:
         """Convert modulation analysis to JSON-serializable format"""
+        # Extract unique keys from key_areas
+        keys_visited = []
+        if hasattr(analysis, 'key_areas'):
+            keys_visited = list({area.get('key', '') for area in analysis.key_areas if area.get('key')})
+        
         return {
-            "modulations": analysis.modulations[:10],
-            "modulation_count": len(analysis.modulations),
-            "keys_visited": analysis.keys_visited,
-            "tonal_plan": analysis.tonal_plan,
-            "stability_score": analysis.stability_score,
+            "modulations": analysis.modulations[:10] if hasattr(analysis, 'modulations') else [],
+            "modulation_count": len(analysis.modulations) if hasattr(analysis, 'modulations') else 0,
+            "keys_visited": keys_visited,
+            "key_areas": analysis.key_areas[:10] if hasattr(analysis, 'key_areas') else [],
+            "pivot_chords": analysis.pivot_chords[:5] if hasattr(analysis, 'pivot_chords') else [],
+            "tonicization_regions": len(analysis.tonicization_regions) if hasattr(analysis, 'tonicization_regions') else 0,
         }
 
     def _identify_common_progressions(
@@ -445,6 +451,7 @@ class HarmonyAnalysisTool(BaseTool):
             mod = results["modulations"]
             summary["modulation_count"] = mod.get("modulation_count", 0)
             summary["keys_visited"] = mod.get("keys_visited", [])
+            summary["key_areas_count"] = len(mod.get("key_areas", []))
 
         # Style indicators
         if results.get("jazz_harmony", {}).get("extended_chords"):
