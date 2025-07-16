@@ -245,7 +245,9 @@ class PatternRecognitionTool(BaseTool):
                 intervals.append(0)
 
         # Look for repeated interval patterns
-        for pattern_length in range(min_length, len(intervals) // 2):
+        # Ensure we have at least space for two occurrences of the pattern
+        max_pattern_length = min(len(intervals) // 2 + 1, len(intervals))
+        for pattern_length in range(min_length, max_pattern_length):
             for start in range(len(intervals) - pattern_length * 2 + 1):
                 pattern = intervals[start : start + pattern_length]
 

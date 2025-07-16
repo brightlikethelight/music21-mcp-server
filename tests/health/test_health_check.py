@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 # Add src to path for imports
-sys.path.insert(0, 'src')
+sys.path.insert(0, '../../src')
 
 class TestHealthMonitor:
     def __init__(self):

@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import traceback
 
 # Add src to path for imports
-sys.path.insert(0, 'src')
+sys.path.insert(0, '../../src')
 
 try:
     from music21 import converter, corpus, key, meter, analysis, harmony, pitch, chord

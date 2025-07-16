@@ -30,7 +30,7 @@ COPY pyproject.toml poetry.lock ./
 # Configure poetry and install dependencies
 RUN poetry config virtualenvs.create true \
     && poetry config virtualenvs.in-project true \
-    && poetry install --no-dev --no-root \
+    && poetry install --only main --no-root \
     && rm -rf $POETRY_CACHE_DIR
 
 # Production stage
@@ -68,25 +68,20 @@ RUN mkdir -p /app/data /app/logs \
 # Switch to non-root user
 USER music21
 
-# Health check
+# Health check for MCP server (stdio-based)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD python -c "import sys; sys.path.insert(0, '/app/src'); from music21_mcp.server import mcp; print('healthy')" || exit 1
 
 # Environment variables
 ENV PYTHONPATH=/app/src
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PORT=8000
-ENV HOST=0.0.0.0
-
-# Expose port
-EXPOSE 8000
 
 # Use tini as init system
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Default command
-CMD ["python", "-m", "music21_mcp.server_remote", "--host", "0.0.0.0", "--port", "8000"]
+# Default command (MCP server uses stdio)
+CMD ["python", "-m", "music21_mcp.server"]
 
 # Labels for metadata
 LABEL maintainer="music21-mcp-server"

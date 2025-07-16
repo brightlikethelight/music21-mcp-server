@@ -23,7 +23,6 @@ except ImportError:
     MUSIC21_AVAILABLE = False
     print("⚠️ Music21 not available - some tests will be skipped")
 
-from music21_mcp.server import ScoreManager
 from music21_mcp.tools import (
     ImportScoreTool,
     KeyAnalysisTool,
@@ -40,22 +39,22 @@ class MCPToolIntegrationTester:
     """Integration tests for the actual MCP tools"""
     
     def __init__(self):
-        self.score_manager = ScoreManager(max_scores=50)
+        # Use simple dict for score storage - matching the new server architecture
+        self.scores = {}
         self.test_results = []
         self.errors = []
         
-        # Initialize tools (as the server does) - tools expect dict-like interface
-        # Pass the scores dict from ScoreManager, not the manager itself
+        # Initialize tools with simple dict (as the new server does)
         self.tools = {
-            "import": ImportScoreTool(self.score_manager.scores),
-            "list": ListScoresTool(self.score_manager.scores),
-            "key_analysis": KeyAnalysisTool(self.score_manager.scores),
-            "harmony_analysis": HarmonyAnalysisTool(self.score_manager.scores),
-            "voice_leading": VoiceLeadingAnalysisTool(self.score_manager.scores),
-            "pattern_recognition": PatternRecognitionTool(self.score_manager.scores),
-            "score_info": ScoreInfoTool(self.score_manager.scores),
-            "export": ExportScoreTool(self.score_manager.scores),
-            "delete": DeleteScoreTool(self.score_manager.scores),
+            "import": ImportScoreTool(self.scores),
+            "list": ListScoresTool(self.scores),
+            "key_analysis": KeyAnalysisTool(self.scores),
+            "harmony_analysis": HarmonyAnalysisTool(self.scores),
+            "voice_leading": VoiceLeadingAnalysisTool(self.scores),
+            "pattern_recognition": PatternRecognitionTool(self.scores),
+            "score_info": ScoreInfoTool(self.scores),
+            "export": ExportScoreTool(self.scores),
+            "delete": DeleteScoreTool(self.scores),
         }
     
     def log_error(self, test_name: str, error: str, severity: str = "medium"):
@@ -226,7 +225,7 @@ C E G c |]"""
             score.append(part)
             
             # Store the score - tools use dict interface
-            self.score_manager.scores["harmony_test"] = score
+            self.scores["harmony_test"] = score
             
             # Test harmony analysis
             print("   Testing harmony analysis...")
@@ -292,19 +291,24 @@ C E G c |]"""
             
             score.append(part)
             # Store the score - tools use dict interface
-            self.score_manager.scores["pattern_test"] = score
+            self.scores["pattern_test"] = score
             
             # Test pattern recognition
             print("   Testing pattern detection...")
             result = await self.tools["pattern_recognition"].execute(
                 score_id="pattern_test",
-                min_occurrences=2
+                pattern_type="both",
+                min_pattern_length=2
             )
             
             if result.get("status") == "success":
-                data = result.get("data", {})
-                melodic = data.get("melodic_patterns", [])
-                rhythmic = data.get("rhythmic_patterns", [])
+                # Pattern results are returned directly, not under 'data'
+                melodic_data = result.get("melodic_patterns", {})
+                rhythmic_data = result.get("rhythmic_patterns", {})
+                
+                # Extract sequences and motifs from melodic patterns
+                melodic = melodic_data.get("sequences", []) + melodic_data.get("motifs", [])
+                rhythmic = rhythmic_data.get("rhythmic_motifs", [])
                 
                 print(f"   ✅ Found {len(melodic)} melodic patterns")
                 print(f"   ✅ Found {len(rhythmic)} rhythmic patterns")

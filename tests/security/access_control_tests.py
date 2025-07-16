@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Set, Any
 import sys
 
 # Add src to path for imports
-sys.path.insert(0, 'src')
+sys.path.insert(0, '../../src')
 
 from music21_mcp.auth.storage import InMemoryOAuth2Storage
 from music21_mcp.auth.oauth2_provider import OAuth2Provider, OAuth2Config

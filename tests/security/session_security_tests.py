@@ -14,7 +14,7 @@ from typing import Dict, List, Optional, Set
 import sys
 
 # Add src to path for imports
-sys.path.insert(0, 'src')
+sys.path.insert(0, '../../src')
 
 from music21_mcp.auth.storage import InMemorySessionStorage
 from music21_mcp.auth.session_manager import SessionManager, SessionConfig

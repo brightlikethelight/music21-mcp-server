@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Set
 import psutil
 
 # Add src to path for imports
-sys.path.insert(0, 'src')
+sys.path.insert(0, '../../src')
 
 from music21_mcp.server import ScoreManager, ServerConfig
 
