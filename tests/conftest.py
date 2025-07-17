@@ -1,118 +1,83 @@
 """
-Pytest configuration and shared fixtures for music21 MCP server tests
+Pytest configuration and fixtures for music21-mcp-server tests
 """
-
 import asyncio
-import os
-import tempfile
+import pytest
+import sys
 from pathlib import Path
 
-import pytest
-from music21 import chord, key, meter, note, stream, tempo
+# Add src directory to Python path
+src_path = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_path))
 
-# Test data directory
-TEST_DATA_DIR = Path(__file__).parent / "test_data"
+# Import what we actually have
+from music21_mcp.tools import (
+    ImportScoreTool,
+    ListScoresTool,
+    KeyAnalysisTool,
+    ChordAnalysisTool,
+    ScoreInfoTool,
+    ExportScoreTool,
+    DeleteScoreTool,
+    HarmonyAnalysisTool,
+    VoiceLeadingAnalysisTool,
+    PatternRecognitionTool,
+    HarmonizationTool,
+    CounterpointGeneratorTool,
+    StyleImitationTool,
+)
 
+@pytest.fixture
+def clean_score_storage():
+    """Provide clean score storage for each test"""
+    return {}
+
+@pytest.fixture
+def sample_bach_score():
+    """Bach chorale from music21 corpus for testing"""
+    from music21 import corpus
+    try:
+        return corpus.parse('bach/bwv66.6')
+    except:
+        # Fallback if corpus not available
+        from music21 import stream, note, key
+        s = stream.Stream()
+        s.append(key.Key('C'))
+        s.append(note.Note('C4', quarterLength=1))
+        s.append(note.Note('D4', quarterLength=1))
+        s.append(note.Note('E4', quarterLength=1))
+        s.append(note.Note('F4', quarterLength=1))
+        return s
+
+@pytest.fixture
+def all_tool_classes():
+    """All available tool classes for testing"""
+    return [
+        ImportScoreTool,
+        ListScoresTool,
+        KeyAnalysisTool,
+        ChordAnalysisTool,
+        ScoreInfoTool,
+        ExportScoreTool,
+        DeleteScoreTool,
+        HarmonyAnalysisTool,
+        VoiceLeadingAnalysisTool,
+        PatternRecognitionTool,
+        HarmonizationTool,
+        CounterpointGeneratorTool,
+        StyleImitationTool,
+    ]
 
 @pytest.fixture
 def event_loop():
-    """Create an instance of the default event loop for each test case."""
+    """Create an instance of the default event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
-
 @pytest.fixture
-def simple_score():
-    """Create a simple test score in C major"""
-    s = stream.Score()
-    p = stream.Part()
-
-    # Add time signature and key
-    p.append(meter.TimeSignature("4/4"))
-    p.append(key.KeySignature(0))  # C major
-    p.append(tempo.MetronomeMark(number=120))
-
-    # Add a simple melody
-    notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]
-    for pitch in notes:
-        n = note.Note(pitch)
-        n.quarterLength = 1
-        p.append(n)
-
-    s.append(p)
-    return s
-
-
-@pytest.fixture
-def chord_progression_score():
-    """Create a score with chord progression"""
-    s = stream.Score()
-    p = stream.Part()
-
-    # Add time signature and key
-    p.append(meter.TimeSignature("4/4"))
-    p.append(key.KeySignature(0))  # C major
-
-    # I-IV-V-I progression
-    chords_data = [
-        ["C4", "E4", "G4"],  # I
-        ["F4", "A4", "C5"],  # IV
-        ["G4", "B4", "D5"],  # V
-        ["C4", "E4", "G4"],  # I
-    ]
-
-    for chord_pitches in chords_data:
-        c = chord.Chord(chord_pitches)
-        c.quarterLength = 4
-        p.append(c)
-
-    s.append(p)
-    return s
-
-
-@pytest.fixture
-def complex_rhythm_score():
-    """Create a score with complex rhythms"""
-    s = stream.Score()
-    p = stream.Part()
-
-    # Add time signature
-    p.append(meter.TimeSignature("6/8"))
-
-    # Add varied rhythms
-    rhythms = [1.5, 0.5, 1, 0.75, 0.25, 2, 0.5, 0.5]
-
-    for i, dur in enumerate(rhythms):
-        n = note.Note("C4")
-        n.quarterLength = dur
-        p.append(n)
-
-    s.append(p)
-    return s
-
-
-@pytest.fixture
-def temp_midi_file(simple_score):
-    """Create a temporary MIDI file"""
-    with tempfile.NamedTemporaryFile(suffix=".mid", delete=False) as f:
-        simple_score.write("midi", fp=f.name)
-        yield f.name
-    os.unlink(f.name)
-
-
-@pytest.fixture
-def temp_musicxml_file(simple_score):
-    """Create a temporary MusicXML file"""
-    with tempfile.NamedTemporaryFile(suffix=".xml", delete=False) as f:
-        simple_score.write("musicxml", fp=f.name)
-        yield f.name
-    os.unlink(f.name)
-
-
-@pytest.fixture
-def mock_score_manager():
-    """Mock score manager for testing"""
-    from src.music21_mcp.server import ScoreManager
-
-    return ScoreManager(max_scores=10)
+async def populated_score_storage(clean_score_storage, sample_bach_score):
+    """Score storage with sample Bach chorale loaded"""
+    storage = clean_score_storage.copy()
+    storage["bach_test"] = sample_bach_score
+    return storage
