@@ -68,9 +68,9 @@ RUN mkdir -p /app/data /app/logs \
 # Switch to non-root user
 USER music21
 
-# Health check for MCP server (stdio-based)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.path.insert(0, '/app/src'); from music21_mcp.server import mcp; print('healthy')" || exit 1
+# Health check for MCP server (lightweight)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD python /app/src/music21_mcp/health_check.py || exit 1
 
 # Environment variables
 ENV PYTHONPATH=/app/src

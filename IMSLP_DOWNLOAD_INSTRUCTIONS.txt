@@ -1,0 +1,172 @@
+================================================================================
+IMSLP TEST CORPUS DOWNLOAD INSTRUCTIONS
+================================================================================
+
+To create a comprehensive test corpus, download these MusicXML files from IMSLP:
+
+IMPORTANT: Always choose MusicXML format when available!
+
+
+BAROQUE PERIOD:
+----------------------------------------
+
+Johann Sebastian Bach - Invention No. 1 in C major, BWV 772
+  URL: https://imslp.org/wiki/Inventions_and_Sinfonias,_BWV_772-801_(Bach,_Johann_Sebastian)
+  Save as: test_corpus/imslp/baroque/bach_invention_1_bwv772.xml
+  Instrumentation: keyboard
+  Complexity: moderate
+
+Johann Sebastian Bach - Fugue in C minor, BWV 847
+  URL: https://imslp.org/wiki/The_Well-Tempered_Clavier_I,_BWV_846-869_(Bach,_Johann_Sebastian)
+  Save as: test_corpus/imslp/baroque/bach_fugue_c_minor_bwv847.xml
+  Instrumentation: keyboard
+  Complexity: complex
+  Known issues: Complex voice leading
+
+Johann Sebastian Bach - Chorale: Aus meines Herzens Grunde, BWV 269
+  URL: https://imslp.org/wiki/Chorales,_BWV_250-438_(Bach,_Johann_Sebastian)
+  Save as: test_corpus/imslp/baroque/bach_chorale_bwv269.xml
+  Instrumentation: satb
+  Complexity: moderate
+
+George Frideric Handel - Hallelujah Chorus from Messiah
+  URL: https://imslp.org/wiki/Messiah,_HWV_56_(Handel,_George_Frideric)
+  Save as: test_corpus/imslp/baroque/handel_messiah_hallelujah.xml
+  Instrumentation: orchestra_choir
+  Complexity: complex
+  Known issues: Large ensemble, Multiple parts
+
+Antonio Vivaldi - Spring from The Four Seasons, RV 269
+  URL: https://imslp.org/wiki/The_Four_Seasons_(Vivaldi,_Antonio)
+  Save as: test_corpus/imslp/baroque/vivaldi_spring_1st_movement.xml
+  Instrumentation: strings
+  Complexity: moderate
+  Known issues: Multiple string parts
+
+Johann Sebastian Bach - Cello Suite No. 1, BWV 1007 - Prelude
+  URL: https://imslp.org/wiki/Cello_Suite_No.1,_BWV_1007_(Bach,_Johann_Sebastian)
+  Save as: test_corpus/imslp/baroque/bach_cello_suite_1_prelude.xml
+  Instrumentation: solo_cello
+  Complexity: moderate
+  Known issues: Monophonic, Implied harmony
+
+CLASSICAL PERIOD:
+----------------------------------------
+
+Wolfgang Amadeus Mozart - Piano Sonata No. 11, K. 331, 1st movement
+  URL: https://imslp.org/wiki/Piano_Sonata_No.11,_K.331_(Mozart,_Wolfgang_Amadeus)
+  Save as: test_corpus/imslp/classical/mozart_k331_1st_movement.xml
+  Instrumentation: piano
+  Complexity: moderate
+
+Ludwig van Beethoven - Für Elise, WoO 59
+  URL: https://imslp.org/wiki/Für_Elise,_WoO_59_(Beethoven,_Ludwig_van)
+  Save as: test_corpus/imslp/classical/beethoven_fur_elise.xml
+  Instrumentation: piano
+  Complexity: simple
+
+Joseph Haydn - Symphony No. 94 'Surprise', 2nd movement
+  URL: https://imslp.org/wiki/Symphony_No.94_(Haydn,_Joseph)
+  Save as: test_corpus/imslp/classical/haydn_surprise_2nd_movement.xml
+  Instrumentation: orchestra
+  Complexity: moderate
+  Known issues: Orchestral texture
+
+Ludwig van Beethoven - String Quartet Op. 18 No. 1, 1st movement
+  URL: https://imslp.org/wiki/String_Quartet_No.1,_Op.18_No.1_(Beethoven,_Ludwig_van)
+  Save as: test_corpus/imslp/classical/beethoven_op18_no1_1st.xml
+  Instrumentation: string_quartet
+  Complexity: complex
+  Known issues: 4-part texture
+
+ROMANTIC PERIOD:
+----------------------------------------
+
+Frédéric Chopin - Prelude Op. 28 No. 4 in E minor
+  URL: https://imslp.org/wiki/Preludes,_Op.28_(Chopin,_Frédéric)
+  Save as: test_corpus/imslp/romantic/chopin_prelude_op28_no4.xml
+  Instrumentation: piano
+  Complexity: moderate
+  Known issues: Chromatic harmony
+
+Robert Schumann - Träumerei from Kinderszenen, Op. 15
+  URL: https://imslp.org/wiki/Kinderszenen,_Op.15_(Schumann,_Robert)
+  Save as: test_corpus/imslp/romantic/schumann_traumerei.xml
+  Instrumentation: piano
+  Complexity: moderate
+  Known issues: Complex voicing
+
+Johannes Brahms - Intermezzo Op. 117 No. 1
+  URL: https://imslp.org/wiki/3_Intermezzi,_Op.117_(Brahms,_Johannes)
+  Save as: test_corpus/imslp/romantic/brahms_intermezzo_op117_no1.xml
+  Instrumentation: piano
+  Complexity: complex
+  Known issues: Dense texture, Cross-rhythms
+
+MODERN PERIOD:
+----------------------------------------
+
+Claude Debussy - Clair de Lune from Suite Bergamasque
+  URL: https://imslp.org/wiki/Suite_bergamasque_(Debussy,_Claude)
+  Save as: test_corpus/imslp/modern/debussy_clair_de_lune.xml
+  Instrumentation: piano
+  Complexity: complex
+  Known issues: Impressionist harmony, Non-functional progressions
+
+Erik Satie - Gymnopédie No. 1
+  URL: https://imslp.org/wiki/3_Gymnopédies_(Satie,_Erik)
+  Save as: test_corpus/imslp/modern/satie_gymnopedie_1.xml
+  Instrumentation: piano
+  Complexity: simple
+  Known issues: Modal harmony
+
+Béla Bartók - Free Variations from Mikrokosmos, Sz. 107
+  URL: https://imslp.org/wiki/Mikrokosmos,_Sz.107_(Bartók,_Béla)
+  Save as: test_corpus/imslp/modern/bartok_mikrokosmos_140.xml
+  Instrumentation: piano
+  Complexity: complex
+  Known issues: Dissonance, Complex meters
+
+Arnold Schoenberg - Six Little Piano Pieces, Op. 19, No. 2
+  URL: https://imslp.org/wiki/6_Little_Piano_Pieces,_Op.19_(Schoenberg,_Arnold)
+  Save as: test_corpus/imslp/modern/schoenberg_op19_no2.xml
+  Instrumentation: piano
+  Complexity: extreme
+  Known issues: Atonal, No clear key
+
+John Cage - Sonatas and Interludes - Sonata I
+  URL: https://imslp.org/wiki/Sonatas_and_Interludes_(Cage,_John)
+  Save as: test_corpus/imslp/modern/cage_sonata_1.xml
+  Instrumentation: prepared_piano
+  Complexity: extreme
+  Known issues: Extended techniques, Non-traditional notation
+
+Iannis Xenakis - Metastaseis (excerpt)
+  URL: https://imslp.org/wiki/Metastaseis_(Xenakis,_Iannis)
+  Save as: test_corpus/imslp/modern/xenakis_metastasis_excerpt.xml
+  Instrumentation: orchestra
+  Complexity: extreme
+  Known issues: Graphic notation, Extreme complexity
+
+RENAISSANCE PERIOD:
+----------------------------------------
+
+Giovanni Pierluigi da Palestrina - Sicut cervus
+  URL: https://imslp.org/wiki/Sicut_cervus_(Palestrina,_Giovanni_Pierluigi_da)
+  Save as: test_corpus/imslp/renaissance/palestrina_sicut_cervus.xml
+  Instrumentation: satb
+  Complexity: moderate
+  Known issues: Modal, Renaissance counterpoint
+
+================================================================================
+DIRECTORY STRUCTURE:
+
+test_corpus/imslp/
+├── baroque/
+├── classical/
+├── romantic/
+├── modern/
+└── renaissance/
+
+Place each file in the appropriate period directory.
+================================================================================
