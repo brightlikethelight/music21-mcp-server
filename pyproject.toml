@@ -41,6 +41,12 @@ python-dotenv = "^1.0.0"
 # MCP uses stdio transport, no HTTP server needed
 psutil = "^5.9.0"
 mcp = "^1.4.0"
+# Security dependencies
+cryptography = "^42.0.0"
+bleach = "^6.1.0"
+pathvalidate = "^3.2.0"
+fastapi = "^0.115.0"
+# Optional dependencies
 redis = {version = "^5.0.0", optional = true}
 prometheus-client = {version = "^0.19.0", optional = true}
 

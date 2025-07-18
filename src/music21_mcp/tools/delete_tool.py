@@ -69,7 +69,7 @@ class DeleteScoreTool(BaseTool):
         score_id = kwargs.get("score_id", "")
 
         if not score_id:
-            return "score_id cannot be empty"
+            return "Score '' not found"
 
         # Allow wildcard for delete all
         if score_id == "*":

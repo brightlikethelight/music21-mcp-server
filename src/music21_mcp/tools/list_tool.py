@@ -53,7 +53,7 @@ class ListScoresTool(BaseTool):
             # Sort by ID for consistent ordering
             scores.sort(key=lambda x: str(x.get("id", "")))
 
-            return self.create_success_response(count=len(scores), scores=scores)
+            return self.create_success_response(total_count=len(scores), scores=scores)
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
         """No inputs to validate for list operation"""

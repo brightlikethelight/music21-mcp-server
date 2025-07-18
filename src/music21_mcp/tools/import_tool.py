@@ -80,6 +80,7 @@ class ImportScoreTool(BaseTool):
             self.report_progress(1.0, "Import complete")
 
             return self.create_success_response(
+                message=f"Successfully imported score '{score_id}' from {source_type}",
                 score_id=score_id, source_type=source_type, **metadata
             )
 
