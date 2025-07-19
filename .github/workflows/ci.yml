@@ -131,7 +131,7 @@ jobs:
         uv run python -c "from music21_mcp.adapters import create_sync_analyzer; a=create_sync_analyzer(); print(f'Python adapter: {a.get_status()[\"status\"]}')"
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
