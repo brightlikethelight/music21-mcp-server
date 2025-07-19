@@ -5,7 +5,7 @@ Analyzes melodic contour and generates appropriate harmony with explanations
 
 import logging
 import random
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from music21 import chord, note, pitch, roman, stream
 
@@ -24,7 +24,7 @@ class HarmonizationTool(BaseTool):
     5. Explanations for harmonic choices
     """
 
-    def __init__(self, score_manager: Dict[str, Any]):
+    def __init__(self, score_manager: dict[str, Any]):
         super().__init__(score_manager)
 
         # Define chord vocabularies for different styles
@@ -77,7 +77,7 @@ class HarmonizationTool(BaseTool):
             ],
         }
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Harmonize a melody in the specified style
 
@@ -116,7 +116,7 @@ class HarmonizationTool(BaseTool):
             self.report_progress(0.3, f"Generating {style} harmonization")
 
             # Generate harmonization based on style
-            harmonization: Dict[str, Any]
+            harmonization: dict[str, Any]
             if style == "classical":
                 harmonization = await self._harmonize_classical(
                     melody, melodic_analysis, constraints, voice_parts
@@ -180,7 +180,7 @@ class HarmonizationTool(BaseTool):
                 confidence_ratings=harmonization.get("confidence_ratings", []),
             )
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         score_id = kwargs.get("score_id", "")
         style = kwargs.get("style", "classical")
@@ -199,10 +199,10 @@ class HarmonizationTool(BaseTool):
 
         return None
 
-    def _extract_melody(self, score: stream.Score) -> List[Any]:
+    def _extract_melody(self, score: stream.Score) -> list[Any]:
         """Extract the melody line from the score"""
         # Try to get the top part or flatten if single line
-        melody_part: Union[stream.Score, stream.Part]
+        melody_part: stream.Score | stream.Part
         if hasattr(score, "parts") and len(score.parts) > 0:
             melody_part = score.parts[0]
         else:
@@ -216,9 +216,9 @@ class HarmonizationTool(BaseTool):
 
         return melody
 
-    async def _analyze_melody(self, melody: List[Any]) -> Dict[str, Any]:
+    async def _analyze_melody(self, melody: list[Any]) -> dict[str, Any]:
         """Analyze melodic features to inform harmonization"""
-        analysis: Dict[str, Any] = {
+        analysis: dict[str, Any] = {
             "key": None,
             "contour": [],
             "implied_harmonies": [],
@@ -253,7 +253,7 @@ class HarmonizationTool(BaseTool):
 
         return analysis
 
-    def _analyze_contour(self, pitches: List[int]) -> List[str]:
+    def _analyze_contour(self, pitches: list[int]) -> list[str]:
         """Analyze melodic contour"""
         contour = []
         for i in range(len(pitches) - 1):
@@ -265,7 +265,7 @@ class HarmonizationTool(BaseTool):
                 contour.append("static")
         return contour
 
-    def _get_implied_harmony(self, note_obj: note.Note, key_obj: Any) -> List[str]:
+    def _get_implied_harmony(self, note_obj: note.Note, key_obj: Any) -> list[str]:
         """Get possible harmonies implied by a melodic note"""
         scale_degree = key_obj.getScaleDegreeFromPitch(note_obj.pitch)
 
@@ -284,11 +284,11 @@ class HarmonizationTool(BaseTool):
 
     async def _harmonize_classical(
         self,
-        melody: List[Any],
-        analysis: Dict[str, Any],
-        constraints: Optional[List[str]],
+        melody: list[Any],
+        analysis: dict[str, Any],
+        constraints: list[str] | None,
         voice_parts: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate classical four-part harmony"""
         result = {
             "score": stream.Score(),
@@ -321,9 +321,11 @@ class HarmonizationTool(BaseTool):
         )
 
         # Realize the harmony
-        for i, (melodic_note, chord_symbol) in enumerate(zip(melody, progression)):
+        for i, (melodic_note, chord_symbol) in enumerate(
+            zip(melody, progression, strict=False)
+        ):
             self.report_progress(
-                0.3 + (0.4 * i / len(melody)), f"Harmonizing note {i+1}/{len(melody)}"
+                0.3 + (0.4 * i / len(melody)), f"Harmonizing note {i + 1}/{len(melody)}"
             )
 
             # Create chord based on symbol
@@ -390,10 +392,10 @@ class HarmonizationTool(BaseTool):
 
     def _generate_progression_classical(
         self,
-        melody: List[Any],
-        analysis: Dict[str, Any],
-        constraints: Optional[List[str]],
-    ) -> List[str]:
+        melody: list[Any],
+        analysis: dict[str, Any],
+        constraints: list[str] | None,
+    ) -> list[str]:
         """Generate a classical chord progression"""
         progression = []
         key_obj = analysis["key"]
@@ -452,7 +454,7 @@ class HarmonizationTool(BaseTool):
 
     def _realize_chord_classical(
         self, chord_symbol: str, key_obj: Any, melodic_note: note.Note
-    ) -> List[pitch.Pitch]:
+    ) -> list[pitch.Pitch]:
         """Realize a chord symbol into pitches for classical style"""
         try:
             rn = roman.RomanNumeral(chord_symbol, key_obj)
@@ -475,7 +477,7 @@ class HarmonizationTool(BaseTool):
             ]
 
     def _choose_alto_note(
-        self, chord_pitches: List[pitch.Pitch], melodic_note: note.Note
+        self, chord_pitches: list[pitch.Pitch], melodic_note: note.Note
     ) -> pitch.Pitch:
         """Choose appropriate alto note"""
         # Remove melody pitch from options
@@ -492,7 +494,7 @@ class HarmonizationTool(BaseTool):
 
     def _choose_tenor_note(
         self,
-        chord_pitches: List[pitch.Pitch],
+        chord_pitches: list[pitch.Pitch],
         melodic_note: note.Note,
         alto_pitch: pitch.Pitch,
     ) -> pitch.Pitch:
@@ -522,10 +524,10 @@ class HarmonizationTool(BaseTool):
 
     async def _harmonize_jazz(
         self,
-        melody: List[Any],
-        analysis: Dict[str, Any],
-        constraints: Optional[List[str]],
-    ) -> Dict[str, Any]:
+        melody: list[Any],
+        analysis: dict[str, Any],
+        constraints: list[str] | None,
+    ) -> dict[str, Any]:
         """Generate jazz harmonization with extended chords"""
         result = {
             "score": stream.Score(),
@@ -545,7 +547,9 @@ class HarmonizationTool(BaseTool):
         progression = self._generate_progression_jazz(melody, analysis, constraints)
 
         # Realize the harmony
-        for i, (melodic_note, chord_symbol) in enumerate(zip(melody, progression)):
+        for i, (melodic_note, chord_symbol) in enumerate(
+            zip(melody, progression, strict=False)
+        ):
             # Create jazz voicing
             voicing = self._create_jazz_voicing(
                 chord_symbol, analysis["key"], melodic_note
@@ -579,10 +583,10 @@ class HarmonizationTool(BaseTool):
 
     def _generate_progression_jazz(
         self,
-        melody: List[Any],
-        analysis: Dict[str, Any],
-        constraints: Optional[List[str]],
-    ) -> List[str]:
+        melody: list[Any],
+        analysis: dict[str, Any],
+        constraints: list[str] | None,
+    ) -> list[str]:
         """Generate jazz chord progression with substitutions"""
         progression = []
 
@@ -612,9 +616,9 @@ class HarmonizationTool(BaseTool):
 
     def _create_jazz_voicing(
         self, chord_symbol: str, key_obj: Any, melodic_note: note.Note
-    ) -> Dict[str, List[pitch.Pitch]]:
+    ) -> dict[str, list[pitch.Pitch]]:
         """Create jazz piano voicing"""
-        voicing: Dict[str, List[pitch.Pitch]] = {"upper": [], "lower": []}
+        voicing: dict[str, list[pitch.Pitch]] = {"upper": [], "lower": []}
 
         try:
             # Simplified jazz voicing
@@ -658,10 +662,10 @@ class HarmonizationTool(BaseTool):
 
     async def _harmonize_pop(
         self,
-        melody: List[Any],
-        analysis: Dict[str, Any],
-        constraints: Optional[List[str]],
-    ) -> Dict[str, Any]:
+        melody: list[Any],
+        analysis: dict[str, Any],
+        constraints: list[str] | None,
+    ) -> dict[str, Any]:
         """Generate pop/rock harmonization"""
         result = {
             "score": stream.Score(),
@@ -690,7 +694,9 @@ class HarmonizationTool(BaseTool):
         progression = self._generate_progression_pop(melody, analysis, constraints)
 
         # Realize harmony
-        for i, (melodic_note, chord_symbol) in enumerate(zip(melody, progression)):
+        for i, (melodic_note, chord_symbol) in enumerate(
+            zip(melody, progression, strict=False)
+        ):
             # Create pop voicing (power chords or triads)
             chord_notes = self._create_pop_voicing(chord_symbol, analysis["key"])
 
@@ -722,10 +728,10 @@ class HarmonizationTool(BaseTool):
 
     def _generate_progression_pop(
         self,
-        melody: List[Any],
-        analysis: Dict[str, Any],
-        constraints: Optional[List[str]],
-    ) -> List[str]:
+        melody: list[Any],
+        analysis: dict[str, Any],
+        constraints: list[str] | None,
+    ) -> list[str]:
         """Generate pop chord progression"""
         # Use common pop progressions
         progression_templates = self.common_progressions["pop"]
@@ -738,7 +744,7 @@ class HarmonizationTool(BaseTool):
 
         return progression
 
-    def _create_pop_voicing(self, chord_symbol: str, key_obj: Any) -> List[pitch.Pitch]:
+    def _create_pop_voicing(self, chord_symbol: str, key_obj: Any) -> list[pitch.Pitch]:
         """Create pop/rock guitar voicing"""
         try:
             rn = roman.RomanNumeral(chord_symbol, key_obj)
@@ -752,9 +758,8 @@ class HarmonizationTool(BaseTool):
             ):
                 # Power chord (root + fifth)
                 return [rn.root(), pitch.Pitch(midi=rn.root().midi + 7)]
-            else:
-                # Full triad
-                return list(rn.pitches)[:3]
+            # Full triad
+            return list(rn.pitches)[:3]
 
         except:
             # Fallback
@@ -762,10 +767,10 @@ class HarmonizationTool(BaseTool):
 
     async def _harmonize_modal(
         self,
-        melody: List[Any],
-        analysis: Dict[str, Any],
-        constraints: Optional[List[str]],
-    ) -> Dict[str, Any]:
+        melody: list[Any],
+        analysis: dict[str, Any],
+        constraints: list[str] | None,
+    ) -> dict[str, Any]:
         """Generate modal harmonization"""
         result = {
             "score": stream.Score(),
@@ -787,7 +792,9 @@ class HarmonizationTool(BaseTool):
         )
 
         # Realize harmony
-        for i, (melodic_note, chord_symbol) in enumerate(zip(melody, progression)):
+        for i, (melodic_note, chord_symbol) in enumerate(
+            zip(melody, progression, strict=False)
+        ):
             if hasattr(melodic_note, "pitch") and hasattr(melodic_note, "duration"):
                 melody_part.append(
                     note.Note(
@@ -818,29 +825,28 @@ class HarmonizationTool(BaseTool):
 
         return result
 
-    def _detect_mode(self, melody: List[Any], analysis: Dict[str, Any]) -> str:
+    def _detect_mode(self, melody: list[Any], analysis: dict[str, Any]) -> str:
         """Detect the mode of the melody"""
         # Simplified mode detection based on characteristic notes
         pitches = [n.pitch for n in melody]
-        pitch_classes = set(p.pitchClass for p in pitches)
+        pitch_classes = {p.pitchClass for p in pitches}
 
         # Check for characteristic modal notes
         if 9 in pitch_classes and 5 not in pitch_classes:  # Flat 7, no 4
             return "mixolydian"
-        elif 6 in pitch_classes and 2 in pitch_classes:  # Natural 6 and 2 in minor
+        if 6 in pitch_classes and 2 in pitch_classes:  # Natural 6 and 2 in minor
             return "dorian"
-        elif 6 in pitch_classes:  # Raised 4
+        if 6 in pitch_classes:  # Raised 4
             return "lydian"
-        else:
-            return "ionian"  # Default to major
+        return "ionian"  # Default to major
 
     def _generate_progression_modal(
         self,
-        melody: List[Any],
-        analysis: Dict[str, Any],
+        melody: list[Any],
+        analysis: dict[str, Any],
         mode: str,
-        constraints: Optional[List[str]],
-    ) -> List[str]:
+        constraints: list[str] | None,
+    ) -> list[str]:
         """Generate modal chord progression"""
         modal_vocab = self.style_vocabularies["modal"]
         if isinstance(modal_vocab, dict) and mode in modal_vocab:
@@ -875,7 +881,7 @@ class HarmonizationTool(BaseTool):
 
     def _create_modal_voicing(
         self, chord_symbol: str, key_obj: Any, mode: str
-    ) -> List[pitch.Pitch]:
+    ) -> list[pitch.Pitch]:
         """Create modal chord voicing"""
         try:
             # Adjust key for mode
@@ -896,7 +902,7 @@ class HarmonizationTool(BaseTool):
 
     def _check_voice_leading(
         self, harmonized_score: stream.Score, style: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Check voice leading quality"""
         quality = {
             "smoothness": 0.0,
@@ -979,7 +985,7 @@ class HarmonizationTool(BaseTool):
 
         return quality
 
-    def _analyze_harmonic_rhythm(self, progression: List[str]) -> Dict[str, Any]:
+    def _analyze_harmonic_rhythm(self, progression: list[str]) -> dict[str, Any]:
         """Analyze the rate of harmonic change"""
         if not progression:
             return {}
@@ -1000,10 +1006,10 @@ class HarmonizationTool(BaseTool):
 
     def _generate_explanations(
         self,
-        harmonization: Dict[str, Any],
-        melodic_analysis: Dict[str, Any],
+        harmonization: dict[str, Any],
+        melodic_analysis: dict[str, Any],
         style: str,
-    ) -> List[Dict[str, str]]:
+    ) -> list[dict[str, str]]:
         """Generate explanations for harmonic choices"""
         explanations = []
 
@@ -1073,7 +1079,7 @@ class HarmonizationTool(BaseTool):
         return characteristics.get(style, "characteristic harmonic patterns")
 
     def _contains_progression(
-        self, full_progression: List[str], pattern: List[str]
+        self, full_progression: list[str], pattern: list[str]
     ) -> bool:
         """Check if progression contains a specific pattern"""
         pattern_length = len(pattern)

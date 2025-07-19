@@ -2,10 +2,12 @@
 Export Score Tool - Export scores to various formats
 """
 
+import builtins
+import contextlib
 import logging
 import os
 import tempfile
-from typing import Any, Dict, Optional
+from typing import Any
 
 from music21 import stream
 
@@ -29,7 +31,7 @@ class ExportScoreTool(BaseTool):
         "text": {"extensions": [".txt"], "method": "text"},
     }
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Export a score to various formats
 
@@ -100,13 +102,11 @@ class ExportScoreTool(BaseTool):
             except Exception:
                 # Clean up temp file on error
                 if output_path and os.path.exists(output_path) and not output_path:
-                    try:
+                    with contextlib.suppress(builtins.BaseException):
                         os.unlink(output_path)
-                    except:
-                        pass
                 raise
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         score_id = kwargs.get("score_id", "")
         format = kwargs.get("format", "musicxml")

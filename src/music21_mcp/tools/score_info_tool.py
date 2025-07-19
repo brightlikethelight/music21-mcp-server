@@ -3,7 +3,7 @@ Score Info Tool - Extract comprehensive metadata and information from scores
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from music21 import instrument, meter, stream, tempo
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ScoreInfoTool(BaseTool):
     """Tool for extracting comprehensive score information and metadata"""
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Get comprehensive information about a score
 
@@ -73,12 +73,12 @@ class ScoreInfoTool(BaseTool):
 
             return self.create_success_response(**info)
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         score_id = kwargs.get("score_id", "")
         return self.check_score_exists(score_id)
 
-    def _extract_metadata(self, score: stream.Score) -> Dict[str, Any]:
+    def _extract_metadata(self, score: stream.Score) -> dict[str, Any]:
         """Extract metadata from score"""
         metadata = {}
 
@@ -126,7 +126,7 @@ class ScoreInfoTool(BaseTool):
 
         return metadata
 
-    def _analyze_structure(self, score: stream.Score) -> Dict[str, Any]:
+    def _analyze_structure(self, score: stream.Score) -> dict[str, Any]:
         """Analyze basic structure of the score"""
         try:
             flat = score.flatten()
@@ -162,9 +162,9 @@ class ScoreInfoTool(BaseTool):
                 "duration_seconds": 0,
             }
 
-    def _analyze_time_and_tempo(self, score: stream.Score) -> Dict[str, Any]:
+    def _analyze_time_and_tempo(self, score: stream.Score) -> dict[str, Any]:
         """Analyze time signatures and tempo markings"""
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
 
         try:
             flat = score.flatten()
@@ -207,7 +207,7 @@ class ScoreInfoTool(BaseTool):
 
         return result
 
-    def _analyze_instruments(self, score: stream.Score) -> List[Dict[str, Any]]:
+    def _analyze_instruments(self, score: stream.Score) -> list[dict[str, Any]]:
         """Analyze instrumentation"""
         instruments_found = []
 
@@ -219,7 +219,7 @@ class ScoreInfoTool(BaseTool):
                         "part_name": (
                             part.partName
                             if hasattr(part, "partName")
-                            else f"Part {i+1}"
+                            else f"Part {i + 1}"
                         ),
                     }
 
@@ -247,9 +247,9 @@ class ScoreInfoTool(BaseTool):
 
         return instruments_found
 
-    def _analyze_detailed_structure(self, score: stream.Score) -> Dict[str, Any]:
+    def _analyze_detailed_structure(self, score: stream.Score) -> dict[str, Any]:
         """Analyze detailed structural elements"""
-        structure: Dict[str, Any] = {}
+        structure: dict[str, Any] = {}
 
         try:
             flat = score.flatten()
@@ -273,7 +273,7 @@ class ScoreInfoTool(BaseTool):
             if dynamics:
                 structure["dynamics_count"] = len(dynamics)  # type: ignore[assignment]
                 structure["dynamic_range"] = list(
-                    set(d.value for d in dynamics if hasattr(d, "value"))
+                    {d.value for d in dynamics if hasattr(d, "value")}
                 )
 
             # Measure analysis
@@ -291,7 +291,7 @@ class ScoreInfoTool(BaseTool):
 
         return structure
 
-    def _get_first_tempo(self, score: stream.Score) -> Optional[tempo.MetronomeMark]:
+    def _get_first_tempo(self, score: stream.Score) -> tempo.MetronomeMark | None:
         """Get the first tempo marking in the score"""
         try:
             flat = score.flatten()

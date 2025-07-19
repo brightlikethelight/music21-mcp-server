@@ -6,7 +6,7 @@ Uses machine learning-inspired techniques for style analysis and generation
 import logging
 import random
 from collections import Counter, defaultdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 from music21 import chord, interval, note, pitch, stream
@@ -26,7 +26,7 @@ class StyleImitationTool(BaseTool):
     5. Hybrid generation with constraints
     """
 
-    def __init__(self, score_manager: Dict[str, Any]):
+    def __init__(self, score_manager: dict[str, Any]):
         super().__init__(score_manager)
 
         # Pre-defined style characteristics
@@ -113,11 +113,11 @@ class StyleImitationTool(BaseTool):
             },
         }
 
-        self.transition_matrices: Dict[str, Dict[Any, Any]] = {}
-        self.rhythm_patterns: Dict[str, Any] = {}
-        self.harmonic_progressions: Dict[str, Any] = {}
+        self.transition_matrices: dict[str, dict[Any, Any]] = {}
+        self.rhythm_patterns: dict[str, Any] = {}
+        self.harmonic_progressions: dict[str, Any] = {}
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Generate music in a specific style
 
@@ -142,7 +142,7 @@ class StyleImitationTool(BaseTool):
         if error:
             return self.create_error_response(error)
 
-        with self.error_handling(f"Style imitation"):
+        with self.error_handling("Style imitation"):
             # Learn style characteristics
             if style_source:
                 self.report_progress(0.1, f"Analyzing style from '{style_source}'")
@@ -201,7 +201,7 @@ class StyleImitationTool(BaseTool):
                 harmonic_language=generation_analysis["harmony"],
             )
 
-    async def analyze_style(self, **kwargs: Any) -> Dict[str, Any]:
+    async def analyze_style(self, **kwargs: Any) -> dict[str, Any]:
         """
         Analyze the style characteristics of a score
 
@@ -249,7 +249,7 @@ class StyleImitationTool(BaseTool):
                 detailed_analysis=detailed,
             )
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         if "style_source" in kwargs and kwargs["style_source"]:
             error = self.check_score_exists(kwargs["style_source"])
@@ -273,9 +273,9 @@ class StyleImitationTool(BaseTool):
 
         return None
 
-    async def _analyze_style(self, score: stream.Score) -> Dict[str, Any]:
+    async def _analyze_style(self, score: stream.Score) -> dict[str, Any]:
         """Analyze style characteristics of a score"""
-        style_data: Dict[str, Dict[str, Any]] = {
+        style_data: dict[str, dict[str, Any]] = {
             "melodic": {},
             "harmonic": {},
             "rhythmic": {},
@@ -325,7 +325,7 @@ class StyleImitationTool(BaseTool):
                     len(chords) / score.duration.quarterLength
                 )
                 style_data["harmonic"]["unique_chords"] = len(
-                    set(ch.pitchedCommonName for ch in chords)
+                    {ch.pitchedCommonName for ch in chords}
                 )
                 style_data["harmonic"]["dissonance_level"] = (
                     self._calculate_dissonance_level(chords)
@@ -375,7 +375,7 @@ class StyleImitationTool(BaseTool):
 
         return style_data
 
-    def _count_contour_changes(self, intervals: List[int]) -> int:
+    def _count_contour_changes(self, intervals: list[int]) -> int:
         """Count melodic contour direction changes"""
         changes = 0
         for i in range(len(intervals) - 1):
@@ -383,7 +383,7 @@ class StyleImitationTool(BaseTool):
                 changes += 1
         return changes
 
-    def _calculate_dissonance_level(self, chords: List[chord.Chord]) -> float:
+    def _calculate_dissonance_level(self, chords: list[chord.Chord]) -> float:
         """Calculate overall dissonance level"""
         if not chords:
             return 0.0
@@ -402,8 +402,8 @@ class StyleImitationTool(BaseTool):
         return dissonance_sum / len(chords)
 
     def _extract_progression_patterns(
-        self, chords: List[chord.Chord]
-    ) -> List[Tuple[Tuple[str, str], int]]:
+        self, chords: list[chord.Chord]
+    ) -> list[tuple[tuple[str, str], int]]:
         """Extract common chord progression patterns"""
         progressions = []
 
@@ -415,7 +415,7 @@ class StyleImitationTool(BaseTool):
         prog_counter = Counter(progressions)
         return prog_counter.most_common(5)
 
-    def _calculate_syncopation(self, notes: List[note.Note]) -> float:
+    def _calculate_syncopation(self, notes: list[note.Note]) -> float:
         """Calculate syncopation level"""
         syncopated = 0
         total = 0
@@ -430,8 +430,8 @@ class StyleImitationTool(BaseTool):
         return syncopated / max(total, 1)
 
     def _extract_rhythm_patterns(
-        self, notes: List[note.Note]
-    ) -> List[Tuple[Tuple[float, ...], int]]:
+        self, notes: list[note.Note]
+    ) -> list[tuple[tuple[float, ...], int]]:
         """Extract common rhythm patterns"""
         patterns = []
         window_size = 4
@@ -448,11 +448,11 @@ class StyleImitationTool(BaseTool):
         pattern_counter = Counter(patterns)
         return pattern_counter.most_common(5)
 
-    def _analyze_texture_density(self, parts: List[stream.Part]) -> Dict[str, float]:
+    def _analyze_texture_density(self, parts: list[stream.Part]) -> dict[str, float]:
         """Analyze texture density across time"""
         return {"average": 0.7, "variation": 0.2}  # Simplified
 
-    def _calculate_voice_independence(self, parts: List[stream.Part]) -> float:
+    def _calculate_voice_independence(self, parts: list[stream.Part]) -> float:
         """Calculate independence between voices"""
         if len(parts) < 2:
             return 1.0
@@ -480,7 +480,7 @@ class StyleImitationTool(BaseTool):
 
         return float(np.mean(independence_scores) if independence_scores else 0.5)
 
-    def _detect_phrase_structure(self, score: stream.Score) -> List[int]:
+    def _detect_phrase_structure(self, score: stream.Score) -> list[int]:
         """Detect phrase boundaries"""
         # Simplified - look for rests or long notes
         phrase_lengths = []
@@ -499,7 +499,7 @@ class StyleImitationTool(BaseTool):
 
         return phrase_lengths
 
-    def _load_composer_style(self, composer: str) -> Dict[str, Any]:
+    def _load_composer_style(self, composer: str) -> dict[str, Any]:
         """Load pre-defined composer style profile"""
         profile = self.style_profiles.get(composer, {})
 
@@ -513,7 +513,7 @@ class StyleImitationTool(BaseTool):
             else "homophonic"
         )
 
-        style_data: Dict[str, Any] = {
+        style_data: dict[str, Any] = {
             "melodic": melodic_data,
             "harmonic": harmonic_data,
             "rhythmic": rhythmic_data,
@@ -524,11 +524,11 @@ class StyleImitationTool(BaseTool):
         return style_data
 
     def _build_transition_matrices(
-        self, score: stream.Score, style_data: Dict[str, Any]
+        self, score: stream.Score, style_data: dict[str, Any]
     ) -> None:
         """Build Markov transition matrices from score"""
         # Pitch transitions
-        pitch_transitions: Dict[int, Dict[int, float]] = defaultdict(
+        pitch_transitions: dict[int, dict[int, float]] = defaultdict(
             lambda: defaultdict(int)
         )
         notes = [n for n in score.flatten().notes if isinstance(n, note.Note)]
@@ -550,7 +550,7 @@ class StyleImitationTool(BaseTool):
         self.transition_matrices["pitch"] = dict(pitch_transitions)
 
         # Rhythm transitions
-        rhythm_transitions: Dict[float, Dict[float, float]] = defaultdict(
+        rhythm_transitions: dict[float, dict[float, float]] = defaultdict(
             lambda: defaultdict(int)
         )
         for i in range(len(notes) - 1):
@@ -588,10 +588,10 @@ class StyleImitationTool(BaseTool):
 
     async def _generate_style_based_music(
         self,
-        style_data: Dict[str, Any],
+        style_data: dict[str, Any],
         generation_length: int,
-        starting_note: Optional[str],
-        constraints: Optional[List[str]],
+        starting_note: str | None,
+        constraints: list[str] | None,
         complexity: str,
     ) -> stream.Score:
         """Generate music based on learned style"""
@@ -599,7 +599,6 @@ class StyleImitationTool(BaseTool):
         part = stream.Part()
 
         # Parse constraints
-        key_constraint = None
         range_constraint = None
         if constraints:
             for constraint in constraints:
@@ -674,7 +673,7 @@ class StyleImitationTool(BaseTool):
         return generated_score
 
     def _generate_stylistic_pitch(
-        self, current: pitch.Pitch, style_data: Dict[str, Any]
+        self, current: pitch.Pitch, style_data: dict[str, Any]
     ) -> pitch.Pitch:
         """Generate next pitch based on style characteristics"""
         stepwise_pref = style_data.get("melodic", {}).get("stepwise_motion", 0.7)
@@ -687,11 +686,10 @@ class StyleImitationTool(BaseTool):
             leap_size = style_data.get("melodic", {}).get("avg_interval", 3)
             step = random.choice([-1, 1]) * random.randint(3, int(leap_size * 2))
 
-        new_pitch = pitch.Pitch(midi=current.midi + step)
-        return new_pitch
+        return pitch.Pitch(midi=current.midi + step)
 
     def _generate_stylistic_duration(
-        self, style_data: Dict[str, Any], complexity: str
+        self, style_data: dict[str, Any], complexity: str
     ) -> float:
         """Generate rhythm based on style"""
         if "rhythm" in self.transition_matrices:
@@ -706,16 +704,15 @@ class StyleImitationTool(BaseTool):
 
         if complexity == "simple":
             return random.choice([0.5, 1.0])
-        elif complexity == "medium":
+        if complexity == "medium":
             return random.choice([0.25, 0.5, 1.0, 1.5])
-        else:
-            # Complex - more variety
-            base_durs = [0.125, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
-            weights = [0.1, 0.2, 0.3, 0.1, 0.2, 0.05, 0.05]
-            return float(np.random.choice(base_durs, p=weights))
+        # Complex - more variety
+        base_durs = [0.125, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
+        weights = [0.1, 0.2, 0.3, 0.1, 0.2, 0.05, 0.05]
+        return float(np.random.choice(base_durs, p=weights))
 
     def _generate_bass_line(
-        self, melody_part: stream.Part, style_data: Dict[str, Any]
+        self, melody_part: stream.Part, style_data: dict[str, Any]
     ) -> stream.Part:
         """Generate a bass line to accompany melody"""
         bass_part = stream.Part()
@@ -734,7 +731,7 @@ class StyleImitationTool(BaseTool):
         return bass_part
 
     def _apply_style_refinements(
-        self, score: stream.Score, style_data: Dict[str, Any], composer: Optional[str]
+        self, score: stream.Score, style_data: dict[str, Any], composer: str | None
     ) -> stream.Score:
         """Apply style-specific refinements to generated music"""
         import copy
@@ -789,8 +786,8 @@ class StyleImitationTool(BaseTool):
         return score
 
     async def _analyze_generation(
-        self, score: stream.Score, style_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, score: stream.Score, style_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze how well the generation matches the style"""
         # Analyze the generated score
         generated_style = await self._analyze_style(score)
@@ -827,9 +824,9 @@ class StyleImitationTool(BaseTool):
             "harmony": generated_style.get("harmonic", {}),
         }
 
-    def _compute_interval_distribution(self, score: stream.Score) -> Dict[str, float]:
+    def _compute_interval_distribution(self, score: stream.Score) -> dict[str, float]:
         """Compute distribution of melodic intervals"""
-        intervals: Dict[str, int] = defaultdict(int)
+        intervals: dict[str, int] = defaultdict(int)
         total = 0
 
         notes = [n for n in score.flatten().notes if isinstance(n, note.Note)]
@@ -846,9 +843,9 @@ class StyleImitationTool(BaseTool):
 
         return distribution
 
-    def _compute_rhythm_histogram(self, score: stream.Score) -> Dict[float, float]:
+    def _compute_rhythm_histogram(self, score: stream.Score) -> dict[float, float]:
         """Compute histogram of rhythm values"""
-        durations: Dict[float, int] = defaultdict(int)
+        durations: dict[float, int] = defaultdict(int)
         total = 0
 
         for n in score.flatten().notesAndRests:
@@ -864,20 +861,20 @@ class StyleImitationTool(BaseTool):
 
         return histogram
 
-    def _extract_chord_vocabulary(self, score: stream.Score) -> List[str]:
+    def _extract_chord_vocabulary(self, score: stream.Score) -> list[str]:
         """Extract unique chord types used"""
         chord_types = set()
 
         for ch in score.flatten().getElementsByClass(chord.Chord):
             chord_types.add(ch.pitchedCommonName)
 
-        return sorted(list(chord_types))
+        return sorted(chord_types)
 
-    def _analyze_phrase_structure(self, score: stream.Score) -> List[int]:
+    def _analyze_phrase_structure(self, score: stream.Score) -> list[int]:
         """Analyze phrase lengths"""
         return self._detect_phrase_structure(score)
 
-    def _identify_distinctive_features(self, style_data: Dict[str, Any]) -> List[str]:
+    def _identify_distinctive_features(self, style_data: dict[str, Any]) -> list[str]:
         """Identify distinctive style features"""
         features = []
 
@@ -905,8 +902,8 @@ class StyleImitationTool(BaseTool):
         return features
 
     def _compare_to_known_styles(
-        self, style_data: Dict[str, Any]
-    ) -> List[Tuple[str, float]]:
+        self, style_data: dict[str, Any]
+    ) -> list[tuple[str, float]]:
         """Compare analyzed style to known composer styles"""
         similarities = []
 

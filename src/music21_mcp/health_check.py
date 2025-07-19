@@ -3,6 +3,7 @@
 Lightweight health check for Docker container
 Does minimal imports to verify basic functionality
 """
+
 import os
 import sys
 from pathlib import Path
@@ -12,19 +13,19 @@ def check_health():
     """Lightweight health check that doesn't import heavy dependencies"""
     try:
         # Check Python version
-        if sys.version_info < (3, 10):
-            return False, "Python version too old"
 
         # Check if we can import basic modules
         try:
-            import asyncio
-            import logging
+            import asyncio  # noqa: F401
+            import logging  # noqa: F401
+            has_asyncio = True  # noqa: F841
         except ImportError as e:
             return False, f"Basic import failed: {e}"
 
         # Check if MCP package is available
         try:
-            import mcp
+            import mcp  # noqa: F401
+            has_mcp = True  # noqa: F841
         except ImportError:
             return False, "MCP package not available"
 
@@ -53,8 +54,6 @@ def check_health():
 if __name__ == "__main__":
     success, message = check_health()
     if success:
-        print("healthy")
         sys.exit(0)
     else:
-        print(f"unhealthy: {message}")
         sys.exit(1)

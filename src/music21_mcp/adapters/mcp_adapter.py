@@ -14,7 +14,8 @@ When MCP breaks (every 3-6 months), only this adapter needs updating.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any
+
 from ..services import MusicAnalysisService
 
 logger = logging.getLogger(__name__)
@@ -23,156 +24,183 @@ logger = logging.getLogger(__name__)
 class MCPAdapter:
     """
     Adapter between MCP protocol and core music analysis service
-    
+
     Handles protocol volatility by isolating all MCP-specific code.
     When FastMCP introduces breaking changes, only this class needs updates.
     """
-    
+
     def __init__(self):
         """Initialize MCP adapter with core service"""
         self.core_service = MusicAnalysisService()
         self.mcp_version = "fastmcp-2.9.0"  # Track which version we support
-        
+
         logger.info(f"MCP adapter initialized for {self.mcp_version}")
-    
+
     # === MCP Tool Interface ===
     # These methods match MCP tool signatures but delegate to core service
-    
-    async def import_score(self, score_id: str, source: str, source_type: str = "corpus") -> Dict[str, Any]:
+
+    async def import_score(
+        self, score_id: str, source: str, source_type: str = "corpus"
+    ) -> dict[str, Any]:
         """MCP tool: Import a score from various sources"""
         try:
             result = await self.core_service.import_score(score_id, source, source_type)
             return self._format_mcp_response(result, "import_score")
         except Exception as e:
             return self._format_mcp_error(f"Import failed: {str(e)}", "import_score")
-    
-    async def list_scores(self) -> Dict[str, Any]:
+
+    async def list_scores(self) -> dict[str, Any]:
         """MCP tool: List all available scores"""
         try:
             result = await self.core_service.list_scores()
             return self._format_mcp_response(result, "list_scores")
         except Exception as e:
             return self._format_mcp_error(f"List failed: {str(e)}", "list_scores")
-    
-    async def score_info(self, score_id: str) -> Dict[str, Any]:
+
+    async def score_info(self, score_id: str) -> dict[str, Any]:
         """MCP tool: Get detailed information about a score"""
         try:
             result = await self.core_service.get_score_info(score_id)
             return self._format_mcp_response(result, "score_info")
         except Exception as e:
             return self._format_mcp_error(f"Info failed: {str(e)}", "score_info")
-    
-    async def export_score(self, score_id: str, format: str = "musicxml") -> Dict[str, Any]:
+
+    async def export_score(
+        self, score_id: str, format: str = "musicxml"
+    ) -> dict[str, Any]:
         """MCP tool: Export a score to various formats"""
         try:
             result = await self.core_service.export_score(score_id, format)
             return self._format_mcp_response(result, "export_score")
         except Exception as e:
             return self._format_mcp_error(f"Export failed: {str(e)}", "export_score")
-    
-    async def delete_score(self, score_id: str) -> Dict[str, Any]:
+
+    async def delete_score(self, score_id: str) -> dict[str, Any]:
         """MCP tool: Delete a score from storage"""
         try:
             result = await self.core_service.delete_score(score_id)
             return self._format_mcp_response(result, "delete_score")
         except Exception as e:
             return self._format_mcp_error(f"Delete failed: {str(e)}", "delete_score")
-    
-    async def key_analysis(self, score_id: str) -> Dict[str, Any]:
+
+    async def key_analysis(self, score_id: str) -> dict[str, Any]:
         """MCP tool: Analyze the key signature of a score"""
         try:
             result = await self.core_service.analyze_key(score_id)
             return self._format_mcp_response(result, "key_analysis")
         except Exception as e:
-            return self._format_mcp_error(f"Key analysis failed: {str(e)}", "key_analysis")
-    
-    async def chord_analysis(self, score_id: str) -> Dict[str, Any]:
+            return self._format_mcp_error(
+                f"Key analysis failed: {str(e)}", "key_analysis"
+            )
+
+    async def chord_analysis(self, score_id: str) -> dict[str, Any]:
         """MCP tool: Analyze chord progressions in a score"""
         try:
             result = await self.core_service.analyze_chords(score_id)
             return self._format_mcp_response(result, "chord_analysis")
         except Exception as e:
-            return self._format_mcp_error(f"Chord analysis failed: {str(e)}", "chord_analysis")
-    
-    async def harmony_analysis(self, score_id: str, analysis_type: str = "roman") -> Dict[str, Any]:
+            return self._format_mcp_error(
+                f"Chord analysis failed: {str(e)}", "chord_analysis"
+            )
+
+    async def harmony_analysis(
+        self, score_id: str, analysis_type: str = "roman"
+    ) -> dict[str, Any]:
         """MCP tool: Perform harmony analysis"""
         try:
             result = await self.core_service.analyze_harmony(score_id, analysis_type)
             return self._format_mcp_response(result, "harmony_analysis")
         except Exception as e:
-            return self._format_mcp_error(f"Harmony analysis failed: {str(e)}", "harmony_analysis")
-    
-    async def voice_leading_analysis(self, score_id: str) -> Dict[str, Any]:
+            return self._format_mcp_error(
+                f"Harmony analysis failed: {str(e)}", "harmony_analysis"
+            )
+
+    async def voice_leading_analysis(self, score_id: str) -> dict[str, Any]:
         """MCP tool: Analyze voice leading quality"""
         try:
             result = await self.core_service.analyze_voice_leading(score_id)
             return self._format_mcp_response(result, "voice_leading_analysis")
         except Exception as e:
-            return self._format_mcp_error(f"Voice leading analysis failed: {str(e)}", "voice_leading_analysis")
-    
-    async def pattern_recognition(self, score_id: str, pattern_type: str = "melodic") -> Dict[str, Any]:
+            return self._format_mcp_error(
+                f"Voice leading analysis failed: {str(e)}", "voice_leading_analysis"
+            )
+
+    async def pattern_recognition(
+        self, score_id: str, pattern_type: str = "melodic"
+    ) -> dict[str, Any]:
         """MCP tool: Recognize musical patterns"""
         try:
             result = await self.core_service.recognize_patterns(score_id, pattern_type)
             return self._format_mcp_response(result, "pattern_recognition")
         except Exception as e:
-            return self._format_mcp_error(f"Pattern recognition failed: {str(e)}", "pattern_recognition")
-    
+            return self._format_mcp_error(
+                f"Pattern recognition failed: {str(e)}", "pattern_recognition"
+            )
+
     # === MCP Response Formatting ===
     # Handle MCP-specific response format requirements
-    
-    def _format_mcp_response(self, core_result: Dict[str, Any], tool_name: str) -> Dict[str, Any]:
+
+    def _format_mcp_response(
+        self, core_result: dict[str, Any], tool_name: str
+    ) -> dict[str, Any]:
         """Format core service response for MCP protocol"""
         # MCP expects specific response format
         # This is where protocol changes usually break things
         if isinstance(core_result, dict) and "status" in core_result:
             # Core service already returns properly formatted response
             return core_result
-        else:
-            # Wrap raw results in MCP format
-            return {
-                "status": "success",
-                "tool": tool_name,
-                "data": core_result,
-                "message": f"{tool_name} completed successfully"
-            }
-    
-    def _format_mcp_error(self, error_message: str, tool_name: str) -> Dict[str, Any]:
+        # Wrap raw results in MCP format
+        return {
+            "status": "success",
+            "tool": tool_name,
+            "data": core_result,
+            "message": f"{tool_name} completed successfully",
+        }
+
+    def _format_mcp_error(self, error_message: str, tool_name: str) -> dict[str, Any]:
         """Format error response for MCP protocol"""
         logger.error(f"MCP tool {tool_name} error: {error_message}")
         return {
             "status": "error",
             "tool": tool_name,
             "error": error_message,
-            "message": f"{tool_name} failed"
+            "message": f"{tool_name} failed",
         }
-    
+
     # === Protocol Evolution Support ===
-    
+
     def get_supported_tools(self) -> list[str]:
         """Get list of all supported MCP tools"""
         return [
-            "import_score", "list_scores", "score_info", "export_score", "delete_score",
-            "key_analysis", "chord_analysis", "harmony_analysis", "voice_leading_analysis",
-            "pattern_recognition"
+            "import_score",
+            "list_scores",
+            "score_info",
+            "export_score",
+            "delete_score",
+            "key_analysis",
+            "chord_analysis",
+            "harmony_analysis",
+            "voice_leading_analysis",
+            "pattern_recognition",
         ]
-    
-    def check_protocol_compatibility(self) -> Dict[str, Any]:
+
+    def check_protocol_compatibility(self) -> dict[str, Any]:
         """Check if current FastMCP version is compatible"""
         try:
             import fastmcp
+
             current_version = getattr(fastmcp, "__version__", "unknown")
-            
+
             return {
                 "supported_version": self.mcp_version,
                 "current_version": current_version,
                 "compatible": current_version.startswith("2.9"),
-                "core_service_healthy": self.core_service.get_score_count() >= 0
+                "core_service_healthy": self.core_service.get_score_count() >= 0,
             }
         except ImportError:
             return {
                 "supported_version": self.mcp_version,
                 "current_version": "not_installed",
                 "compatible": False,
-                "error": "FastMCP not available"
+                "error": "FastMCP not available",
             }

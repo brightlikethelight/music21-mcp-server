@@ -3,7 +3,7 @@ Key Analysis Tool - Detect musical key with multiple algorithms
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from music21 import stream
 
@@ -22,7 +22,7 @@ class KeyAnalysisTool(BaseTool):
         "bellman": "Bellman-Budge",
     }
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Analyze the key of a score using various algorithms
 
@@ -65,44 +65,39 @@ class KeyAnalysisTool(BaseTool):
                     alternatives=alternatives,
                     algorithm_results=results,
                 )
-            else:
-                # Run specific algorithm
-                self.report_progress(
-                    0.3,
-                    f"Running {self.ALGORITHMS.get(algorithm, algorithm)} algorithm",
+            # Run specific algorithm
+            self.report_progress(
+                0.3,
+                f"Running {self.ALGORITHMS.get(algorithm, algorithm)} algorithm",
+            )
+
+            result = self._analyze_with_algorithm(analysis_score, algorithm)
+
+            if result is None:
+                return self.create_error_response(f"Failed to analyze with {algorithm}")
+
+            key = result.tonic.name + (" major" if result.mode == "major" else " minor")
+
+            # Get alternatives
+            alternatives = []
+            for alt in result.alternateInterpretations[:3]:
+                alt_key = alt.tonic.name + (
+                    " major" if alt.mode == "major" else " minor"
+                )
+                alternatives.append(
+                    {"key": alt_key, "confidence": alt.correlationCoefficient}
                 )
 
-                result = self._analyze_with_algorithm(analysis_score, algorithm)
+            self.report_progress(1.0, "Analysis complete")
 
-                if result is None:
-                    return self.create_error_response(
-                        f"Failed to analyze with {algorithm}"
-                    )
+            return self.create_success_response(
+                key=key,
+                confidence=result.correlationCoefficient,
+                alternatives=alternatives,
+                algorithm=self.ALGORITHMS.get(algorithm, algorithm),
+            )
 
-                key = result.tonic.name + (
-                    " major" if result.mode == "major" else " minor"
-                )
-
-                # Get alternatives
-                alternatives = []
-                for alt in result.alternateInterpretations[:3]:
-                    alt_key = alt.tonic.name + (
-                        " major" if alt.mode == "major" else " minor"
-                    )
-                    alternatives.append(
-                        {"key": alt_key, "confidence": alt.correlationCoefficient}
-                    )
-
-                self.report_progress(1.0, "Analysis complete")
-
-                return self.create_success_response(
-                    key=key,
-                    confidence=result.correlationCoefficient,
-                    alternatives=alternatives,
-                    algorithm=self.ALGORITHMS.get(algorithm, algorithm),
-                )
-
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         score_id = kwargs.get("score_id", "")
         algorithm = kwargs.get("algorithm", "all")
@@ -119,7 +114,7 @@ class KeyAnalysisTool(BaseTool):
 
     async def _analyze_with_all_algorithms(
         self, score: stream.Stream
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run all key detection algorithms"""
         results = {}
 
@@ -149,19 +144,18 @@ class KeyAnalysisTool(BaseTool):
         try:
             if algorithm == "krumhansl":
                 return score.analyze("key.krumhanslschmuckler")
-            elif algorithm == "aarden":
+            if algorithm == "aarden":
                 return score.analyze("key.aardenessen")
-            elif algorithm == "temperley":
+            if algorithm == "temperley":
                 return score.analyze("key.temperleykostkapayne")
-            elif algorithm == "bellman":
+            if algorithm == "bellman":
                 return score.analyze("key.bellmanbudge")
-            else:
-                return score.analyze("key")
+            return score.analyze("key")
         except Exception as e:
             logger.error(f"Key analysis with {algorithm} failed: {e}")
             return None
 
-    def _find_consensus(self, results: Dict[str, Any]) -> tuple:
+    def _find_consensus(self, results: dict[str, Any]) -> tuple:
         """Find consensus key from multiple algorithms"""
         if not results:
             return "C major", 0.0, []

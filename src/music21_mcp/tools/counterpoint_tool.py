@@ -3,14 +3,15 @@ Counterpoint Generator Tool - Create species counterpoint
 Follows Fux rules with options for strict or relaxed application
 """
 
+import builtins
+import contextlib
 import logging
 import random
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from music21 import interval
+from music21 import interval, note, pitch, stream
 from music21 import key as m21_key
-from music21 import note, pitch, stream
 
 from .base_tool import BaseTool
 
@@ -54,7 +55,7 @@ class CounterpointGeneratorTool(BaseTool):
     5. Rule violation checking with explanations
     """
 
-    def __init__(self, score_manager: Dict[str, Any]):
+    def __init__(self, score_manager: dict[str, Any]):
         super().__init__(score_manager)
 
         # Define consonant and dissonant intervals
@@ -105,7 +106,7 @@ class CounterpointGeneratorTool(BaseTool):
             },
         }
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Generate counterpoint for a given cantus firmus
 
@@ -209,7 +210,7 @@ class CounterpointGeneratorTool(BaseTool):
                 explanations=self._generate_explanations(species_enum, rule_report),
             )
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         score_id = kwargs.get("score_id", "")
         species = kwargs.get("species", "first")
@@ -234,7 +235,7 @@ class CounterpointGeneratorTool(BaseTool):
 
         return None
 
-    def _extract_cantus_firmus(self, score: stream.Score) -> List[note.Note]:
+    def _extract_cantus_firmus(self, score: stream.Score) -> list[note.Note]:
         """Extract the cantus firmus melody"""
         # Get the first part or flattened notes
         if hasattr(score, "parts") and len(score.parts) > 0:
@@ -250,7 +251,7 @@ class CounterpointGeneratorTool(BaseTool):
 
         return cf_notes
 
-    def _determine_key(self, cantus_firmus: List[note.Note], mode: str) -> m21_key.Key:
+    def _determine_key(self, cantus_firmus: list[note.Note], mode: str) -> m21_key.Key:
         """Determine the key/mode of the cantus firmus"""
         try:
             # Create stream for analysis
@@ -259,26 +260,23 @@ class CounterpointGeneratorTool(BaseTool):
             if mode in ["major", "minor"]:
                 # Standard key detection
                 detected_key = cf_stream.analyze("key")
-                if mode == "minor" and detected_key.mode == "major":
-                    detected_key = detected_key.relative
-                elif mode == "major" and detected_key.mode == "minor":
+                if (
+                    mode == "minor"
+                    and detected_key.mode == "major"
+                    or mode == "major"
+                    and detected_key.mode == "minor"
+                ):
                     detected_key = detected_key.relative
                 return detected_key
-            else:
-                # Modal detection (simplified)
-                # Get the final note as likely tonic
-                final_note = cantus_firmus[-1].pitch
+            # Modal detection (simplified)
+            # Get the final note as likely tonic
+            final_note = cantus_firmus[-1].pitch
 
-                if mode == "dorian":
-                    return m21_key.Key(final_note.name, "minor")
-                elif mode == "phrygian":
-                    return m21_key.Key(final_note.name, "minor")
-                elif mode == "lydian":
-                    return m21_key.Key(final_note.name, "major")
-                elif mode == "mixolydian":
-                    return m21_key.Key(final_note.name, "major")
-                else:
-                    return m21_key.Key(final_note.name, "major")
+            if mode == "dorian" or mode == "phrygian":
+                return m21_key.Key(final_note.name, "minor")
+            if mode == "lydian" or mode == "mixolydian":
+                return m21_key.Key(final_note.name, "major")
+            return m21_key.Key(final_note.name, "major")
 
         except Exception as e:
             logger.error(f"Key determination failed: {e}")
@@ -298,27 +296,24 @@ class CounterpointGeneratorTool(BaseTool):
 
     async def _generate_first_species(
         self,
-        cantus_firmus: List[note.Note],
+        cantus_firmus: list[note.Note],
         cf_key: m21_key.Key,
         voice_position: str,
         rule_set: str,
-        custom_rules: Optional[List[str]],
-    ) -> Dict[str, Any]:
+        custom_rules: list[str] | None,
+    ) -> dict[str, Any]:
         """Generate first species (1:1) counterpoint"""
         counterpoint_notes = []
         interval_analysis = []
 
         # Determine starting interval
-        if voice_position == "above":
-            start_intervals = [0, 7, 12]  # Unison, fifth, octave
-        else:
-            start_intervals = [-12, -7, 0]  # Octave, fifth, unison below
+        start_intervals = [0, 7, 12] if voice_position == "above" else [-12, -7, 0]  # noqa: SIM108
 
         # Generate note for each CF note
         for i, cf_note in enumerate(cantus_firmus):
             self.report_progress(
                 0.3 + (0.4 * i / len(cantus_firmus)),
-                f"Generating note {i+1}/{len(cantus_firmus)}",
+                f"Generating note {i + 1}/{len(cantus_firmus)}",
             )
 
             if i == 0:
@@ -373,11 +368,11 @@ class CounterpointGeneratorTool(BaseTool):
         cf_note: note.Note,
         cf_key: m21_key.Key,
         voice_position: str,
-        previous_notes: List[note.Note],
-        cantus_firmus: List[note.Note],
+        previous_notes: list[note.Note],
+        cantus_firmus: list[note.Note],
         cf_index: int,
         rule_set: str,
-        custom_rules: Optional[List[str]],
+        custom_rules: list[str] | None,
     ) -> pitch.Pitch:
         """Choose appropriate note for first species counterpoint"""
         # Get available pitches in key
@@ -445,7 +440,7 @@ class CounterpointGeneratorTool(BaseTool):
 
     def _get_scale_pitches(
         self, key: m21_key.Key, reference_pitch: pitch.Pitch, voice_position: str
-    ) -> List[pitch.Pitch]:
+    ) -> list[pitch.Pitch]:
         """Get available pitches from the scale"""
         scale = key.getScale()
 
@@ -469,12 +464,12 @@ class CounterpointGeneratorTool(BaseTool):
 
     async def _generate_second_species(
         self,
-        cantus_firmus: List[note.Note],
+        cantus_firmus: list[note.Note],
         cf_key: m21_key.Key,
         voice_position: str,
         rule_set: str,
-        custom_rules: Optional[List[str]],
-    ) -> Dict[str, Any]:
+        custom_rules: list[str] | None,
+    ) -> dict[str, Any]:
         """Generate second species (2:1) counterpoint"""
         counterpoint_notes = []
         interval_analysis = []
@@ -537,10 +532,10 @@ class CounterpointGeneratorTool(BaseTool):
         cf_note: note.Note,
         cf_key: m21_key.Key,
         voice_position: str,
-        previous_notes: List[note.Note],
+        previous_notes: list[note.Note],
         is_strong_beat: bool,
         rule_set: str,
-        custom_rules: Optional[List[str]],
+        custom_rules: list[str] | None,
     ) -> pitch.Pitch:
         """Choose note for second species with passing tones allowed"""
         available_pitches = self._get_scale_pitches(
@@ -574,12 +569,12 @@ class CounterpointGeneratorTool(BaseTool):
 
     async def _generate_third_species(
         self,
-        cantus_firmus: List[note.Note],
+        cantus_firmus: list[note.Note],
         cf_key: m21_key.Key,
         voice_position: str,
         rule_set: str,
-        custom_rules: Optional[List[str]],
-    ) -> Dict[str, Any]:
+        custom_rules: list[str] | None,
+    ) -> dict[str, Any]:
         """Generate third species (3:1) counterpoint"""
         counterpoint_notes = []
         interval_analysis = []
@@ -632,11 +627,11 @@ class CounterpointGeneratorTool(BaseTool):
         cf_note: note.Note,
         cf_key: m21_key.Key,
         voice_position: str,
-        previous_notes: List[note.Note],
+        previous_notes: list[note.Note],
         beat: int,
         is_strong: bool,
         rule_set: str,
-        custom_rules: Optional[List[str]],
+        custom_rules: list[str] | None,
     ) -> pitch.Pitch:
         """Choose note for third species with more embellishments"""
         available_pitches = self._get_scale_pitches(
@@ -674,12 +669,12 @@ class CounterpointGeneratorTool(BaseTool):
 
     async def _generate_fourth_species(
         self,
-        cantus_firmus: List[note.Note],
+        cantus_firmus: list[note.Note],
         cf_key: m21_key.Key,
         voice_position: str,
         rule_set: str,
-        custom_rules: Optional[List[str]],
-    ) -> Dict[str, Any]:
+        custom_rules: list[str] | None,
+    ) -> dict[str, Any]:
         """Generate fourth species (syncopated) counterpoint"""
         counterpoint_notes = []
         interval_analysis = []
@@ -726,12 +721,12 @@ class CounterpointGeneratorTool(BaseTool):
     def _create_suspension(
         self,
         cf_note: note.Note,
-        prev_cf: Optional[note.Note],
+        prev_cf: note.Note | None,
         cf_key: m21_key.Key,
         voice_position: str,
-        previous_notes: List[note.Note],
+        previous_notes: list[note.Note],
         rule_set: str,
-    ) -> List[note.Note]:
+    ) -> list[note.Note]:
         """Create a suspension figure"""
         notes = []
 
@@ -796,12 +791,12 @@ class CounterpointGeneratorTool(BaseTool):
 
     async def _generate_fifth_species(
         self,
-        cantus_firmus: List[note.Note],
+        cantus_firmus: list[note.Note],
         cf_key: m21_key.Key,
         voice_position: str,
         rule_set: str,
-        custom_rules: Optional[List[str]],
-    ) -> Dict[str, Any]:
+        custom_rules: list[str] | None,
+    ) -> dict[str, Any]:
         """Generate fifth species (florid) counterpoint"""
         counterpoint_notes = []
         interval_analysis = []
@@ -872,10 +867,7 @@ class CounterpointGeneratorTool(BaseTool):
         self, cf_note: note.Note, voice_position: str
     ) -> pitch.Pitch:
         """Choose opening pitch (perfect consonance)"""
-        if voice_position == "above":
-            options = [0, 7, 12]  # Unison, fifth, octave
-        else:
-            options = [-12, -7, 0]
+        options = [0, 7, 12] if voice_position == "above" else [-12, -7, 0]  # noqa: SIM108
 
         interval_choice = random.choice(options)
         return pitch.Pitch(midi=cf_note.pitch.midi + interval_choice)
@@ -895,9 +887,8 @@ class CounterpointGeneratorTool(BaseTool):
                 leading_tone.midi -= 12
 
             return leading_tone
-        else:
-            # In minor, could use natural or raised 7th
-            return self._choose_consonant_pitch(cf_note, cf_key, voice_position)
+        # In minor, could use natural or raised 7th
+        return self._choose_consonant_pitch(cf_note, cf_key, voice_position)
 
     def _choose_final_pitch(
         self, cf_note: note.Note, voice_position: str
@@ -910,7 +901,7 @@ class CounterpointGeneratorTool(BaseTool):
 
         return pitch.Pitch(midi=cf_note.pitch.midi + interval_choice)
 
-    def _analyze_melodic_line(self, notes: List[note.Note]) -> Dict[str, Any]:
+    def _analyze_melodic_line(self, notes: list[note.Note]) -> dict[str, Any]:
         """Analyze the melodic characteristics of the counterpoint"""
         analysis = {
             "total_notes": len(notes),
@@ -975,12 +966,12 @@ class CounterpointGeneratorTool(BaseTool):
 
     def _check_counterpoint_rules(
         self,
-        cantus_firmus: List[note.Note],
-        counterpoint: List[note.Note],
+        cantus_firmus: list[note.Note],
+        counterpoint: list[note.Note],
         species: Species,
         rule_set: str,
-        custom_rules: Optional[List[str]],
-    ) -> Dict[str, Any]:
+        custom_rules: list[str] | None,
+    ) -> dict[str, Any]:
         """Check counterpoint against rules"""
         violations = []
         total_checks = 0
@@ -1000,10 +991,8 @@ class CounterpointGeneratorTool(BaseTool):
             rules_to_check = []
             if custom_rules:
                 for rule_name in custom_rules:
-                    try:
+                    with contextlib.suppress(builtins.BaseException):
                         rules_to_check.append(CounterpointRule(rule_name))
-                    except:
-                        pass
 
         # Check each rule
         for rule in rules_to_check:
@@ -1066,10 +1055,10 @@ class CounterpointGeneratorTool(BaseTool):
 
     def _check_parallel_intervals(
         self,
-        cantus_firmus: List[note.Note],
-        counterpoint: List[note.Note],
+        cantus_firmus: list[note.Note],
+        counterpoint: list[note.Note],
         interval_size: int,
-    ) -> List[int]:
+    ) -> list[int]:
         """Check for parallel fifths or octaves"""
         locations = []
 
@@ -1106,7 +1095,7 @@ class CounterpointGeneratorTool(BaseTool):
         return locations
 
     def _check_cadence(
-        self, cantus_firmus: List[note.Note], counterpoint: List[note.Note]
+        self, cantus_firmus: list[note.Note], counterpoint: list[note.Note]
     ) -> bool:
         """Check if cadence is proper"""
         if not cantus_firmus or not counterpoint:
@@ -1128,8 +1117,8 @@ class CounterpointGeneratorTool(BaseTool):
 
     def _create_counterpoint_score(
         self,
-        cantus_firmus: List[note.Note],
-        counterpoint: List[note.Note],
+        cantus_firmus: list[note.Note],
+        counterpoint: list[note.Note],
         voice_position: str,
         species: Species,
     ) -> stream.Score:
@@ -1161,8 +1150,8 @@ class CounterpointGeneratorTool(BaseTool):
         return score
 
     def _generate_explanations(
-        self, species: Species, rule_report: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, species: Species, rule_report: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Generate educational explanations"""
         explanations = []
 

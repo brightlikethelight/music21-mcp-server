@@ -5,7 +5,7 @@ Supports sequence detection, motivic analysis, and fuzzy matching
 
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 from music21 import interval, stream
@@ -24,7 +24,7 @@ class PatternRecognitionTool(BaseTool):
     4. Contour analysis with similarity scoring
     """
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Find patterns in a musical score
 
@@ -80,7 +80,7 @@ class PatternRecognitionTool(BaseTool):
                 message="Pattern recognition complete", **results
             )
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         score_id = kwargs.get("score_id", "")
         pattern_type = kwargs.get("pattern_type", "both")
@@ -104,9 +104,9 @@ class PatternRecognitionTool(BaseTool):
         min_length: int,
         threshold: float,
         include_transformations: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Find melodic patterns including sequences and motifs"""
-        results: Dict[str, Any] = {
+        results: dict[str, Any] = {
             "sequences": [],
             "motifs": [],
             "contour_patterns": [],
@@ -165,9 +165,9 @@ class PatternRecognitionTool(BaseTool):
 
     async def _find_rhythmic_patterns(
         self, score: stream.Score, min_length: int, threshold: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Find rhythmic patterns"""
-        results: Dict[str, Any] = {
+        results: dict[str, Any] = {
             "rhythmic_motifs": [],
             "metric_patterns": [],
             "syncopations": [],
@@ -228,9 +228,9 @@ class PatternRecognitionTool(BaseTool):
 
         return results
 
-    def _find_sequences(self, melody: List, min_length: int) -> List[Dict]:
+    def _find_sequences(self, melody: list, min_length: int) -> list[dict]:
         """Find melodic sequences (exact transpositions)"""
-        sequences: List[Dict[str, Any]] = []
+        sequences: list[dict[str, Any]] = []
 
         if len(melody) < min_length * 2:
             return sequences
@@ -289,13 +289,13 @@ class PatternRecognitionTool(BaseTool):
 
     def _find_motifs(
         self,
-        melody: List,
+        melody: list,
         min_length: int,
         threshold: float,
         include_transformations: bool,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """Find recurring melodic motifs with fuzzy matching"""
-        motifs: List[Dict[str, Any]] = []
+        motifs: list[dict[str, Any]] = []
 
         if len(melody) < min_length:
             return motifs
@@ -356,7 +356,7 @@ class PatternRecognitionTool(BaseTool):
         return motifs
 
     def _calculate_pitch_similarity(
-        self, seq1: List[int], seq2: List[int], include_transformations: bool
+        self, seq1: list[int], seq2: list[int], include_transformations: bool
     ) -> float:
         """Calculate similarity between two pitch sequences"""
         if len(seq1) != len(seq2):
@@ -390,10 +390,10 @@ class PatternRecognitionTool(BaseTool):
             return 0.85
 
         # Fuzzy contour matching
-        matches = sum(1 for a, b in zip(contour1, contour2) if a == b)
+        matches = sum(1 for a, b in zip(contour1, contour2, strict=False) if a == b)
         return matches / len(contour1) * 0.8
 
-    def _get_contour(self, pitches: List[int]) -> List[str]:
+    def _get_contour(self, pitches: list[int]) -> list[str]:
         """Get melodic contour (up, down, same)"""
         contour = []
         for i in range(len(pitches) - 1):
@@ -405,7 +405,7 @@ class PatternRecognitionTool(BaseTool):
                 contour.append("S")
         return contour
 
-    def _analyze_contour(self, melody: List) -> Dict[str, Any]:
+    def _analyze_contour(self, melody: list) -> dict[str, Any]:
         """Analyze overall melodic contour"""
         if len(melody) < 2:
             return {}
@@ -434,7 +434,7 @@ class PatternRecognitionTool(BaseTool):
             "descending_ratio": contour_string.count("D") / max(1, len(contour_string)),
         }
 
-    def _classify_contour_shape(self, pitches: List[int]) -> str:
+    def _classify_contour_shape(self, pitches: list[int]) -> str:
         """Classify overall melodic shape"""
         if not pitches:
             return "unknown"
@@ -455,18 +455,17 @@ class PatternRecognitionTool(BaseTool):
         # Classify
         if abs(slope) < 0.1:  # Relatively flat
             return "static"
-        elif slope > 0.5:
+        if slope > 0.5:
             return "ascending"
-        elif slope < -0.5:
+        if slope < -0.5:
             return "descending"
-        elif middle_avg > first_half_avg and middle_avg > second_half_avg:
+        if middle_avg > first_half_avg and middle_avg > second_half_avg:
             return "arch"
-        elif middle_avg < first_half_avg and middle_avg < second_half_avg:
+        if middle_avg < first_half_avg and middle_avg < second_half_avg:
             return "inverted_arch"
-        else:
-            return "undulating"
+        return "undulating"
 
-    def _find_interval_patterns(self, melody: List, min_length: int) -> List[Dict]:
+    def _find_interval_patterns(self, melody: list, min_length: int) -> list[dict]:
         """Find recurring interval patterns"""
         patterns = []
 
@@ -483,8 +482,8 @@ class PatternRecognitionTool(BaseTool):
                 intervals.append("P1")
 
         # Find recurring patterns
-        pattern_counts: Dict[Tuple[str, ...], int] = defaultdict(int)
-        pattern_positions: Dict[Tuple[str, ...], List[int]] = defaultdict(list)
+        pattern_counts: dict[tuple[str, ...], int] = defaultdict(int)
+        pattern_positions: dict[tuple[str, ...], list[int]] = defaultdict(list)
 
         for length in range(min_length, min(len(intervals), 8)):
             for start in range(len(intervals) - length + 1):
@@ -515,7 +514,7 @@ class PatternRecognitionTool(BaseTool):
 
         return patterns
 
-    def _assess_interval_pattern_significance(self, pattern: Tuple[str, ...]) -> float:
+    def _assess_interval_pattern_significance(self, pattern: tuple[str, ...]) -> float:
         """Assess musical significance of an interval pattern"""
         significance = 0.5
 
@@ -540,10 +539,10 @@ class PatternRecognitionTool(BaseTool):
         return max(0, min(1, significance))
 
     def _find_rhythmic_motifs(
-        self, rhythm_stream: List[Dict], min_length: int, threshold: float
-    ) -> List[Dict]:
+        self, rhythm_stream: list[dict], min_length: int, threshold: float
+    ) -> list[dict]:
         """Find recurring rhythmic patterns"""
-        motifs: List[Dict[str, Any]] = []
+        motifs: list[dict[str, Any]] = []
 
         if len(rhythm_stream) < min_length:
             return motifs
@@ -594,7 +593,7 @@ class PatternRecognitionTool(BaseTool):
         return motifs
 
     def _calculate_rhythmic_similarity(
-        self, rhythm1: List[float], rhythm2: List[float]
+        self, rhythm1: list[float], rhythm2: list[float]
     ) -> float:
         """Calculate similarity between two rhythmic patterns"""
         if len(rhythm1) != len(rhythm2):
@@ -609,11 +608,13 @@ class PatternRecognitionTool(BaseTool):
             ratio = rhythm2[0] / rhythm1[0] if rhythm1[0] != 0 else 0
             if ratio > 0:
                 scaled = [r * ratio for r in rhythm1]
-                if all(abs(a - b) < 0.01 for a, b in zip(scaled, rhythm2)):
+                if all(
+                    abs(a - b) < 0.01 for a, b in zip(scaled, rhythm2, strict=False)
+                ):
                     return 0.9
 
         # Approximate match with tolerance
-        differences = [abs(a - b) for a, b in zip(rhythm1, rhythm2)]
+        differences = [abs(a - b) for a, b in zip(rhythm1, rhythm2, strict=False)]
         avg_difference = sum(differences) / len(differences)
 
         if avg_difference < 0.125:  # Within 32nd note
@@ -621,7 +622,7 @@ class PatternRecognitionTool(BaseTool):
 
         return 0.0
 
-    def _analyze_metric_patterns(self, score: stream.Score) -> List[Dict]:
+    def _analyze_metric_patterns(self, score: stream.Score) -> list[dict]:
         """Analyze metric patterns and accentuation"""
         patterns = []
 
@@ -646,39 +647,37 @@ class PatternRecognitionTool(BaseTool):
 
         return patterns
 
-    def _get_strong_beats(self, time_sig: Any) -> List[int]:
+    def _get_strong_beats(self, time_sig: Any) -> list[int]:
         """Identify strong beats in a time signature"""
         if time_sig.numerator == 4:
             return [1, 3]
-        elif time_sig.numerator == 3:
+        if time_sig.numerator == 3:
             return [1]
-        elif time_sig.numerator == 6:
+        if time_sig.numerator == 6:
             return [1, 4]
-        elif time_sig.numerator == 2:
+        if time_sig.numerator == 2:
             return [1]
-        else:
-            # Default: first beat and middle if even
-            strong = [1]
-            if time_sig.numerator % 2 == 0:
-                strong.append(time_sig.numerator // 2 + 1)
-            return strong
+        # Default: first beat and middle if even
+        strong = [1]
+        if time_sig.numerator % 2 == 0:
+            strong.append(time_sig.numerator // 2 + 1)
+        return strong
 
     def _classify_meter(self, time_sig: Any) -> str:
         """Classify the type of meter"""
         if time_sig.numerator in [2, 4]:
             return "simple_duple"
-        elif time_sig.numerator == 3:
+        if time_sig.numerator == 3:
             return "simple_triple"
-        elif time_sig.numerator == 6:
+        if time_sig.numerator == 6:
             return "compound_duple"
-        elif time_sig.numerator == 9:
+        if time_sig.numerator == 9:
             return "compound_triple"
-        elif time_sig.numerator in [5, 7]:
+        if time_sig.numerator in [5, 7]:
             return "asymmetric"
-        else:
-            return "complex"
+        return "complex"
 
-    def _find_syncopations(self, part: stream.Part) -> List[Dict]:
+    def _find_syncopations(self, part: stream.Part) -> list[dict]:
         """Find syncopated rhythms"""
         syncopations = []
 
@@ -713,9 +712,9 @@ class PatternRecognitionTool(BaseTool):
 
         return syncopations[:20]  # Limit output
 
-    def _detect_cross_rhythms(self, score: stream.Score) -> List[Dict]:
+    def _detect_cross_rhythms(self, score: stream.Score) -> list[dict]:
         """Detect polyrhythms between parts"""
-        cross_rhythms: List[Dict[str, Any]] = []
+        cross_rhythms: list[dict[str, Any]] = []
 
         try:
             if len(score.parts) < 2:
@@ -743,7 +742,7 @@ class PatternRecognitionTool(BaseTool):
 
         return cross_rhythms
 
-    def _extract_rhythm_profile(self, part: stream.Part) -> Dict[str, Any]:
+    def _extract_rhythm_profile(self, part: stream.Part) -> dict[str, Any]:
         """Extract rhythmic profile of a part"""
         try:
             durations = [n.duration.quarterLength for n in part.flatten().notesAndRests]
@@ -776,7 +775,7 @@ class PatternRecognitionTool(BaseTool):
             logger.debug(f"Rhythm profile extraction error: {e}")
             return {}
 
-    def _analyze_phrase_structure(self, score: stream.Score) -> Dict[str, Any]:
+    def _analyze_phrase_structure(self, score: stream.Score) -> dict[str, Any]:
         """Analyze musical phrase structure"""
         structure = {"phrases": [], "phrase_lengths": [], "symmetry": "unknown"}
 
@@ -789,34 +788,33 @@ class PatternRecognitionTool(BaseTool):
                 elements = list(melody.notesAndRests)
                 for i, element in enumerate(elements):
                     # Phrase ends at significant rests or end
-                    if (
+                    if ((
                         element.isRest and element.duration.quarterLength >= 1.0
-                    ) or i == len(elements) - 1:
-                        if i > current_phrase_start:
-                            phrase_length = sum(
-                                e.duration.quarterLength
-                                for e in elements[current_phrase_start:i]
-                            )
+                    ) or i == len(elements) - 1) and i > current_phrase_start:
+                        phrase_length = sum(
+                            e.duration.quarterLength
+                            for e in elements[current_phrase_start:i]
+                        )
 
-                            structure["phrases"].append(
-                                {
-                                    "start_measure": elements[
-                                        current_phrase_start
-                                    ].measureNumber,
-                                    "end_measure": (
-                                        elements[i - 1].measureNumber if i > 0 else 1
-                                    ),
-                                    "length": phrase_length,
-                                    "note_count": sum(
-                                        1
-                                        for e in elements[current_phrase_start:i]
-                                        if e.isNote
-                                    ),
-                                }
-                            )
-                            structure["phrase_lengths"].append(phrase_length)
+                        structure["phrases"].append(
+                            {
+                                "start_measure": elements[
+                                    current_phrase_start
+                                ].measureNumber,
+                                "end_measure": (
+                                    elements[i - 1].measureNumber if i > 0 else 1
+                                ),
+                                "length": phrase_length,
+                                "note_count": sum(
+                                    1
+                                    for e in elements[current_phrase_start:i]
+                                    if e.isNote
+                                ),
+                            }
+                        )
+                        structure["phrase_lengths"].append(phrase_length)
 
-                            current_phrase_start = i + 1
+                        current_phrase_start = i + 1
 
             # Analyze symmetry
             if len(structure["phrase_lengths"]) >= 2:
@@ -844,7 +842,7 @@ class PatternRecognitionTool(BaseTool):
 
         return structure
 
-    def _deduplicate_patterns(self, patterns: List[Dict]) -> List[Dict]:
+    def _deduplicate_patterns(self, patterns: list[dict]) -> list[dict]:
         """Remove duplicate patterns keeping the most significant"""
         seen = set()
         unique = []
@@ -866,9 +864,9 @@ class PatternRecognitionTool(BaseTool):
 
         return unique
 
-    def _get_common_intervals(self, melodies: List[List]) -> List[Dict]:
+    def _get_common_intervals(self, melodies: list[list]) -> list[dict]:
         """Get most common melodic intervals"""
-        interval_counts: Dict[str, int] = defaultdict(int)
+        interval_counts: dict[str, int] = defaultdict(int)
 
         for melody in melodies:
             for i in range(len(melody) - 1):
@@ -888,7 +886,7 @@ class PatternRecognitionTool(BaseTool):
         ]
 
     def _calculate_melodic_density(
-        self, melodies: List[List], score: stream.Score
+        self, melodies: list[list], score: stream.Score
     ) -> float:
         """Calculate notes per quarter note"""
         total_notes = sum(len(m) for m in melodies)
@@ -898,7 +896,7 @@ class PatternRecognitionTool(BaseTool):
             return float(round(total_notes / total_duration, 2))
         return 0.0
 
-    def _identify_transformations(self, similar_patterns: List[Dict]) -> List[str]:
+    def _identify_transformations(self, similar_patterns: list[dict]) -> list[str]:
         """Identify transformations between pattern instances"""
         transformations = set()
 
@@ -913,7 +911,10 @@ class PatternRecognitionTool(BaseTool):
             # Check for transposition
             if len(pitches) == len(base_pitches):
                 interval_diff = pitches[0] - base_pitches[0]
-                if all(p - b == interval_diff for p, b in zip(pitches, base_pitches)):
+                if all(
+                    p - b == interval_diff
+                    for p, b in zip(pitches, base_pitches, strict=False)
+                ):
                     transformations.add(f"T{interval_diff}")
 
                 # Check for inversion

@@ -5,7 +5,7 @@ Supports files, corpus, and text notation with intelligent auto-detection
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 from music21 import converter, corpus, note, stream
 
@@ -28,7 +28,7 @@ class ImportScoreTool(BaseTool):
         ".mei",
     }
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Import a musical score from various sources
 
@@ -86,7 +86,7 @@ class ImportScoreTool(BaseTool):
                 **metadata,
             )
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         score_id = kwargs.get("score_id", "")
         source = kwargs.get("source", "")
@@ -144,7 +144,7 @@ class ImportScoreTool(BaseTool):
             return cleaned[0].isalpha() and cleaned[1:].isdigit()
         return False
 
-    async def _import_from_file(self, file_path: str) -> Optional[stream.Score]:
+    async def _import_from_file(self, file_path: str) -> stream.Score | None:
         """Import from a file"""
         if not os.path.exists(file_path):
             return None
@@ -158,7 +158,7 @@ class ImportScoreTool(BaseTool):
             logger.error(f"Failed to parse file {file_path}: {e}")
             return None
 
-    async def _import_from_corpus(self, corpus_path: str) -> Optional[stream.Score]:
+    async def _import_from_corpus(self, corpus_path: str) -> stream.Score | None:
         """Import from music21 corpus"""
         try:
             self.report_progress(0.3, "Loading from corpus")
@@ -169,7 +169,7 @@ class ImportScoreTool(BaseTool):
             logger.error(f"Failed to load corpus {corpus_path}: {e}")
             return None
 
-    async def _import_from_text(self, text: str) -> Optional[stream.Score]:
+    async def _import_from_text(self, text: str) -> stream.Score | None:
         """Import from text notation"""
         try:
             self.report_progress(0.3, "Parsing text notation")
@@ -185,7 +185,7 @@ class ImportScoreTool(BaseTool):
                     part.append(n)
                     if i % 10 == 0:  # Update progress every 10 notes
                         self.report_progress(
-                            0.3 + (0.4 * i / total), f"Parsing note {i+1}/{total}"
+                            0.3 + (0.4 * i / total), f"Parsing note {i + 1}/{total}"
                         )
                 except Exception as e:
                     logger.warning(f"Invalid note '{note_str}': {e}")
@@ -199,7 +199,7 @@ class ImportScoreTool(BaseTool):
             logger.error(f"Failed to parse text notation: {e}")
             return None
 
-    def _extract_metadata(self, score: stream.Score) -> Dict[str, Any]:
+    def _extract_metadata(self, score: stream.Score) -> dict[str, Any]:
         """Extract metadata from score"""
         try:
             num_notes = len(list(score.flatten().notes))

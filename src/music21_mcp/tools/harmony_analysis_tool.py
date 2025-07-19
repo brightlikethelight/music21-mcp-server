@@ -4,7 +4,7 @@ Uses music21 directly for Roman numeral analysis and chord detection
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from music21 import chord, key, roman, stream
 
@@ -21,10 +21,10 @@ class HarmonyAnalysisTool(BaseTool):
     3. Basic functional harmony detection
     """
 
-    def __init__(self, score_manager: Dict[str, Any]):
+    def __init__(self, score_manager: dict[str, Any]):
         super().__init__(score_manager)
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Perform harmonic analysis on a score
 
@@ -78,14 +78,14 @@ class HarmonyAnalysisTool(BaseTool):
                 chord_count=len(chords),
             )
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate the inputs for harmony analysis"""
         score_id = kwargs.get("score_id", "")
         if not score_id:
             return "score_id is required"
         return None
 
-    def _extract_chords(self, score: stream.Score) -> List[chord.Chord]:
+    def _extract_chords(self, score: stream.Score) -> list[chord.Chord]:
         """Extract chords from the score"""
         chords = []
 
@@ -97,8 +97,8 @@ class HarmonyAnalysisTool(BaseTool):
         return chords
 
     def _analyze_roman_numerals(
-        self, chords: List[chord.Chord], score: stream.Score
-    ) -> List[Dict[str, Any]]:
+        self, chords: list[chord.Chord], score: stream.Score
+    ) -> list[dict[str, Any]]:
         """Analyze chords using Roman numeral notation"""
         roman_numerals = []
 
@@ -158,8 +158,8 @@ class HarmonyAnalysisTool(BaseTool):
         return roman_numerals
 
     def _analyze_progressions(
-        self, roman_numerals: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, roman_numerals: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Analyze chord progressions"""
         progressions = []
 
@@ -193,8 +193,8 @@ class HarmonyAnalysisTool(BaseTool):
         return progressions
 
     def _analyze_functional_harmony(
-        self, roman_numerals: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, roman_numerals: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Analyze functional harmony"""
         if not roman_numerals:
             return {}
@@ -223,8 +223,8 @@ class HarmonyAnalysisTool(BaseTool):
         }
 
     def _analyze_harmonic_rhythm(
-        self, chords: List[chord.Chord]
-    ) -> List[Dict[str, Any]]:
+        self, chords: list[chord.Chord]
+    ) -> list[dict[str, Any]]:
         """Analyze harmonic rhythm"""
         rhythm = []
 

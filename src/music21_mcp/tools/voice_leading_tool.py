@@ -4,9 +4,9 @@ Uses music21 directly for basic voice leading analysis
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from music21 import chord, interval, note, stream
+from music21 import interval, note, stream
 
 from .base_tool import BaseTool
 
@@ -21,10 +21,10 @@ class VoiceLeadingAnalysisTool(BaseTool):
     3. Basic voice leading smoothness analysis
     """
 
-    def __init__(self, score_manager: Dict[str, Any]):
+    def __init__(self, score_manager: dict[str, Any]):
         super().__init__(score_manager)
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Analyze voice leading in a score
 
@@ -60,16 +60,16 @@ class VoiceLeadingAnalysisTool(BaseTool):
                 overall_score=max(0, 100 - total_issues * 10),  # Basic scoring
             )
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate the inputs for voice leading analysis"""
         score_id = kwargs.get("score_id", "")
         if not score_id:
             return "score_id is required"
         return None
 
-    def _detect_parallel_intervals(self, score: stream.Score) -> List[Dict[str, Any]]:
+    def _detect_parallel_intervals(self, score: stream.Score) -> list[dict[str, Any]]:
         """Detect parallel fifths and octaves"""
-        parallel_issues: List[Dict[str, Any]] = []
+        parallel_issues: list[dict[str, Any]] = []
 
         # Get all parts
         parts = score.parts
@@ -117,9 +117,9 @@ class VoiceLeadingAnalysisTool(BaseTool):
 
         return parallel_issues
 
-    def _detect_voice_crossings(self, score: stream.Score) -> List[Dict[str, Any]]:
+    def _detect_voice_crossings(self, score: stream.Score) -> list[dict[str, Any]]:
         """Detect voice crossings"""
-        voice_crossings: List[Dict[str, Any]] = []
+        voice_crossings: list[dict[str, Any]] = []
 
         # Get all parts
         parts = score.parts
@@ -154,7 +154,7 @@ class VoiceLeadingAnalysisTool(BaseTool):
 
         return voice_crossings
 
-    def _analyze_smoothness(self, score: stream.Score) -> Dict[str, Any]:
+    def _analyze_smoothness(self, score: stream.Score) -> dict[str, Any]:
         """Analyze voice leading smoothness"""
         smoothness = {
             "total_motion": 0,

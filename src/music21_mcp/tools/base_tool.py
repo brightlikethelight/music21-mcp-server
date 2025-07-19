@@ -6,8 +6,9 @@ Provides common functionality and interface contracts
 import logging
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Generator, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,18 +22,18 @@ class BaseTool(ABC):
     - Memory-efficient processing
     """
 
-    def __init__(self, score_manager: Dict[str, Any]):
+    def __init__(self, score_manager: dict[str, Any]):
         """Initialize with reference to score manager"""
         self.score_manager = score_manager
-        self._progress_callback: Optional[Callable] = None
+        self._progress_callback: Callable | None = None
 
     @property
-    def scores(self) -> Dict[str, Any]:
+    def scores(self) -> dict[str, Any]:
         """Provide access to scores for backward compatibility with tests"""
         return self.score_manager
 
     @abstractmethod
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Execute the tool operation
 
@@ -45,7 +46,7 @@ class BaseTool(ABC):
         pass
 
     @abstractmethod
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """
         Validate input parameters
 
@@ -77,8 +78,8 @@ class BaseTool(ABC):
             raise
 
     def create_error_response(
-        self, message: str, details: Optional[Dict] = None
-    ) -> Dict[str, Any]:
+        self, message: str, details: dict | None = None
+    ) -> dict[str, Any]:
         """Create standardized error response"""
         response = {"status": "error", "message": message}
         if details:
@@ -87,13 +88,13 @@ class BaseTool(ABC):
 
     def create_success_response(
         self, message: str = "Operation completed successfully", **kwargs: Any
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create standardized success response"""
         response = {"status": "success", "message": message}
         response.update(kwargs)
         return response
 
-    def check_score_exists(self, score_id: str) -> Optional[str]:
+    def check_score_exists(self, score_id: str) -> str | None:
         """Check if score exists, return error message if not"""
         if score_id not in self.score_manager:
             return f"Score with ID '{score_id}' not found"

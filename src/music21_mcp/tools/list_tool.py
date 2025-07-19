@@ -3,7 +3,7 @@ List Scores Tool - List all imported scores with metadata
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .base_tool import BaseTool
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class ListScoresTool(BaseTool):
     """Tool for listing all imported scores"""
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         List all imported scores with their metadata
 
@@ -55,6 +55,6 @@ class ListScoresTool(BaseTool):
 
             return self.create_success_response(total_count=len(scores), scores=scores)
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """No inputs to validate for list operation"""
         return None

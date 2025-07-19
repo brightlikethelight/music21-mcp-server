@@ -3,7 +3,7 @@ Chord Analysis Tool - Extract and analyze chord progressions
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from music21 import chord, roman
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ChordAnalysisTool(BaseTool):
     """Tool for analyzing chord progressions with Roman numeral analysis"""
 
-    async def execute(self, **kwargs: Any) -> Dict[str, Any]:
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
         Analyze chord progressions in a score
 
@@ -30,7 +30,7 @@ class ChordAnalysisTool(BaseTool):
         score_id = kwargs.get("score_id", "")
         include_roman_numerals = kwargs.get("include_roman_numerals", True)
         include_inversions = kwargs.get("include_inversions", True)
-        segment_length = kwargs.get("segment_length", 0.5)
+        kwargs.get("segment_length", 0.5)
         # Validate inputs
         error = self.validate_inputs(**kwargs)
         if error:
@@ -70,7 +70,7 @@ class ChordAnalysisTool(BaseTool):
                 if i % 10 == 0:
                     self.report_progress(
                         0.3 + (0.5 * i / total_chords),
-                        f"Processing chord {i+1}/{total_chords}",
+                        f"Processing chord {i + 1}/{total_chords}",
                     )
 
                 chord_info = self._analyze_chord(ch, score_key, include_inversions)
@@ -111,14 +111,14 @@ class ChordAnalysisTool(BaseTool):
 
             return result
 
-    def validate_inputs(self, **kwargs: Any) -> Optional[str]:
+    def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         score_id = kwargs.get("score_id", "")
         return self.check_score_exists(score_id)
 
     def _analyze_chord(
         self, ch: chord.Chord, score_key, include_inversions: bool
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze a single chord"""
         try:
             # Get pitch names
@@ -163,7 +163,7 @@ class ChordAnalysisTool(BaseTool):
             logger.warning(f"Error analyzing chord: {e}")
             return {"pitches": [str(p) for p in ch.pitches], "error": "Analysis failed"}
 
-    def _analyze_harmonic_rhythm(self, chord_list: List[chord.Chord]) -> Dict[str, Any]:
+    def _analyze_harmonic_rhythm(self, chord_list: list[chord.Chord]) -> dict[str, Any]:
         """Analyze the harmonic rhythm (rate of chord changes)"""
         if not chord_list:
             return {"average_duration": 0, "changes_per_measure": 0}
@@ -197,7 +197,7 @@ class ChordAnalysisTool(BaseTool):
             logger.warning(f"Error analyzing harmonic rhythm: {e}")
             return {"average_duration": 0, "changes_per_measure": 0}
 
-    def _generate_chord_summary(self, chord_progression: List[Dict]) -> Dict[str, Any]:
+    def _generate_chord_summary(self, chord_progression: list[dict]) -> dict[str, Any]:
         """Generate summary statistics about the chord progression"""
         if not chord_progression:
             return {}
