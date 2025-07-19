@@ -777,7 +777,11 @@ class PatternRecognitionTool(BaseTool):
 
     def _analyze_phrase_structure(self, score: stream.Score) -> dict[str, Any]:
         """Analyze musical phrase structure"""
-        structure: dict[str, Any] = {"phrases": [], "phrase_lengths": [], "symmetry": "unknown"}
+        structure: dict[str, Any] = {
+            "phrases": [],
+            "phrase_lengths": [],
+            "symmetry": "unknown",
+        }
 
         try:
             # Simple phrase detection based on rests and cadences
