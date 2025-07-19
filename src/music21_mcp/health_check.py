@@ -18,6 +18,7 @@ def check_health():
         try:
             import asyncio  # noqa: F401
             import logging  # noqa: F401
+
             has_asyncio = True  # noqa: F841
         except ImportError as e:
             return False, f"Basic import failed: {e}"
@@ -25,6 +26,7 @@ def check_health():
         # Check if MCP package is available
         try:
             import mcp  # noqa: F401
+
             has_mcp = True  # noqa: F841
         except ImportError:
             return False, "MCP package not available"

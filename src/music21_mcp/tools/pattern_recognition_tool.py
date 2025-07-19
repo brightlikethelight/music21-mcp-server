@@ -788,9 +788,10 @@ class PatternRecognitionTool(BaseTool):
                 elements = list(melody.notesAndRests)
                 for i, element in enumerate(elements):
                     # Phrase ends at significant rests or end
-                    if ((
-                        element.isRest and element.duration.quarterLength >= 1.0
-                    ) or i == len(elements) - 1) and i > current_phrase_start:
+                    if (
+                        (element.isRest and element.duration.quarterLength >= 1.0)
+                        or i == len(elements) - 1
+                    ) and i > current_phrase_start:
                         phrase_length = sum(
                             e.duration.quarterLength
                             for e in elements[current_phrase_start:i]
