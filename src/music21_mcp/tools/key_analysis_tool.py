@@ -139,7 +139,7 @@ class KeyAnalysisTool(BaseTool):
 
         return results
 
-    def _analyze_with_algorithm(self, score: stream.Stream, algorithm: str):
+    def _analyze_with_algorithm(self, score: stream.Stream, algorithm: str) -> Any:
         """Run a specific key detection algorithm"""
         try:
             if algorithm == "krumhansl":

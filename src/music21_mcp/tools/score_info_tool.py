@@ -271,7 +271,7 @@ class ScoreInfoTool(BaseTool):
             # Dynamics
             dynamics = list(flat.getElementsByClass("Dynamic"))
             if dynamics:
-                structure["dynamics_count"] = len(dynamics)  # type: ignore[assignment]
+                structure["dynamics_count"] = len(dynamics)
                 structure["dynamic_range"] = list(
                     {d.value for d in dynamics if hasattr(d, "value")}
                 )

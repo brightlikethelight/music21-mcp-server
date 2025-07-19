@@ -467,7 +467,7 @@ class PatternRecognitionTool(BaseTool):
 
     def _find_interval_patterns(self, melody: list, min_length: int) -> list[dict]:
         """Find recurring interval patterns"""
-        patterns = []
+        patterns: list[dict] = []
 
         if len(melody) < min_length + 1:
             return patterns
@@ -777,7 +777,7 @@ class PatternRecognitionTool(BaseTool):
 
     def _analyze_phrase_structure(self, score: stream.Score) -> dict[str, Any]:
         """Analyze musical phrase structure"""
-        structure = {"phrases": [], "phrase_lengths": [], "symmetry": "unknown"}
+        structure: dict[str, Any] = {"phrases": [], "phrase_lengths": [], "symmetry": "unknown"}
 
         try:
             # Simple phrase detection based on rests and cadences
