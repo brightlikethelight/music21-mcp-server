@@ -142,7 +142,11 @@ class HarmonizationTool(BaseTool):
             harmonized_score = harmonization["score"]
             assert isinstance(harmonized_score, stream.Score)
             style_vocab = self.style_vocabularies.get(style, {})
-            voice_leading_style = style_vocab.get("voice_leading", "free") if isinstance(style_vocab, dict) else "free"
+            voice_leading_style = (
+                style_vocab.get("voice_leading", "free")
+                if isinstance(style_vocab, dict)
+                else "free"
+            )
             assert isinstance(voice_leading_style, str)
             voice_leading_check = self._check_voice_leading(
                 harmonized_score, voice_leading_style
@@ -306,8 +310,10 @@ class HarmonizationTool(BaseTool):
 
         # Add melody to soprano
         for n in melody:
-            if hasattr(n, 'pitch') and hasattr(n, 'duration'):
-                soprano.append(note.Note(n.pitch, quarterLength=n.duration.quarterLength))
+            if hasattr(n, "pitch") and hasattr(n, "duration"):
+                soprano.append(
+                    note.Note(n.pitch, quarterLength=n.duration.quarterLength)
+                )
 
         # Generate harmonic progression
         progression = self._generate_progression_classical(
@@ -328,10 +334,11 @@ class HarmonizationTool(BaseTool):
             if voice_parts >= 3:
                 # Distribute pitches to voices
                 alto_pitch = self._choose_alto_note(chord_pitches, melodic_note)
-                if hasattr(melodic_note, 'duration'):
+                if hasattr(melodic_note, "duration"):
                     alto.append(
                         note.Note(
-                            alto_pitch, quarterLength=melodic_note.duration.quarterLength
+                            alto_pitch,
+                            quarterLength=melodic_note.duration.quarterLength,
                         )
                     )
 
@@ -339,18 +346,21 @@ class HarmonizationTool(BaseTool):
                 tenor_pitch = self._choose_tenor_note(
                     chord_pitches, melodic_note, alto_pitch
                 )
-                if hasattr(melodic_note, 'duration'):
+                if hasattr(melodic_note, "duration"):
                     tenor.append(
                         note.Note(
-                            tenor_pitch, quarterLength=melodic_note.duration.quarterLength
+                            tenor_pitch,
+                            quarterLength=melodic_note.duration.quarterLength,
                         )
                     )
 
             # Bass gets root (simplified)
             bass_pitch = chord_pitches[0]
-            if hasattr(melodic_note, 'duration'):
+            if hasattr(melodic_note, "duration"):
                 bass.append(
-                    note.Note(bass_pitch, quarterLength=melodic_note.duration.quarterLength)
+                    note.Note(
+                        bass_pitch, quarterLength=melodic_note.duration.quarterLength
+                    )
                 )
 
             progression_list = result["progression"]
@@ -542,7 +552,7 @@ class HarmonizationTool(BaseTool):
             )
 
             # Right hand: melody + upper structure
-            if hasattr(melodic_note, 'pitch'):
+            if hasattr(melodic_note, "pitch"):
                 rh_chord = chord.Chord([melodic_note.pitch] + voicing["upper"])
                 right_hand.append(rh_chord)
 
@@ -671,7 +681,7 @@ class HarmonizationTool(BaseTool):
 
         # Add melody
         for n in melody:
-            if hasattr(n, 'pitch') and hasattr(n, 'duration'):
+            if hasattr(n, "pitch") and hasattr(n, "duration"):
                 melody_part.append(
                     note.Note(n.pitch, quarterLength=n.duration.quarterLength)
                 )
@@ -689,7 +699,7 @@ class HarmonizationTool(BaseTool):
             guitar_part.append(guitar_chord)
 
             # Simple bass line
-            if hasattr(melodic_note, 'duration'):
+            if hasattr(melodic_note, "duration"):
                 bass_note = note.Note(
                     chord_notes[0], quarterLength=melodic_note.duration.quarterLength
                 )
@@ -778,7 +788,7 @@ class HarmonizationTool(BaseTool):
 
         # Realize harmony
         for i, (melodic_note, chord_symbol) in enumerate(zip(melody, progression)):
-            if hasattr(melodic_note, 'pitch') and hasattr(melodic_note, 'duration'):
+            if hasattr(melodic_note, "pitch") and hasattr(melodic_note, "duration"):
                 melody_part.append(
                     note.Note(
                         melodic_note.pitch,
@@ -916,15 +926,24 @@ class HarmonizationTool(BaseTool):
 
             for i in range(min(len(soprano), len(bass)) - 1):
                 # Calculate voice motion
-                sop_motion = abs(float(soprano[i + 1].pitch.midi) - float(soprano[i].pitch.midi))
-                bass_motion = abs(float(bass[i + 1].pitch.midi) - float(bass[i].pitch.midi))
+                sop_motion = abs(
+                    float(soprano[i + 1].pitch.midi) - float(soprano[i].pitch.midi)
+                )
+                bass_motion = abs(
+                    float(bass[i + 1].pitch.midi) - float(bass[i].pitch.midi)
+                )
 
                 total_motion += float(sop_motion + bass_motion)
                 motion_count += 2
 
                 # Check for parallels
-                interval1 = int((float(soprano[i].pitch.midi) - float(bass[i].pitch.midi)) % 12)
-                interval2 = int((float(soprano[i + 1].pitch.midi) - float(bass[i + 1].pitch.midi)) % 12)
+                interval1 = int(
+                    (float(soprano[i].pitch.midi) - float(bass[i].pitch.midi)) % 12
+                )
+                interval2 = int(
+                    (float(soprano[i + 1].pitch.midi) - float(bass[i + 1].pitch.midi))
+                    % 12
+                )
 
                 if interval1 == interval2:
                     if interval1 == 7:  # Perfect fifth
@@ -940,14 +959,18 @@ class HarmonizationTool(BaseTool):
             if motion_count > 0:
                 avg_motion = float(total_motion) / float(motion_count)
                 # Smooth voice leading has average motion of 2-3 semitones
-                quality["smoothness"] = float(max(0.0, 1.0 - abs(avg_motion - 2.5) / 10.0))
+                quality["smoothness"] = float(
+                    max(0.0, 1.0 - abs(avg_motion - 2.5) / 10.0)
+                )
 
             # Style-specific allowances
             if style == "pop" or style == "jazz":
                 # More lenient for contemporary styles
                 current_smoothness = quality.get("smoothness", 0.0)
                 if isinstance(current_smoothness, (int, float)):
-                    quality["smoothness"] = float(min(1.0, float(current_smoothness) * 1.2))
+                    quality["smoothness"] = float(
+                        min(1.0, float(current_smoothness) * 1.2)
+                    )
                 else:
                     quality["smoothness"] = 0.0
 

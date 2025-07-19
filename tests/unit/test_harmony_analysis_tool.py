@@ -21,11 +21,17 @@ class TestHarmonyAnalysisTool:
         result = await tool.execute(score_id="bach_test")
         
         assert result["status"] == "success"
-        assert "harmony_analysis" in result
-        harmony = result["harmony_analysis"]
-        assert "chords" in harmony
-        assert "roman_numerals" in harmony
-        assert "progressions" in harmony
+        assert "roman_numerals" in result
+        assert "chord_progressions" in result
+        assert "functional_analysis" in result
+        assert "harmonic_rhythm" in result
+        assert "chord_count" in result
+        assert isinstance(result["roman_numerals"], list)
+        assert isinstance(result["chord_progressions"], list)
+        assert isinstance(result["functional_analysis"], dict)
+        assert isinstance(result["harmonic_rhythm"], list)
+        assert isinstance(result["chord_count"], int)
+        assert result["chord_count"] >= 0
     
     @pytest.mark.asyncio
     async def test_harmony_analysis_chord_detection(self, populated_score_storage):
@@ -35,15 +41,15 @@ class TestHarmonyAnalysisTool:
         result = await tool.execute(score_id="bach_test")
         
         assert result["status"] == "success"
-        chords = result["harmony_analysis"]["chords"]
-        assert isinstance(chords, list)
+        roman_numerals = result["roman_numerals"]
+        assert isinstance(roman_numerals, list)
         
-        # Bach chorales should have identifiable chords
-        if len(chords) > 0:
-            chord = chords[0]
-            assert "chord_symbol" in chord
-            assert "measure" in chord
-            assert "beat" in chord
+        # Check if any roman numerals were found
+        if len(roman_numerals) > 0:
+            roman_numeral = roman_numerals[0]
+            assert "roman_numeral" in roman_numeral
+            assert "measure" in roman_numeral
+            assert "beat" in roman_numeral
     
     @pytest.mark.asyncio
     async def test_harmony_analysis_roman_numerals(self, populated_score_storage):
@@ -53,7 +59,7 @@ class TestHarmonyAnalysisTool:
         result = await tool.execute(score_id="bach_test")
         
         assert result["status"] == "success"
-        roman_numerals = result["harmony_analysis"]["roman_numerals"]
+        roman_numerals = result["roman_numerals"]
         assert isinstance(roman_numerals, list)
         
         # Should have Roman numeral analysis
@@ -71,7 +77,7 @@ class TestHarmonyAnalysisTool:
         result = await tool.execute(score_id="bach_test")
         
         assert result["status"] == "success"
-        progressions = result["harmony_analysis"]["progressions"]
+        progressions = result["chord_progressions"]
         assert isinstance(progressions, list)
         
         # Should identify common progressions
@@ -103,7 +109,9 @@ class TestHarmonyAnalysisTool:
         )
         
         assert result["status"] == "success"
-        assert "harmony_analysis" in result
+        assert "roman_numerals" in result
+        assert "chord_progressions" in result
+        assert "functional_analysis" in result
     
     @pytest.mark.asyncio
     async def test_harmony_analysis_handles_monophonic(self, clean_score_storage):
@@ -127,7 +135,9 @@ class TestHarmonyAnalysisTool:
         assert result["status"] in ["success", "error"]
         if result["status"] == "success":
             # Monophonic music might have implied harmony
-            assert "harmony_analysis" in result
+            assert "roman_numerals" in result
+            assert "chord_progressions" in result
+            assert "chord_count" in result
     
     @pytest.mark.asyncio
     async def test_harmony_analysis_handles_empty_score(self, clean_score_storage):
@@ -144,7 +154,6 @@ class TestHarmonyAnalysisTool:
         assert result["status"] in ["success", "error"]
         if result["status"] == "success":
             # Empty score should have no harmony
-            harmony = result["harmony_analysis"]
-            assert len(harmony["chords"]) == 0
-            assert len(harmony["roman_numerals"]) == 0
-            assert len(harmony["progressions"]) == 0
+            assert len(result["roman_numerals"]) == 0
+            assert len(result["chord_progressions"]) == 0
+            assert result["chord_count"] == 0

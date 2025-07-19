@@ -161,8 +161,25 @@ test_corpus/
 temp/
 tmp/
 cache/
+logs/
+
+# Test and analysis result files
+*_results.json
+*_report.json
+stress_test_results.json
+production_*_results.json
+tool_functionality_results.json
+
+# Report-style documentation (keep only in docs/)
+*_REPORT.md
+*_ASSESSMENT.md
+FINAL_*.md
+MISSION_*.md
+PROTOCOL_*.md
+
+# Test files in root (should be in tests/)
+/test_*.py
 
 # Claude specific (to be removed)
 claude_desktop_config.json
 .claude/
-EOF < /dev/null

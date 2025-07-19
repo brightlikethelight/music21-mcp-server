@@ -21,9 +21,14 @@ class TestKeyAnalysisTool:
         result = await tool.execute(score_id="bach_test")
         
         assert result["status"] == "success"
-        assert "key_analysis" in result
-        assert "tonic" in result["key_analysis"]
-        assert "mode" in result["key_analysis"]
+        assert "key" in result
+        assert "confidence" in result
+        assert "alternatives" in result
+        assert isinstance(result["key"], str)
+        assert isinstance(result["confidence"], (int, float))
+        assert isinstance(result["alternatives"], list)
+        # Key should be in format "<tonic> major" or "<tonic> minor"
+        assert " major" in result["key"] or " minor" in result["key"]
     
     @pytest.mark.asyncio
     async def test_analyze_nonexistent_score(self, clean_score_storage):
@@ -43,10 +48,9 @@ class TestKeyAnalysisTool:
         result = await tool.execute(score_id="bach_test")
         
         assert result["status"] == "success"
-        key_analysis = result["key_analysis"]
-        assert "confidence" in key_analysis
-        assert isinstance(key_analysis["confidence"], (int, float))
-        assert 0 <= key_analysis["confidence"] <= 1
+        assert "confidence" in result
+        assert isinstance(result["confidence"], (int, float))
+        assert 0 <= result["confidence"] <= 1
     
     @pytest.mark.asyncio
     async def test_analyze_key_alternative_keys(self, populated_score_storage):
@@ -56,22 +60,37 @@ class TestKeyAnalysisTool:
         result = await tool.execute(score_id="bach_test")
         
         assert result["status"] == "success"
-        key_analysis = result["key_analysis"]
-        assert "alternative_keys" in key_analysis
-        assert isinstance(key_analysis["alternative_keys"], list)
+        assert "alternatives" in result
+        assert isinstance(result["alternatives"], list)
+        
+        # Check alternative structure if any exist
+        if len(result["alternatives"]) > 0:
+            alt = result["alternatives"][0]
+            assert "key" in alt
+            assert "confidence" in alt
+            assert isinstance(alt["key"], str)
+            assert isinstance(alt["confidence"], (int, float))
     
     @pytest.mark.asyncio
-    async def test_analyze_key_metadata(self, populated_score_storage):
-        """Test key analysis includes metadata"""
+    async def test_analyze_key_algorithm_results(self, populated_score_storage):
+        """Test key analysis includes algorithm results when using 'all'"""
         tool = KeyAnalysisTool(populated_score_storage)
         
-        result = await tool.execute(score_id="bach_test")
+        result = await tool.execute(score_id="bach_test", algorithm="all")
         
         assert result["status"] == "success"
-        key_analysis = result["key_analysis"]
-        assert "tonic" in key_analysis
-        assert "mode" in key_analysis
-        assert key_analysis["mode"] in ["major", "minor"]
+        assert "algorithm_results" in result
+        assert isinstance(result["algorithm_results"], dict)
+        
+        # Check that we have results from multiple algorithms
+        expected_algorithms = ["krumhansl", "aarden", "temperley", "bellman"]
+        for alg in expected_algorithms:
+            if alg in result["algorithm_results"]:
+                alg_result = result["algorithm_results"][alg]
+                assert "key" in alg_result
+                assert "confidence" in alg_result
+                assert isinstance(alg_result["key"], str)
+                assert isinstance(alg_result["confidence"], (int, float))
     
     @pytest.mark.asyncio
     async def test_key_analysis_handles_empty_score(self, clean_score_storage):
@@ -87,4 +106,4 @@ class TestKeyAnalysisTool:
         # Should handle gracefully, either succeed with default or fail informatively
         assert result["status"] in ["success", "error"]
         if result["status"] == "error":
-            assert "analysis failed" in result["message"].lower() or "empty" in result["message"].lower()
+            assert "analysis failed" in result["message"].lower() or "empty" in result["message"].lower() or "not found" in result["message"].lower()

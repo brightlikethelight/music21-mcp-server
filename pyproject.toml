@@ -29,6 +29,7 @@ packages = [{include = "music21_mcp", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 music21 = "^9.1.0"
+midiutil = "^1.2.1"
 numpy = "^1.24.0"
 scipy = "^1.11.0"
 matplotlib = "^3.7.0"
@@ -40,15 +41,13 @@ cachetools = "^5.3.0"
 python-dotenv = "^1.0.0"
 # MCP uses stdio transport, no HTTP server needed
 psutil = "^5.9.0"
-mcp = "^1.4.0"
-# Security dependencies
-cryptography = "^42.0.0"
+mcp = "^1.11.0"
+fastmcp = "==2.9.0"  # Pinned version for stability - MCP breaks frequently
+# Basic security and web dependencies  
 bleach = "^6.1.0"
 pathvalidate = "^3.2.0"
 fastapi = "^0.115.0"
-# Optional dependencies
-redis = {version = "^5.0.0", optional = true}
-prometheus-client = {version = "^0.19.0", optional = true}
+uvicorn = "^0.31.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
@@ -81,14 +80,16 @@ optional = true
 plotly = "^5.17.0"
 seaborn = "^0.12.0"
 
-[tool.poetry.extras]
-redis = ["redis"]
-monitoring = ["prometheus-client"]
-all = ["redis", "prometheus-client"]
+# No enterprise extras - keeping it simple until MCP ecosystem stabilizes
 
 [tool.poetry.scripts]
-music21-mcp = "music21_mcp.server:main"
-music21-mcp-remote = "music21_mcp.server_remote:main"
+# Unified launcher for all interfaces
+music21-analysis = "music21_mcp.launcher:main"
+
+# Individual interface entry points
+music21-mcp = "music21_mcp.server_minimal:main"
+music21-http = "music21_mcp.adapters.http_adapter:main"
+music21-cli = "music21_mcp.adapters.cli_adapter:main"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/brightlikethelight/music21-mcp-server/issues"
@@ -101,24 +102,49 @@ include = '\.pyi?$'
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "N",   # pep8-naming
-    "UP",  # pyupgrade
-    "B",   # flake8-bugbear
-    "C4",  # flake8-comprehensions
-    "DTZ", # flake8-datetimez
-    "T20", # flake8-print
-    "SIM", # flake8-simplify
-    "RET", # flake8-return
-]
-ignore = ["E501", "B008", "C901", "W191"]
+src = ["src"]
 
-[tool.ruff.per-file-ignores]
-"tests/*" = ["T20"]
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez
+    "T20",  # flake8-print
+    "SIM",  # flake8-simplify
+    "RET",  # flake8-return
+    "S",    # flake8-bandit (security)
+    "PT",   # flake8-pytest-style
+    "Q",    # flake8-quotes
+    "RSE",  # flake8-raise
+    "TCH",  # flake8-type-checking
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults
+    "C901",   # function is too complex
+    "W191",   # indentation contains tabs
+    "S101",   # use of assert (pytest uses asserts)
+    "S608",   # possible SQL injection (false positives)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["T20", "S101", "S106", "S311"]
+"src/music21_mcp/tools/*" = ["T20"]  # Allow print in tools
+
+[tool.ruff.lint.isort]
+known-first-party = ["music21_mcp"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [tool.mypy]
 python_version = "3.10"
@@ -145,6 +171,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "mcp.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fastmcp.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -291,7 +291,9 @@ class StyleImitationTool(BaseTool):
                 for i in range(len(all_notes) - 1):
                     current_note = all_notes[i]
                     next_note = all_notes[i + 1]
-                    if isinstance(current_note, note.Note) and isinstance(next_note, note.Note):
+                    if isinstance(current_note, note.Note) and isinstance(
+                        next_note, note.Note
+                    ):
                         try:
                             intv = interval.Interval(
                                 noteStart=current_note, noteEnd=next_note
@@ -762,10 +764,10 @@ class StyleImitationTool(BaseTool):
             for i in range(len(notes) - 1):
                 current_note = notes[i]
                 next_note = notes[i + 1]
-                if isinstance(current_note, note.Note) and isinstance(next_note, note.Note):
-                    interval_size = abs(
-                        current_note.pitch.midi - next_note.pitch.midi
-                    )
+                if isinstance(current_note, note.Note) and isinstance(
+                    next_note, note.Note
+                ):
+                    interval_size = abs(current_note.pitch.midi - next_note.pitch.midi)
                     if interval_size == 4:  # Major third
                         # Could add passing tone
                         pass

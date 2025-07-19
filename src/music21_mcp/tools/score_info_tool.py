@@ -164,7 +164,7 @@ class ScoreInfoTool(BaseTool):
 
     def _analyze_time_and_tempo(self, score: stream.Score) -> Dict[str, Any]:
         """Analyze time signatures and tempo markings"""
-        result = {}
+        result: Dict[str, Any] = {}
 
         try:
             flat = score.flatten()
@@ -249,7 +249,7 @@ class ScoreInfoTool(BaseTool):
 
     def _analyze_detailed_structure(self, score: stream.Score) -> Dict[str, Any]:
         """Analyze detailed structural elements"""
-        structure = {}
+        structure: Dict[str, Any] = {}
 
         try:
             flat = score.flatten()
@@ -271,7 +271,7 @@ class ScoreInfoTool(BaseTool):
             # Dynamics
             dynamics = list(flat.getElementsByClass("Dynamic"))
             if dynamics:
-                structure["dynamics_count"] = len(dynamics)
+                structure["dynamics_count"] = len(dynamics)  # type: ignore[assignment]
                 structure["dynamic_range"] = list(
                     set(d.value for d in dynamics if hasattr(d, "value"))
                 )

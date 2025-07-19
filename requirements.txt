@@ -1,7 +1,18 @@
-# Core dependencies
+# Core dependencies for REST API
 music21>=8.1.0  # Use version compatible with Python 3.9+ for CI
-mcp>=0.1.0
 numpy>=1.21.0
+
+# REST API framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# HTTP client for testing
+requests==2.31.0
+
+# MCP dependencies (FastMCP 2.0 for stability)
+mcp>=1.11.0
+fastmcp>=2.9.0
 
 # Testing
 pytest>=7.0.0

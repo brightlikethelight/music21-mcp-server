@@ -25,7 +25,7 @@ class BaseTool(ABC):
         """Initialize with reference to score manager"""
         self.score_manager = score_manager
         self._progress_callback: Optional[Callable] = None
-    
+
     @property
     def scores(self) -> Dict[str, Any]:
         """Provide access to scores for backward compatibility with tests"""

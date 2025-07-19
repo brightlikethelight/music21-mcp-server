@@ -81,7 +81,9 @@ class ImportScoreTool(BaseTool):
 
             return self.create_success_response(
                 message=f"Successfully imported score '{score_id}' from {source_type}",
-                score_id=score_id, source_type=source_type, **metadata
+                score_id=score_id,
+                source_type=source_type,
+                **metadata,
             )
 
     def validate_inputs(self, **kwargs: Any) -> Optional[str]:
