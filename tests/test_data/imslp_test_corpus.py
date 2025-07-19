@@ -3,12 +3,10 @@
 IMSLP Test Corpus Manager
 Manages real-world MusicXML files for comprehensive testing
 """
+
 import json
-import shutil
 from dataclasses import asdict, dataclass
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -22,8 +20,8 @@ class IMSLPScore:
     imslp_url: str
     filename: str
     complexity: str  # simple, moderate, complex, extreme
-    known_issues: List[str]
-    expected_tools: List[str]  # Tools that should work on this score
+    known_issues: list[str]
+    expected_tools: list[str]  # Tools that should work on this score
 
 
 class IMSLPTestCorpus:
@@ -38,16 +36,16 @@ class IMSLPTestCorpus:
         self.metadata_file = self.corpus_dir / "corpus_metadata.json"
         self.scores = self._load_metadata()
 
-    def _load_metadata(self) -> Dict[str, IMSLPScore]:
+    def _load_metadata(self) -> dict[str, IMSLPScore]:
         """Load or create corpus metadata"""
         if self.metadata_file.exists():
-            with open(self.metadata_file, "r") as f:
+            with open(self.metadata_file) as f:
                 data = json.load(f)
                 return {k: IMSLPScore(**v) for k, v in data.items()}
         else:
             return self._create_default_corpus()
 
-    def _create_default_corpus(self) -> Dict[str, IMSLPScore]:
+    def _create_default_corpus(self) -> dict[str, IMSLPScore]:
         """Create default corpus metadata"""
         corpus = {
             # BAROQUE SCORES
@@ -370,7 +368,7 @@ class IMSLPTestCorpus:
         self.save_metadata(corpus)
         return corpus
 
-    def save_metadata(self, corpus: Optional[Dict[str, IMSLPScore]] = None):
+    def save_metadata(self, corpus: dict[str, IMSLPScore] | None = None):
         """Save corpus metadata to disk"""
         if corpus is None:
             corpus = self.scores
@@ -437,7 +435,7 @@ class IMSLPTestCorpus:
 
         return "\n".join(instructions)
 
-    def get_test_matrix(self) -> Dict[str, Dict[str, List[str]]]:
+    def get_test_matrix(self) -> dict[str, dict[str, list[str]]]:
         """Get a matrix of which tools should be tested on which scores"""
         matrix = {}
 
@@ -450,7 +448,7 @@ class IMSLPTestCorpus:
 
         return matrix
 
-    def get_scores_by_complexity(self, complexity: str) -> List[Tuple[str, IMSLPScore]]:
+    def get_scores_by_complexity(self, complexity: str) -> list[tuple[str, IMSLPScore]]:
         """Get all scores of a given complexity level"""
         return [
             (sid, s) for sid, s in self.scores.items() if s.complexity == complexity
@@ -458,7 +456,7 @@ class IMSLPTestCorpus:
 
     def get_scores_by_instrumentation(
         self, instrumentation: str
-    ) -> List[Tuple[str, IMSLPScore]]:
+    ) -> list[tuple[str, IMSLPScore]]:
         """Get all scores with given instrumentation"""
         return [
             (sid, s)
@@ -466,7 +464,7 @@ class IMSLPTestCorpus:
             if s.instrumentation == instrumentation
         ]
 
-    def verify_corpus(self) -> Dict[str, bool]:
+    def verify_corpus(self) -> dict[str, bool]:
         """Verify which files are actually present"""
         verification = {}
 

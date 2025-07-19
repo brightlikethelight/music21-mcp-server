@@ -146,6 +146,7 @@ include = '\.pyi?$'
 line-length = 88
 target-version = "py310"
 src = ["src"]
+exclude = ["debug_test.py", "examples/"]
 
 [tool.ruff.lint]
 select = [
@@ -189,7 +190,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["T20", "S101", "S106", "S311"]
+"tests/*" = ["T20", "S101", "S106", "S311", "E402", "F401", "F821", "S602", "S603", "S108", "S103", "W293"]
 "src/music21_mcp/tools/*" = ["T20"]  # Allow print in tools
 "src/music21_mcp/adapters/cli_adapter.py" = ["T201"]  # CLI needs print statements
 "src/music21_mcp/launcher.py" = ["T201"]  # Launcher needs print statements

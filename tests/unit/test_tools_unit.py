@@ -3,18 +3,26 @@ Unit tests for individual tool classes
 Tests each tool in isolation with mocked dependencies
 """
 
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 import pytest
-from music21 import chord, key, meter, note, stream, tempo
+from music21 import chord, note, stream
 
-from music21_mcp.tools import (ChordAnalysisTool, CounterpointGeneratorTool,
-                               DeleteScoreTool, ExportScoreTool,
-                               HarmonizationTool, HarmonyAnalysisTool,
-                               ImportScoreTool, KeyAnalysisTool,
-                               ListScoresTool, PatternRecognitionTool,
-                               ScoreInfoTool, StyleImitationTool,
-                               VoiceLeadingAnalysisTool)
+from music21_mcp.tools import (
+    ChordAnalysisTool,
+    CounterpointGeneratorTool,
+    DeleteScoreTool,
+    ExportScoreTool,
+    HarmonizationTool,
+    HarmonyAnalysisTool,
+    ImportScoreTool,
+    KeyAnalysisTool,
+    ListScoresTool,
+    PatternRecognitionTool,
+    ScoreInfoTool,
+    StyleImitationTool,
+    VoiceLeadingAnalysisTool,
+)
 
 
 @pytest.fixture
