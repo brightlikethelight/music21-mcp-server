@@ -93,12 +93,12 @@ jobs:
         LOG_LEVEL: INFO
       run: |
         # Reality-based testing: 95% core music21, 5% MCP adapter
-        echo "🎵 Running Reality-Based Test Suite"
+        echo "Running Reality-Based Test Suite"
         uv run python tests/run_reality_tests.py || echo "Some MCP adapter failures expected (40-50% success rate)"
 
     - name: Run core music21 tests (MUST PASS)
       run: |
-        echo "🎯 Core Music21 Tests - Protocol Independent"
+        echo "Core Music21 Tests - Protocol Independent"
         uv run pytest tests/core/ -v \
           --cov=src/music21_mcp/services \
           --cov=src/music21_mcp/tools \
@@ -108,7 +108,7 @@ jobs:
 
     - name: Run adapter tests (failures expected)
       run: |
-        echo "📡 MCP Adapter Tests - Expect Failures (40-50% success rate)"
+        echo "MCP Adapter Tests - Expect Failures (40-50% success rate)"
         uv run pytest tests/adapters/ -v \
           --cov=src/music21_mcp/adapters \
           --cov-append \
@@ -116,7 +116,7 @@ jobs:
 
     - name: Run unit tests  
       run: |
-        echo "🔧 Unit Tests - Tool Level"
+        echo "Unit Tests - Tool Level"
         uv run pytest tests/unit/ -v \
           --cov=src/music21_mcp/tools \
           --cov-append \
@@ -124,11 +124,11 @@ jobs:
 
     - name: Test all interfaces work
       run: |
-        echo "🚀 Interface Integration Tests"
+        echo "Interface Integration Tests"
         # Test that all 4 interfaces can be launched
         timeout 5 uv run python -m music21_mcp.launcher || echo "Launcher works"
-        uv run python -c "from music21_mcp.services import MusicAnalysisService; s=MusicAnalysisService(); print(f'✅ Core service: {len(s.get_available_tools())} tools')"
-        uv run python -c "from music21_mcp.adapters import create_sync_analyzer; a=create_sync_analyzer(); print(f'✅ Python adapter: {a.get_status()[\"status\"]}')"
+        uv run python -c "from music21_mcp.services import MusicAnalysisService; s=MusicAnalysisService(); print(f'Core service: {len(s.get_available_tools())} tools')"
+        uv run python -c "from music21_mcp.adapters import create_sync_analyzer; a=create_sync_analyzer(); print(f'Python adapter: {a.get_status()[\"status\"]}')"
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
