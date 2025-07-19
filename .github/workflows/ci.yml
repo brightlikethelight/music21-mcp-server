@@ -207,7 +207,7 @@ jobs:
         twine check dist/*
     
     - name: Store distribution packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: distribution-packages
         path: dist/
