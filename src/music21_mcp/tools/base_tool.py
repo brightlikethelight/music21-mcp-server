@@ -81,7 +81,7 @@ class BaseTool(ABC):
         self, message: str, details: dict | None = None
     ) -> dict[str, Any]:
         """Create standardized error response"""
-        response = {"status": "error", "error": message}
+        response = {"status": "error", "message": message}
         if details:
             response.update(details)
         return response

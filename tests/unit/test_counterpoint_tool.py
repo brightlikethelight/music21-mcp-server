@@ -31,7 +31,7 @@ class TestCounterpointGeneratorTool:
         result = await tool.execute(
             score_id="cantus",
             output_id="counterpoint",
-            species=1,
+            species="first",
             voice_position="above",
         )
 
@@ -47,7 +47,7 @@ class TestCounterpointGeneratorTool:
         result = await tool.execute(
             score_id="nonexistent",
             output_id="counterpoint",
-            species=1,
+            species="first",
             voice_position="above",
         )
 
@@ -68,11 +68,11 @@ class TestCounterpointGeneratorTool:
 
         tool = CounterpointGeneratorTool(clean_score_storage)
 
-        # Test different species (1-5)
-        for species in [1, 2, 3, 4, 5]:
+        # Test different species
+        for species in ["first", "second", "third", "fourth", "fifth"]:
             result = await tool.execute(
                 score_id="cantus",
-                output_id=f"counterpoint_species_{species}",
+                output_id=f"counterpoint_{species}_species",
                 species=species,
                 voice_position="above",
             )
@@ -80,7 +80,7 @@ class TestCounterpointGeneratorTool:
             # Some species might be more complex to implement
             assert result["status"] in ["success", "error"]
             if result["status"] == "success":
-                assert f"counterpoint_species_{species}" in clean_score_storage
+                assert f"counterpoint_{species}_species" in clean_score_storage
 
     @pytest.mark.asyncio
     async def test_counterpoint_voice_positions(self, clean_score_storage):
@@ -99,7 +99,7 @@ class TestCounterpointGeneratorTool:
         result_above = await tool.execute(
             score_id="cantus",
             output_id="counterpoint_above",
-            species=1,
+            species="first",
             voice_position="above",
         )
         assert result_above["status"] == "success"
@@ -108,7 +108,7 @@ class TestCounterpointGeneratorTool:
         result_below = await tool.execute(
             score_id="cantus",
             output_id="counterpoint_below",
-            species=1,
+            species="first",
             voice_position="below",
         )
         assert result_below["status"] == "success"
@@ -128,7 +128,7 @@ class TestCounterpointGeneratorTool:
         result = await tool.execute(
             score_id="cantus",
             output_id="validated_counterpoint",
-            species=1,
+            species="first",
             voice_position="above",
             strict_rules=True,
         )
@@ -153,7 +153,7 @@ class TestCounterpointGeneratorTool:
         result = await tool.execute(
             score_id="cantus",
             output_id="existing_score",  # Already exists
-            species=1,
+            species="first",
             voice_position="above",
         )
 
@@ -175,7 +175,7 @@ class TestCounterpointGeneratorTool:
         result = await tool.execute(
             score_id="cantus",
             output_id="counterpoint",
-            species=1,
+            species="first",
             voice_position="above",
         )
 

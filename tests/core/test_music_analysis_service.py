@@ -47,8 +47,8 @@ class TestMusicAnalysisServiceCore:
 
         assert result["status"] == "error"
         assert (
-            "not found" in result["error"].lower()
-            or "could not" in result["error"].lower()
+            "not found" in result["message"].lower()
+            or "could not" in result["message"].lower()
         )
         assert "invalid" not in service.scores
 
@@ -98,7 +98,7 @@ class TestMusicAnalysisServiceCore:
         result = await service.get_score_info("missing_score")
 
         assert result["status"] == "error"
-        assert "not found" in result["error"].lower()
+        assert "not found" in result["message"].lower()
 
     async def test_delete_score_success(self, service):
         """Test deleting existing score"""
@@ -115,7 +115,7 @@ class TestMusicAnalysisServiceCore:
         result = await service.delete_score("never_existed")
 
         assert result["status"] == "error"
-        assert "not found" in result["error"].lower()
+        assert "not found" in result["message"].lower()
 
     # === Key Analysis Tests ===
 
@@ -139,7 +139,7 @@ class TestMusicAnalysisServiceCore:
         result = await service.analyze_key("missing")
 
         assert result["status"] == "error"
-        assert "not found" in result["error"].lower()
+        assert "not found" in result["message"].lower()
 
     # === Harmony Analysis Tests ===
 
@@ -177,8 +177,8 @@ class TestMusicAnalysisServiceCore:
 
         assert result["status"] == "error"
         assert (
-            "analysis_type" in result["error"].lower()
-            or "invalid" in result["error"].lower()
+            "analysis_type" in result["message"].lower()
+            or "invalid" in result["message"].lower()
         )
 
     # === Voice Leading Analysis Tests ===
@@ -205,7 +205,7 @@ class TestMusicAnalysisServiceCore:
         result = await service.analyze_voice_leading("missing")
 
         assert result["status"] == "error"
-        assert "not found" in result["error"].lower()
+        assert "not found" in result["message"].lower()
 
     # === Pattern Recognition Tests ===
 
@@ -236,8 +236,8 @@ class TestMusicAnalysisServiceCore:
 
         assert result["status"] == "error"
         assert (
-            "pattern_type" in result["error"].lower()
-            or "invalid" in result["error"].lower()
+            "pattern_type" in result["message"].lower()
+            or "invalid" in result["message"].lower()
         )
 
     # === Service Status Tests ===
@@ -297,7 +297,7 @@ class TestMusicAnalysisServiceCore:
 
         assert result["status"] == "error"
         assert (
-            "score_id" in result["error"].lower() or "empty" in result["error"].lower()
+            "score_id" in result["message"].lower() or "empty" in result["message"].lower()
         )
 
     async def test_null_values(self, service):
@@ -364,7 +364,7 @@ class TestMusicAnalysisServiceExport:
 
         assert result["status"] == "error"
         assert (
-            "format" in result["error"].lower() or "invalid" in result["error"].lower()
+            "format" in result["message"].lower() or "invalid" in result["message"].lower()
         )
 
     async def test_export_missing_score(self):
@@ -373,7 +373,7 @@ class TestMusicAnalysisServiceExport:
         result = await service.export_score("missing", "musicxml")
 
         assert result["status"] == "error"
-        assert "not found" in result["error"].lower()
+        assert "not found" in result["message"].lower()
 
 
 # === Integration Tests (Music21 Core Focus) ===

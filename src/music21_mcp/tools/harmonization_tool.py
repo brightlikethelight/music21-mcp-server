@@ -84,6 +84,7 @@ class HarmonizationTool(BaseTool):
         Args:
             **kwargs: Keyword arguments including:
                 score_id: ID of the melody score to harmonize
+                output_id: ID for the harmonized output score (optional)
                 style: Harmonization style ('classical', 'jazz', 'pop', 'modal')
                 constraints: List of constraints (e.g., ['diatonic_only', 'no_parallels'])
                 include_explanations: Include explanations for harmonic choices
@@ -91,6 +92,7 @@ class HarmonizationTool(BaseTool):
         """
         # Extract parameters from kwargs
         score_id = kwargs.get("score_id", "")
+        output_id = kwargs.get("output_id", "")
         style = kwargs.get("style", "classical")
         constraints = kwargs.get("constraints")
         include_explanations = kwargs.get("include_explanations", True)
@@ -164,31 +166,38 @@ class HarmonizationTool(BaseTool):
             self.report_progress(1.0, "Harmonization complete")
 
             # Store harmonized score
-            harmonized_id = f"{score_id}_harmonized_{style}"
+            harmonized_id = output_id if output_id else f"{score_id}_harmonized_{style}"
             harmonized_score = harmonization["score"]
             assert isinstance(harmonized_score, stream.Score)
             self.score_manager[harmonized_id] = harmonized_score
 
             return self.create_success_response(
                 harmonized_score_id=harmonized_id,
-                style=style,
-                chord_progression=harmonization["progression"],
-                roman_numerals=harmonization["roman_numerals"],
-                voice_leading_quality=voice_leading_check,
-                explanations=explanations,
-                harmonic_rhythm=harmonization.get("harmonic_rhythm", {}),
-                confidence_ratings=harmonization.get("confidence_ratings", []),
+                harmonization={
+                    "style": style,
+                    "chord_progression": harmonization["progression"],
+                    "roman_numerals": harmonization["roman_numerals"],
+                    "voice_leading_quality": voice_leading_check,
+                    "explanations": explanations,
+                    "harmonic_rhythm": harmonization.get("harmonic_rhythm", {}),
+                    "confidence_ratings": harmonization.get("confidence_ratings", []),
+                }
             )
 
     def validate_inputs(self, **kwargs: Any) -> str | None:
         """Validate input parameters"""
         score_id = kwargs.get("score_id", "")
+        output_id = kwargs.get("output_id", "")
         style = kwargs.get("style", "classical")
         voice_parts = kwargs.get("voice_parts", 4)
 
         error = self.check_score_exists(score_id)
         if error:
             return error
+
+        # Check if output_id already exists
+        if output_id and output_id in self.score_manager:
+            return f"Score with ID '{output_id}' already exists"
 
         valid_styles = list(self.style_vocabularies.keys())
         if style not in valid_styles:

@@ -30,7 +30,7 @@ class TestHarmonizationTool:
 
         tool = HarmonizationTool(clean_score_storage)
         result = await tool.execute(
-            score_id="melody", output_id="harmonized_melody", style="chorale"
+            score_id="melody", output_id="harmonized_melody", style="classical"
         )
 
         assert result["status"] == "success"
@@ -43,7 +43,7 @@ class TestHarmonizationTool:
         tool = HarmonizationTool(clean_score_storage)
 
         result = await tool.execute(
-            score_id="nonexistent", output_id="harmonized", style="chorale"
+            score_id="nonexistent", output_id="harmonized", style="classical"
         )
 
         assert result["status"] == "error"
@@ -65,7 +65,7 @@ class TestHarmonizationTool:
         tool = HarmonizationTool(clean_score_storage)
 
         # Test different styles
-        styles = ["chorale", "classical", "romantic", "jazz"]
+        styles = ["classical", "jazz", "pop", "modal"]
         for style in styles:
             result = await tool.execute(
                 score_id="melody", output_id=f"harmonized_{style}", style=style
@@ -92,7 +92,7 @@ class TestHarmonizationTool:
         result = await tool.execute(
             score_id="melody",
             output_id="harmonized_custom",
-            style="chorale",
+            style="classical",
             voices=4,
             key="G major",
             time_signature="4/4",
@@ -116,7 +116,7 @@ class TestHarmonizationTool:
         result = await tool.execute(
             score_id="melody",
             output_id="existing_score",  # Already exists
-            style="chorale",
+            style="classical",
         )
 
         assert result["status"] == "error"
@@ -141,7 +141,7 @@ class TestHarmonizationTool:
             result = await tool.execute(
                 score_id="melody",
                 output_id=f"harmonized_{voices}v",
-                style="chorale",
+                style="classical",
                 voices=voices,
             )
 
@@ -165,12 +165,12 @@ class TestHarmonizationTool:
 
         tool = HarmonizationTool(clean_score_storage)
         result = await tool.execute(
-            score_id="melody", output_id="harmonized", style="chorale"
+            score_id="melody", output_id="harmonized", style="classical"
         )
 
         assert result["status"] == "success"
         harmonization = result["harmonization"]
         assert "style" in harmonization
-        assert "voices" in harmonization
-        assert "key" in harmonization
-        assert harmonization["style"] == "chorale"
+        assert "chord_progression" in harmonization
+        assert "voice_leading_quality" in harmonization
+        assert harmonization["style"] == "classical"

@@ -28,17 +28,16 @@ from music21_mcp.tools import (
 @pytest.fixture
 def mock_score_manager():
     """Mock score manager for testing"""
-    manager = Mock()
-    manager.add_score = AsyncMock()
-    manager.get_score = AsyncMock()
-    manager.get = Mock()  # This is what base_tool.py actually calls
-    manager.list_scores = AsyncMock()
-    manager.remove_score = AsyncMock()
-
-    # Make it behave like a container for 'in' operator
-    manager.__contains__ = Mock(return_value=True)
-
-    return manager
+    # Create a custom class that inherits from dict but has async methods
+    class MockScoreManager(dict):
+        def __init__(self):
+            super().__init__()
+            self.add_score = AsyncMock()
+            self.get_score = AsyncMock()
+            self.list_scores = AsyncMock()
+            self.remove_score = AsyncMock()
+    
+    return MockScoreManager()
 
 
 @pytest.fixture
@@ -122,18 +121,22 @@ class TestListScoresTool:
         assert result["scores"] == []
 
     @pytest.mark.asyncio
-    async def test_list_multiple_scores(self, mock_score_manager):
-        mock_scores = [
-            {"id": "score1", "title": "Score 1"},
-            {"id": "score2", "title": "Score 2"},
-        ]
-        mock_score_manager.list_scores.return_value = mock_scores
+    async def test_list_multiple_scores(self, mock_score_manager, sample_score):
+        # Add multiple scores to the manager
+        mock_score_manager["score1"] = sample_score
+        mock_score_manager["score2"] = sample_score
+        
         tool = ListScoresTool(mock_score_manager)
 
         result = await tool.execute()
 
+        assert result["status"] == "success"
         assert result["count"] == 2
-        assert result["scores"] == mock_scores
+        assert len(result["scores"]) == 2
+        # Check that both scores are in the result
+        score_ids = [s["score_id"] for s in result["scores"]]
+        assert "score1" in score_ids
+        assert "score2" in score_ids
 
 
 class TestKeyAnalysisTool:
@@ -237,23 +240,26 @@ class TestDeleteScoreTool:
     """Test DeleteScoreTool functionality"""
 
     @pytest.mark.asyncio
-    async def test_delete_existing_score(self, mock_score_manager):
-        mock_score_manager.remove_score.return_value = True
+    async def test_delete_existing_score(self, mock_score_manager, sample_score):
+        # Add a score to delete
+        mock_score_manager["test_score"] = sample_score
         tool = DeleteScoreTool(mock_score_manager)
 
         result = await tool.execute(score_id="test_score")
 
         assert result["status"] == "success"
         assert "deleted" in result["message"]
+        assert "test_score" not in mock_score_manager
 
     @pytest.mark.asyncio
     async def test_delete_nonexistent_score(self, mock_score_manager):
-        mock_score_manager.remove_score.return_value = False
+        # Don't add any score, so it won't exist
         tool = DeleteScoreTool(mock_score_manager)
 
         result = await tool.execute(score_id="nonexistent")
 
-        assert result["status"] == "not_found"
+        assert result["status"] == "error"
+        assert "not found" in result["message"]
 
 
 class TestHarmonyAnalysisTool:
