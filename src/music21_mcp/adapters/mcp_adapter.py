@@ -204,17 +204,18 @@ class MCPAdapter:
                 "compatible": False,
                 "error": "FastMCP not available",
             }
-    
-    def create_server(self):
+
+    def create_server(self) -> object:
         """Create MCP server instance (for testing)"""
         try:
             from fastmcp import FastMCP
-            server = FastMCP()
+
+            server: object = FastMCP()
             self._register_tools(server)
             return server
-        except ImportError:
-            raise ImportError("FastMCP not available")
-    
+        except ImportError as err:
+            raise ImportError("FastMCP not available") from err
+
     def _register_tools(self, server=None):
         """Register MCP tools with server (for testing)"""
         # This is a stub for testing purposes
