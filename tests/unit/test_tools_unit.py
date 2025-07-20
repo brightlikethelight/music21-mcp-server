@@ -34,10 +34,10 @@ def mock_score_manager():
     manager.get = Mock()  # This is what base_tool.py actually calls
     manager.list_scores = AsyncMock()
     manager.remove_score = AsyncMock()
-    
+
     # Make it behave like a container for 'in' operator
     manager.__contains__ = Mock(return_value=True)
-    
+
     return manager
 
 
@@ -45,7 +45,7 @@ def mock_score_manager():
 def sample_score():
     """Create a sample score for testing"""
     from music21 import metadata
-    
+
     s = stream.Score()
     part = stream.Part()
 
@@ -59,7 +59,7 @@ def sample_score():
         part.append(m)
 
     s.append(part)
-    
+
     # Initialize metadata properly
     s.metadata = metadata.Metadata()
     s.metadata.title = "Test Score"
