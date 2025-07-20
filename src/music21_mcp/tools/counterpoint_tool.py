@@ -457,7 +457,7 @@ class CounterpointGeneratorTool(BaseTool):
         # Get scale pitches in range
         scale_pitches = scale.getPitches()
         scale_pitch_classes = {p.pitchClass for p in scale_pitches}
-        
+
         for midi in range(min_midi, max_midi + 1):
             p = pitch.Pitch(midi=midi)
             if p.pitchClass in scale_pitch_classes:
