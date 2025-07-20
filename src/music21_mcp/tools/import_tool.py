@@ -183,6 +183,7 @@ class ImportScoreTool(BaseTool):
             if text.strip().startswith("tinyNotation:"):
                 # Use music21's tinyNotation parser
                 from music21 import converter
+
                 tiny_text = text.replace("tinyNotation:", "").strip()
                 score = converter.parse(f"tinyNotation: {tiny_text}")
                 self.report_progress(0.7, "TinyNotation parsed")
