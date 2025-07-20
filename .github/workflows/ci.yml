@@ -162,6 +162,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --dev
+        uv add --dev bandit pip-audit
 
     - name: Run bandit security scan
       run: |
@@ -212,67 +213,68 @@ jobs:
         name: distribution-packages
         path: dist/
 
-  docker:
-    name: Docker Build and Security Scan
-    runs-on: ubuntu-latest
-    needs: [test, security]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  # Docker and deployment jobs commented out - Docker files have been removed
+  # docker:
+  #   name: Docker Build and Security Scan
+  #   runs-on: ubuntu-latest
+  #   needs: [test, security]
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+  #   - name: Set up Docker Buildx
+  #     uses: docker/setup-buildx-action@v3
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+  #   - name: Login to GitHub Container Registry
+  #     uses: docker/login-action@v3
+  #     with:
+  #       registry: ghcr.io
+  #       username: ${{ github.actor }}
+  #       password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: deploy/docker/Dockerfile
-        push: true
-        tags: |
-          ghcr.io/${{ github.repository }}:latest
-          ghcr.io/${{ github.repository }}:${{ github.sha }}
-        platforms: linux/amd64,linux/arm64
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+  #   - name: Build and push Docker image
+  #     uses: docker/build-push-action@v5
+  #     with:
+  #       context: .
+  #       file: deploy/docker/Dockerfile
+  #       push: true
+  #       tags: |
+  #         ghcr.io/${{ github.repository }}:latest
+  #         ghcr.io/${{ github.repository }}:${{ github.sha }}
+  #       platforms: linux/amd64,linux/arm64
+  #       cache-from: type=gha
+  #       cache-to: type=gha,mode=max
 
-    - name: Run Trivy vulnerability scan
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: 'ghcr.io/${{ github.repository }}:${{ github.sha }}'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
+  #   - name: Run Trivy vulnerability scan
+  #     uses: aquasecurity/trivy-action@master
+  #     with:
+  #       image-ref: 'ghcr.io/${{ github.repository }}:${{ github.sha }}'
+  #       format: 'sarif'
+  #       output: 'trivy-results.sarif'
 
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
+  #   - name: Upload Trivy scan results
+  #     uses: github/codeql-action/upload-sarif@v3
+  #     if: always()
+  #     with:
+  #       sarif_file: 'trivy-results.sarif'
 
-  deployment-validation:
-    name: Deployment Config Validation
-    runs-on: ubuntu-latest
-    needs: [test, security]
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  # deployment-validation:
+  #   name: Deployment Config Validation
+  #   runs-on: ubuntu-latest
+  #   needs: [test, security]
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
 
-    - name: Validate Docker configs
-      run: |
-        # Validate docker-compose files
-        if [ -f deploy/docker/docker-compose.yml ]; then
-          docker-compose -f deploy/docker/docker-compose.yml config
-        fi
+  #   - name: Validate Docker configs
+  #     run: |
+  #       # Validate docker-compose files
+  #       if [ -f deploy/docker/docker-compose.yml ]; then
+  #         docker-compose -f deploy/docker/docker-compose.yml config
+  #       fi
 
-    - name: Validate YAML syntax
-      run: |
-        # Check all YAML files for syntax errors
-        find deploy/ -name "*.yaml" -o -name "*.yml" | xargs -I {} sh -c 'echo "Checking {}" && python -c "import yaml; yaml.safe_load(open(\"{}\"))"'
+  #   - name: Validate YAML syntax
+  #     run: |
+  #       # Check all YAML files for syntax errors
+  #       find deploy/ -name "*.yaml" -o -name "*.yml" | xargs -I {} sh -c 'echo "Checking {}" && python -c "import yaml; yaml.safe_load(open(\"{}\"))"'

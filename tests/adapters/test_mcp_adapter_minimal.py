@@ -46,7 +46,7 @@ class TestMCPAdapterMinimal:
         except Exception as e:
             pytest.skip(f"MCP compatibility check failed as expected: {e}")
 
-    @patch("music21_mcp.adapters.mcp_adapter.FastMCP")
+    @patch("fastmcp.FastMCP")
     def test_create_server_mocked(self, mock_fastmcp, adapter):
         """Test server creation with mocked FastMCP (avoid real MCP issues)"""
         mock_server = Mock()

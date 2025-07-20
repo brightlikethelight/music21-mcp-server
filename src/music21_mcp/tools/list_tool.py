@@ -27,7 +27,7 @@ class ListScoresTool(BaseTool):
                 try:
                     # Extract basic info for each score
                     info = {
-                        "id": score_id,
+                        "score_id": score_id,  # Changed from "id" to "score_id" to match test expectations
                         "measures": len(
                             list(score.flatten().getElementsByClass("Measure"))
                         ),
@@ -47,13 +47,13 @@ class ListScoresTool(BaseTool):
                 except Exception as e:
                     logger.warning(f"Error processing score {score_id}: {e}")
                     scores.append(
-                        {"id": score_id, "error": "Failed to extract metadata"}
+                        {"score_id": score_id, "error": "Failed to extract metadata"}
                     )
 
             # Sort by ID for consistent ordering
-            scores.sort(key=lambda x: str(x.get("id", "")))
+            scores.sort(key=lambda x: str(x.get("score_id", "")))
 
-            return self.create_success_response(total_count=len(scores), scores=scores)
+            return self.create_success_response(count=len(scores), scores=scores)
 
     def validate_inputs(self, **kwargs: Any) -> str | None:
         """No inputs to validate for list operation"""
