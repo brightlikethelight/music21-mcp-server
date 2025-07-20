@@ -53,13 +53,18 @@ class ScoreInfoTool(BaseTool):
                 info["title"] = metadata["movementName"]
             else:
                 info["title"] = f"Score {score_id}"
-            
             if "composer" in metadata:
                 info["composer"] = metadata["composer"]
             else:
                 # Infer composer from common corpus patterns
-                if ("bach" in score_id.lower() or "bwv" in score_id.lower() or 
-                    ("movementName" in metadata and "bwv" in metadata["movementName"].lower())):
+                if (
+                    "bach" in score_id.lower()
+                    or "bwv" in score_id.lower()
+                    or (
+                        "movementName" in metadata
+                        and "bwv" in metadata["movementName"].lower()
+                    )
+                ):
                     info["composer"] = "J.S. Bach"
                 else:
                     info["composer"] = "Unknown"
@@ -74,12 +79,10 @@ class ScoreInfoTool(BaseTool):
             self.report_progress(0.5, "Analyzing time and tempo")
             time_info = self._analyze_time_and_tempo(score)
             info.update(time_info)
-            
             # Add flattened time_signature for test compatibility
             if "time_signatures" in info and info["time_signatures"]:
                 first_time_sig = info["time_signatures"][0]
                 info["time_signature"] = first_time_sig.get("signature", "4/4")
-            
             # Add duration field for test compatibility
             if "duration_seconds" in info:
                 info["duration"] = info["duration_seconds"]
@@ -95,9 +98,11 @@ class ScoreInfoTool(BaseTool):
                 self.report_progress(0.9, "Analyzing detailed structure")
                 detailed_structure = self._analyze_detailed_structure(score)
                 info["structure"] = detailed_structure
-                
                 # Add flattened key_signature for test compatibility
-                if "key_signatures" in detailed_structure and detailed_structure["key_signatures"]:
+                if (
+                    "key_signatures" in detailed_structure
+                    and detailed_structure["key_signatures"]
+                ):
                     first_key_sig = detailed_structure["key_signatures"][0]
                     info["key_signature"] = first_key_sig.get("sharps", 0)
 

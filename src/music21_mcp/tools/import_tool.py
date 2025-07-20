@@ -65,7 +65,9 @@ class ImportScoreTool(BaseTool):
                 elif source_type == "text":
                     score = await self._import_from_text(source)
                 else:
-                    return self.create_error_response(f"Unknown source type: {source_type}")
+                    return self.create_error_response(
+                        f"Unknown source type: {source_type}"
+                    )
 
                 if score is None:
                     return self.create_error_response("Failed to import score")
@@ -74,8 +76,7 @@ class ImportScoreTool(BaseTool):
                 error_msg = str(e)
                 if "Could not find" in error_msg:
                     return self.create_error_response(f"Could not find score: {source}")
-                else:
-                    return self.create_error_response(f"Import failed: {error_msg}")
+                return self.create_error_response(f"Import failed: {error_msg}")
 
             self.report_progress(0.8, "Analyzing score metadata")
 
