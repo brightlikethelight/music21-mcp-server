@@ -297,7 +297,8 @@ class TestMusicAnalysisServiceCore:
 
         assert result["status"] == "error"
         assert (
-            "score_id" in result["message"].lower() or "empty" in result["message"].lower()
+            "score_id" in result["message"].lower()
+            or "empty" in result["message"].lower()
         )
 
     async def test_null_values(self, service):
@@ -364,7 +365,8 @@ class TestMusicAnalysisServiceExport:
 
         assert result["status"] == "error"
         assert (
-            "format" in result["message"].lower() or "invalid" in result["message"].lower()
+            "format" in result["message"].lower()
+            or "invalid" in result["message"].lower()
         )
 
     async def test_export_missing_score(self):

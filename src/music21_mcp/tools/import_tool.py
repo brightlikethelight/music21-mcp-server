@@ -178,6 +178,17 @@ class ImportScoreTool(BaseTool):
         """Import from text notation"""
         try:
             self.report_progress(0.3, "Parsing text notation")
+            
+            # Check if it's tinyNotation format
+            if text.strip().startswith("tinyNotation:"):
+                # Use music21's tinyNotation parser
+                from music21 import converter
+                tiny_text = text.replace("tinyNotation:", "").strip()
+                score = converter.parse(f"tinyNotation: {tiny_text}")
+                self.report_progress(0.7, "TinyNotation parsed")
+                return score
+            
+            # Otherwise parse as space-separated notes
             score = stream.Score()
             part = stream.Part()
 

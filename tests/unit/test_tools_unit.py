@@ -28,6 +28,7 @@ from music21_mcp.tools import (
 @pytest.fixture
 def mock_score_manager():
     """Mock score manager for testing"""
+
     # Create a custom class that inherits from dict but has async methods
     class MockScoreManager(dict):
         def __init__(self):
@@ -39,14 +40,14 @@ def mock_score_manager():
             # Override get to be a Mock
             self._dict_get = super().get
             self.get = Mock()
-        
+
         def __getitem__(self, key):
             # When tests set mock_score_manager[key] = value
             if key in self:
                 return super().__getitem__(key)
             # When tools call score_manager.get(key), use the mock
             return self.get.return_value
-    
+
     return MockScoreManager()
 
 
@@ -137,7 +138,7 @@ class TestListScoresTool:
         # Add multiple scores to the manager
         mock_score_manager["score1"] = sample_score
         mock_score_manager["score2"] = sample_score
-        
+
         tool = ListScoresTool(mock_score_manager)
 
         result = await tool.execute()
@@ -387,9 +388,7 @@ class TestCounterpointGeneratorTool:
         mock_score_manager.get.return_value = cantus
         tool = CounterpointGeneratorTool(mock_score_manager)
 
-        result = await tool.execute(
-            score_id="cantus", species="first"
-        )
+        result = await tool.execute(score_id="cantus", species="first")
 
         assert result["status"] == "success"
         assert result["species"] == "first"
@@ -406,9 +405,7 @@ class TestStyleImitationTool:
         mock_score_manager.get.return_value = sample_score
         tool = StyleImitationTool(mock_score_manager)
 
-        result = await tool.execute(
-            style_source="test_score", generation_length=8
-        )
+        result = await tool.execute(style_source="test_score", generation_length=8)
 
         assert result["status"] == "success"
         assert "generated_score_id" in result

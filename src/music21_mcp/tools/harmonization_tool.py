@@ -181,7 +181,7 @@ class HarmonizationTool(BaseTool):
                     "explanations": explanations,
                     "harmonic_rhythm": harmonization.get("harmonic_rhythm", {}),
                     "confidence_ratings": harmonization.get("confidence_ratings", []),
-                }
+                },
             )
 
     def validate_inputs(self, **kwargs: Any) -> str | None:
