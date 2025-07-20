@@ -57,17 +57,25 @@ class ImportScoreTool(BaseTool):
             # Import based on source type
             score = None
 
-            if source_type == "file":
-                score = await self._import_from_file(source)
-            elif source_type == "corpus":
-                score = await self._import_from_corpus(source)
-            elif source_type == "text":
-                score = await self._import_from_text(source)
-            else:
-                return self.create_error_response(f"Unknown source type: {source_type}")
+            try:
+                if source_type == "file":
+                    score = await self._import_from_file(source)
+                elif source_type == "corpus":
+                    score = await self._import_from_corpus(source)
+                elif source_type == "text":
+                    score = await self._import_from_text(source)
+                else:
+                    return self.create_error_response(f"Unknown source type: {source_type}")
 
-            if score is None:
-                return self.create_error_response("Failed to import score")
+                if score is None:
+                    return self.create_error_response("Failed to import score")
+            except Exception as e:
+                # Return the specific error message from music21
+                error_msg = str(e)
+                if "Could not find" in error_msg:
+                    return self.create_error_response(f"Could not find score: {source}")
+                else:
+                    return self.create_error_response(f"Import failed: {error_msg}")
 
             self.report_progress(0.8, "Analyzing score metadata")
 
@@ -160,14 +168,10 @@ class ImportScoreTool(BaseTool):
 
     async def _import_from_corpus(self, corpus_path: str) -> stream.Score | None:
         """Import from music21 corpus"""
-        try:
-            self.report_progress(0.3, "Loading from corpus")
-            score = corpus.parse(corpus_path)
-            self.report_progress(0.7, "Corpus loaded successfully")
-            return score
-        except Exception as e:
-            logger.error(f"Failed to load corpus {corpus_path}: {e}")
-            return None
+        self.report_progress(0.3, "Loading from corpus")
+        score = corpus.parse(corpus_path)
+        self.report_progress(0.7, "Corpus loaded successfully")
+        return score
 
     async def _import_from_text(self, text: str) -> stream.Score | None:
         """Import from text notation"""
