@@ -170,7 +170,14 @@ class ScoreInfoTool(BaseTool):
 
             # Count elements
             num_notes = len(list(flat.notes))
-            num_measures = len(list(flat.getElementsByClass("Measure")))
+            # Count measures from parts (flattened score doesn't preserve Measure objects)
+            num_measures = 0
+            if hasattr(score, "parts") and score.parts:
+                # Get measures from the first part (typical structure)
+                num_measures = len(list(score.parts[0].getElementsByClass("Measure")))
+            else:
+                # Fallback for single-part scores
+                num_measures = len(list(score.getElementsByClass("Measure")))
             num_parts = len(score.parts) if hasattr(score, "parts") else 1
 
             # Duration
