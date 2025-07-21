@@ -165,15 +165,14 @@ class ImportScoreTool(BaseTool):
             if isinstance(parsed, stream.Score):
                 self.report_progress(0.7, "File parsed successfully")
                 return parsed
-            elif hasattr(parsed, 'flatten'):
+            if hasattr(parsed, "flatten"):
                 # Convert to Score if it's another stream type
                 score = stream.Score()
                 score.append(parsed)
                 self.report_progress(0.7, "File parsed and converted to Score")
                 return score
-            else:
-                self.report_progress(0.7, "File parsed successfully")
-                return None
+            self.report_progress(0.7, "File parsed successfully")
+            return None
         except Exception as e:
             logger.error(f"Failed to parse file {file_path}: {e}")
             return None
@@ -186,15 +185,14 @@ class ImportScoreTool(BaseTool):
         if isinstance(parsed, stream.Score):
             self.report_progress(0.7, "Corpus loaded successfully")
             return parsed
-        elif hasattr(parsed, 'expandRepeats'):
+        if hasattr(parsed, "expandRepeats"):
             # Convert to Score if it's another stream type
             score = stream.Score()
             score.append(parsed)
             self.report_progress(0.7, "Corpus loaded and converted to Score")
             return score
-        else:
-            self.report_progress(0.7, "Corpus loaded successfully")
-            return None
+        self.report_progress(0.7, "Corpus loaded successfully")
+        return None
 
     async def _import_from_text(self, text: str) -> stream.Score | None:
         """Import from text notation"""
@@ -212,12 +210,11 @@ class ImportScoreTool(BaseTool):
                 if isinstance(parsed, stream.Score):
                     self.report_progress(0.7, "TinyNotation parsed")
                     return parsed
-                else:
-                    # Convert to Score if it's another stream type
-                    score = stream.Score()
-                    score.append(parsed)
-                    self.report_progress(0.7, "TinyNotation parsed and converted to Score")
-                    return score
+                # Convert to Score if it's another stream type
+                score = stream.Score()
+                score.append(parsed)
+                self.report_progress(0.7, "TinyNotation parsed and converted to Score")
+                return score
 
             # Otherwise parse as space-separated notes
             score = stream.Score()

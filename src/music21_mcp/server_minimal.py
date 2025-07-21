@@ -31,6 +31,7 @@ except ImportError:
             raise ImportError(
                 "FastMCP package not installed. Please install with: pip install fastmcp"
             )
+
     FastMCP = _FastMCP  # Assign to original name
 
 
