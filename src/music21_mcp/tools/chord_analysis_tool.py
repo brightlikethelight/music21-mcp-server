@@ -177,7 +177,7 @@ class ChordAnalysisTool(BaseTool):
             changes_per_measure = 4.0 / avg_duration if avg_duration > 0 else 0
 
             # Find most common durations
-            duration_counts = {}
+            duration_counts: dict[float, int] = {}
             for d in durations:
                 duration_counts[d] = duration_counts.get(d, 0) + 1
 
@@ -204,7 +204,7 @@ class ChordAnalysisTool(BaseTool):
 
         try:
             # Count chord types
-            chord_types = {}
+            chord_types: dict[str, int] = {}
             for ch in chord_progression:
                 symbol = ch.get("symbol", "unknown")
                 chord_types[symbol] = chord_types.get(symbol, 0) + 1
@@ -215,7 +215,7 @@ class ChordAnalysisTool(BaseTool):
             )[:5]
 
             # Count qualities
-            qualities = {}
+            qualities: dict[str, int] = {}
             for ch in chord_progression:
                 quality = ch.get("quality", "unknown")
                 if quality:

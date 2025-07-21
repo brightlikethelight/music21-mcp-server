@@ -161,7 +161,7 @@ class HarmonyAnalysisTool(BaseTool):
         self, roman_numerals: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         """Analyze chord progressions"""
-        progressions = []
+        progressions: list[dict[str, Any]] = []
 
         if len(roman_numerals) < 2:
             return progressions

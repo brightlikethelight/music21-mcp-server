@@ -160,9 +160,20 @@ class ImportScoreTool(BaseTool):
 
         try:
             self.report_progress(0.3, "Parsing file")
-            score = converter.parse(file_path)
-            self.report_progress(0.7, "File parsed successfully")
-            return score
+            parsed = converter.parse(file_path)
+            # Ensure we return a Score object
+            if isinstance(parsed, stream.Score):
+                self.report_progress(0.7, "File parsed successfully")
+                return parsed
+            elif hasattr(parsed, 'flatten'):
+                # Convert to Score if it's another stream type
+                score = stream.Score()
+                score.append(parsed)
+                self.report_progress(0.7, "File parsed and converted to Score")
+                return score
+            else:
+                self.report_progress(0.7, "File parsed successfully")
+                return None
         except Exception as e:
             logger.error(f"Failed to parse file {file_path}: {e}")
             return None
@@ -170,9 +181,20 @@ class ImportScoreTool(BaseTool):
     async def _import_from_corpus(self, corpus_path: str) -> stream.Score | None:
         """Import from music21 corpus"""
         self.report_progress(0.3, "Loading from corpus")
-        score = corpus.parse(corpus_path)
-        self.report_progress(0.7, "Corpus loaded successfully")
-        return score
+        parsed = corpus.parse(corpus_path)
+        # Ensure we return a Score object
+        if isinstance(parsed, stream.Score):
+            self.report_progress(0.7, "Corpus loaded successfully")
+            return parsed
+        elif hasattr(parsed, 'expandRepeats'):
+            # Convert to Score if it's another stream type
+            score = stream.Score()
+            score.append(parsed)
+            self.report_progress(0.7, "Corpus loaded and converted to Score")
+            return score
+        else:
+            self.report_progress(0.7, "Corpus loaded successfully")
+            return None
 
     async def _import_from_text(self, text: str) -> stream.Score | None:
         """Import from text notation"""
@@ -185,9 +207,17 @@ class ImportScoreTool(BaseTool):
                 from music21 import converter
 
                 tiny_text = text.replace("tinyNotation:", "").strip()
-                score = converter.parse(f"tinyNotation: {tiny_text}")
-                self.report_progress(0.7, "TinyNotation parsed")
-                return score
+                parsed = converter.parse(f"tinyNotation: {tiny_text}")
+                # Ensure we return a Score object
+                if isinstance(parsed, stream.Score):
+                    self.report_progress(0.7, "TinyNotation parsed")
+                    return parsed
+                else:
+                    # Convert to Score if it's another stream type
+                    score = stream.Score()
+                    score.append(parsed)
+                    self.report_progress(0.7, "TinyNotation parsed and converted to Score")
+                    return score
 
             # Otherwise parse as space-separated notes
             score = stream.Score()

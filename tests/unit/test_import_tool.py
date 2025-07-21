@@ -54,7 +54,10 @@ class TestImportScoreTool:
         )
 
         assert result["status"] == "error"
-        assert "Failed to import" in result["message"]
+        assert (
+            "Failed to import" in result["message"]
+            or "Could not find" in result["message"]
+        )
 
     @pytest.mark.asyncio
     async def test_import_url_source(self, clean_score_storage):

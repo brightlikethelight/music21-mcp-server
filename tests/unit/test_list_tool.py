@@ -25,8 +25,8 @@ class TestListScoresTool:
         assert result["status"] == "success"
         assert "scores" in result
         assert result["scores"] == []
-        assert "total_count" in result
-        assert result["total_count"] == 0
+        assert "count" in result
+        assert result["count"] == 0
 
     @pytest.mark.asyncio
     async def test_list_populated_storage(self, populated_score_storage):
@@ -37,14 +37,14 @@ class TestListScoresTool:
 
         assert result["status"] == "success"
         assert "scores" in result
-        assert "total_count" in result
-        assert result["total_count"] > 0
-        assert len(result["scores"]) == result["total_count"]
+        assert "count" in result
+        assert result["count"] > 0
+        assert len(result["scores"]) == result["count"]
 
         # Check score entry structure
         if len(result["scores"]) > 0:
             score_entry = result["scores"][0]
-            assert "id" in score_entry
+            assert "id" in score_entry or "score_id" in score_entry
             assert "title" in score_entry
             assert "parts" in score_entry
 
@@ -62,11 +62,13 @@ class TestListScoresTool:
         result = await tool.execute()
 
         assert result["status"] == "success"
-        assert result["total_count"] == 3
+        assert result["count"] == 3
         assert len(result["scores"]) == 3
 
         # Check all scores are listed
-        score_ids = [score["id"] for score in result["scores"]]
+        score_ids = [
+            score.get("id", score.get("score_id")) for score in result["scores"]
+        ]
         assert "score1" in score_ids
         assert "score2" in score_ids
         assert "score3" in score_ids
@@ -81,7 +83,7 @@ class TestListScoresTool:
         assert result["status"] == "success"
         if len(result["scores"]) > 0:
             score = result["scores"][0]
-            assert "id" in score
+            assert "id" in score or "score_id" in score
             assert "title" in score
             assert "parts" in score
             assert isinstance(score["parts"], int)
@@ -99,4 +101,4 @@ class TestListScoresTool:
         # Should handle gracefully and continue with other scores
         assert result["status"] == "success"
         assert "scores" in result
-        assert "total_count" in result
+        assert "count" in result

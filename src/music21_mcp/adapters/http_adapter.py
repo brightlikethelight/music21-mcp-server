@@ -107,7 +107,7 @@ class HTTPAdapter:
             try:
                 # Save uploaded file temporarily
                 with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=Path(file.filename).suffix
+                    delete=False, suffix=Path(file.filename or "").suffix
                 ) as tmp:
                     content = await file.read()
                     tmp.write(content)

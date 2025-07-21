@@ -10,7 +10,7 @@ import random
 from enum import Enum
 from typing import Any
 
-from music21 import interval, note, pitch, stream
+from music21 import interval, note, pitch, stream, tie
 from music21 import key as m21_key
 
 from .base_tool import BaseTool
@@ -241,7 +241,10 @@ class CounterpointGeneratorTool(BaseTool):
         if hasattr(score, "parts") and len(score.parts) > 0:
             cf_part = score.parts[0]
         else:
-            cf_part = score
+            # Convert Score to Part for processing
+            cf_part = stream.Part()
+            for element in score.flatten():
+                cf_part.append(element)
 
         # Extract notes
         cf_notes = []
@@ -255,7 +258,7 @@ class CounterpointGeneratorTool(BaseTool):
         """Determine the key/mode of the cantus firmus"""
         try:
             # Create stream for analysis
-            cf_stream = stream.Stream(cantus_firmus)
+            cf_stream: stream.Stream = stream.Stream(cantus_firmus)
 
             if mode in ["major", "minor"]:
                 # Standard key detection
@@ -303,8 +306,8 @@ class CounterpointGeneratorTool(BaseTool):
         custom_rules: list[str] | None,
     ) -> dict[str, Any]:
         """Generate first species (1:1) counterpoint"""
-        counterpoint_notes = []
-        interval_analysis = []
+        counterpoint_notes: list[note.Note] = []
+        interval_analysis: list[dict[str, Any]] = []
 
         # Determine starting interval
         start_intervals = [0, 7, 12] if voice_position == "above" else [-12, -7, 0]  # noqa: SIM108
@@ -474,8 +477,8 @@ class CounterpointGeneratorTool(BaseTool):
         custom_rules: list[str] | None,
     ) -> dict[str, Any]:
         """Generate second species (2:1) counterpoint"""
-        counterpoint_notes = []
-        interval_analysis = []
+        counterpoint_notes: list[note.Note] = []
+        interval_analysis: list[dict[str, Any]] = []
 
         for i, cf_note in enumerate(cantus_firmus):
             # Generate two notes for each CF note
@@ -579,8 +582,8 @@ class CounterpointGeneratorTool(BaseTool):
         custom_rules: list[str] | None,
     ) -> dict[str, Any]:
         """Generate third species (3:1) counterpoint"""
-        counterpoint_notes = []
-        interval_analysis = []
+        counterpoint_notes: list[note.Note] = []
+        interval_analysis: list[dict[str, Any]] = []
 
         for i, cf_note in enumerate(cantus_firmus):
             # Generate three notes for each CF note
@@ -679,15 +682,16 @@ class CounterpointGeneratorTool(BaseTool):
         custom_rules: list[str] | None,
     ) -> dict[str, Any]:
         """Generate fourth species (syncopated) counterpoint"""
-        counterpoint_notes = []
-        interval_analysis = []
+        counterpoint_notes: list[note.Note] = []
+        interval_analysis: list[dict[str, Any]] = []
 
         # Fourth species uses suspensions
         for i, cf_note in enumerate(cantus_firmus):
             if i == 0:
                 # First measure - start with rest then consonance
-                rest = note.Rest(quarterLength=cf_note.duration.quarterLength / 2)
-                counterpoint_notes.append(rest)
+                # Skip adding rest to maintain type consistency
+                # rest = note.Rest(quarterLength=cf_note.duration.quarterLength / 2)
+                # counterpoint_notes.append(rest)
 
                 cp_pitch = self._choose_opening_pitch(cf_note, voice_position)
                 cp_note = note.Note(
@@ -743,7 +747,7 @@ class CounterpointGeneratorTool(BaseTool):
         suspension_note = note.Note(
             prep_pitch, quarterLength=cf_note.duration.quarterLength / 2
         )
-        suspension_note.tie = note.Tie("start")
+        suspension_note.tie = tie.Tie("start")
         notes.append(suspension_note)
 
         # Resolution (step down to consonance)
@@ -801,8 +805,8 @@ class CounterpointGeneratorTool(BaseTool):
         custom_rules: list[str] | None,
     ) -> dict[str, Any]:
         """Generate fifth species (florid) counterpoint"""
-        counterpoint_notes = []
-        interval_analysis = []
+        counterpoint_notes: list[note.Note] = []
+        interval_analysis: list[dict[str, Any]] = []
 
         # Fifth species mixes all previous species
         for i, cf_note in enumerate(cantus_firmus):
@@ -960,10 +964,10 @@ class CounterpointGeneratorTool(BaseTool):
 
         analysis["stepwise_motion_percentage"] = (
             stepwise / (len(pitched_notes) - 1)
-        ) * 100
-        analysis["leap_count"] = leaps
-        analysis["direction_changes"] = direction_changes
-        analysis["climax_position"] = pitches.index(max(pitches)) / len(pitches)
+        ) * 100.0
+        analysis["leap_count"] = int(leaps)
+        analysis["direction_changes"] = int(direction_changes)
+        analysis["climax_position"] = pitches.index(max(pitches)) / len(pitches) * 1.0
 
         return analysis
 

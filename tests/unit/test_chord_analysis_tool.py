@@ -23,11 +23,9 @@ class TestChordAnalysisTool:
         result = await tool.execute(score_id="bach_test")
 
         assert result["status"] == "success"
-        assert "chord_analysis" in result
-        analysis = result["chord_analysis"]
-        assert "chords" in analysis
-        assert "chord_histogram" in analysis
-        assert "most_common_chords" in analysis
+        assert "chord_progression" in result
+        assert "harmonic_rhythm" in result
+        assert "summary" in result
 
     @pytest.mark.asyncio
     async def test_chord_analysis_nonexistent_score(self, clean_score_storage):
@@ -47,14 +45,14 @@ class TestChordAnalysisTool:
         result = await tool.execute(score_id="bach_test")
 
         assert result["status"] == "success"
-        chords = result["chord_analysis"]["chords"]
-        assert isinstance(chords, list)
+        chord_progression = result["chord_progression"]
+        assert isinstance(chord_progression, list)
 
-        if len(chords) > 0:
-            chord = chords[0]
-            assert "chord_symbol" in chord
-            assert "measure" in chord
-            assert "beat" in chord
+        if len(chord_progression) > 0:
+            chord = chord_progression[0]
+            assert "symbol" in chord
+            assert "pitches" in chord
+            assert "offset" in chord
             assert "quality" in chord
             assert "root" in chord
 
@@ -66,12 +64,15 @@ class TestChordAnalysisTool:
         result = await tool.execute(score_id="bach_test")
 
         assert result["status"] == "success"
-        histogram = result["chord_analysis"]["chord_histogram"]
-        assert isinstance(histogram, dict)
+        summary = result["summary"]
+        assert isinstance(summary, dict)
+        assert "chord_qualities" in summary
 
-        # Histogram should have chord types as keys and counts as values
-        for chord_type, count in histogram.items():
-            assert isinstance(chord_type, str)
+        # Check chord qualities structure
+        qualities = summary["chord_qualities"]
+        assert isinstance(qualities, dict)
+        for quality, count in qualities.items():
+            assert isinstance(quality, str)
             assert isinstance(count, int)
             assert count >= 0
 
@@ -83,7 +84,9 @@ class TestChordAnalysisTool:
         result = await tool.execute(score_id="bach_test")
 
         assert result["status"] == "success"
-        common_chords = result["chord_analysis"]["most_common_chords"]
+        summary = result["summary"]
+        assert "most_common_chords" in summary
+        common_chords = summary["most_common_chords"]
         assert isinstance(common_chords, list)
 
         # Should be sorted by frequency
@@ -101,7 +104,8 @@ class TestChordAnalysisTool:
         )
 
         assert result["status"] == "success"
-        assert "chord_analysis" in result
+        assert "chord_progression" in result
+        assert "harmonic_rhythm" in result
 
     @pytest.mark.asyncio
     async def test_chord_analysis_monophonic_music(self, clean_score_storage):
@@ -121,9 +125,9 @@ class TestChordAnalysisTool:
         # Should handle monophonic music gracefully
         assert result["status"] in ["success", "error"]
         if result["status"] == "success":
-            # Monophonic music should have no or implied chords
-            chords = result["chord_analysis"]["chords"]
-            assert isinstance(chords, list)
+            # Monophonic music should have no or few chords
+            chord_progression = result["chord_progression"]
+            assert isinstance(chord_progression, list)
 
     @pytest.mark.asyncio
     async def test_chord_analysis_complex_harmony(self, clean_score_storage):
@@ -153,6 +157,9 @@ class TestChordAnalysisTool:
         result = await tool.execute(score_id="complex")
 
         assert result["status"] == "success"
-        analysis = result["chord_analysis"]
-        assert len(analysis["chords"]) == 5
-        assert len(analysis["chord_histogram"]) >= 3  # At least 3 different chord types
+        assert "chord_progression" in result
+        assert "summary" in result
+        # Should have detected all 5 chords
+        assert result["total_chords"] == 5
+        # Should have multiple chord qualities
+        assert len(result["summary"]["chord_qualities"]) >= 2

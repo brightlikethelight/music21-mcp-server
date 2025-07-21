@@ -26,11 +26,12 @@ try:
 except ImportError:
     HAS_MCP = False
 
-    class FastMCP:
+    class _FastMCP:  # Renamed to avoid redefinition
         def __init__(self, *args, **kwargs):
             raise ImportError(
                 "FastMCP package not installed. Please install with: pip install fastmcp"
             )
+    FastMCP = _FastMCP  # Assign to original name
 
 
 # Import protocol adapter (isolates MCP concerns from core value)
@@ -50,7 +51,7 @@ logger = logging.getLogger(__name__)
 mcp_adapter = MCPAdapter()
 
 # Create FastMCP server
-mcp = FastMCP("Music21 MCP Server - Minimal")
+mcp: FastMCP = FastMCP("Music21 MCP Server - Minimal")
 
 logger.info("Music21 MCP Server initialized with adapter pattern")
 
