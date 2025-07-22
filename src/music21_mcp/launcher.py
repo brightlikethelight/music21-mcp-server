@@ -79,7 +79,7 @@ def start_http_server():
         print("🔗 Health check: http://localhost:8000/health")
         print()
 
-        uvicorn.run(app, host="0.0.0.0", port=8000)  # noqa: S104
+        uvicorn.run(app, host="0.0.0.0", port=8000)  # nosec B104 - HTTP server needs to bind to all interfaces
 
     except ImportError as e:
         print(f"❌ HTTP server not available: {e}")

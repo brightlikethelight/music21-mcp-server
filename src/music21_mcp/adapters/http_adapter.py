@@ -249,4 +249,4 @@ if __name__ == "__main__":
     print("🌐 Starting server on http://localhost:8000")
     print("📖 API docs: http://localhost:8000/docs")
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)  # noqa: S104
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # nosec B104 - HTTP server needs to bind to all interfaces

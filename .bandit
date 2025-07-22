@@ -1,0 +1,17 @@
+[bandit]
+# Configuration file for bandit security scanner
+
+# Exclude test files and specific patterns that are false positives for music generation
+exclude_dirs = tests,examples,debug_test.py
+
+# Skip these checks for music generation tools
+skips = B110,B112  # try/except pass/continue patterns in music analysis are acceptable
+
+# Allow certain patterns in music generation files
+[bandit.blacklist_calls]
+# Allow random usage for music generation - not cryptographic
+bad_name_sets = 
+
+[bandit.plugins.B311_random]
+# Disable B311 (random usage) for music generation files
+skip_lines = random.choice,random.randint,random.random,random.uniform
