@@ -12,12 +12,12 @@ __license__ = "MIT"
 
 # Import main service classes for easy access
 try:
+    from .adapters.python_adapter import create_async_analyzer, create_sync_analyzer
     from .services import MusicAnalysisService
-    from .adapters.python_adapter import create_sync_analyzer, create_async_analyzer
-    
+
     __all__ = [
         "__version__",
-        "__author__", 
+        "__author__",
         "__email__",
         "__license__",
         "MusicAnalysisService",
@@ -29,6 +29,6 @@ except ImportError:
     __all__ = [
         "__version__",
         "__author__",
-        "__email__", 
+        "__email__",
         "__license__",
     ]
