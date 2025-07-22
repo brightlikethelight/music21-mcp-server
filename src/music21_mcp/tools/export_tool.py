@@ -7,7 +7,7 @@ import contextlib
 import logging
 import os
 import tempfile
-from typing import Any
+from typing import Any, Dict, List
 
 from music21 import stream
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class ExportScoreTool(BaseTool):
     """Tool for exporting scores to various formats"""
 
-    SUPPORTED_FORMATS = {
+    SUPPORTED_FORMATS: Dict[str, Dict[str, Any]] = {
         "midi": {"extensions": [".mid", ".midi"], "method": "midi"},
         "musicxml": {"extensions": [".xml", ".musicxml", ".mxl"], "method": "musicxml"},
         "abc": {"extensions": [".abc"], "method": "abc"},
@@ -74,8 +74,9 @@ class ExportScoreTool(BaseTool):
 
             # Export based on format
             try:
+                method = str(format_info["method"])
                 success = await self._export_score(
-                    score, format_info["method"], output_path
+                    score, method, output_path
                 )
 
                 if not success:

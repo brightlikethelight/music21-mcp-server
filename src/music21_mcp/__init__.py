@@ -12,7 +12,7 @@ __license__ = "MIT"
 
 # Import main service classes for easy access
 try:
-    from .adapters.python_adapter import create_async_analyzer, create_sync_analyzer
+    from .adapters.python_adapter import create_music_analyzer, create_sync_analyzer
     from .services import MusicAnalysisService
 
     __all__ = [
@@ -22,7 +22,7 @@ try:
         "__license__",
         "MusicAnalysisService",
         "create_sync_analyzer",
-        "create_async_analyzer",
+        "create_music_analyzer",
     ]
 except ImportError:
     # Allow version import even if dependencies aren't installed

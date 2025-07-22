@@ -146,6 +146,8 @@ class CounterpointGeneratorTool(BaseTool):
 
             # Convert species string to enum
             species_enum = self._get_species_enum(species)
+            if species_enum is None:
+                return self.create_error_response(f"Unknown species: {species}")
 
             self.report_progress(0.3, f"Generating {species} species counterpoint")
 
@@ -170,8 +172,6 @@ class CounterpointGeneratorTool(BaseTool):
                 counterpoint = await self._generate_fifth_species(
                     cantus_firmus, cf_key, voice_position, rule_set, custom_rules
                 )
-            else:
-                return self.create_error_response(f"Unknown species: {species}")
 
             self.report_progress(0.7, "Checking counterpoint rules")
 
@@ -286,7 +286,7 @@ class CounterpointGeneratorTool(BaseTool):
             # Default to C major
             return m21_key.Key("C", "major")
 
-    def _get_species_enum(self, species: str) -> Species:
+    def _get_species_enum(self, species: str) -> Species | None:
         """Convert species string to enum"""
         mapping = {
             "first": Species.FIRST,
@@ -295,7 +295,7 @@ class CounterpointGeneratorTool(BaseTool):
             "fourth": Species.FOURTH,
             "fifth": Species.FIFTH,
         }
-        return mapping.get(species, Species.FIRST)
+        return mapping.get(species)
 
     async def _generate_first_species(
         self,
@@ -913,11 +913,11 @@ class CounterpointGeneratorTool(BaseTool):
         analysis = {
             "total_notes": len(notes),
             "range": 0,
-            "stepwise_motion_percentage": 0,
+            "stepwise_motion_percentage": 0.0,
             "leap_count": 0,
             "direction_changes": 0,
             "repeated_notes": 0,
-            "climax_position": 0,
+            "climax_position": 0.0,
         }
 
         if len(notes) < 2:

@@ -123,27 +123,26 @@ class CLIAdapter:
         print(f"\n🎵 {operation} Result:")
         print("=" * (len(operation) + 10))
 
-        if isinstance(result, dict):
-            if result.get("status") == "success":
-                print("✅ Status: Success")
-                if "message" in result:
-                    print(f"📝 Message: {result['message']}")
+        if result.get("status") == "success":
+            print("✅ Status: Success")
+            if "message" in result:
+                print(f"📝 Message: {result['message']}")
 
-                # Print key data fields
-                if "data" in result:
-                    data = result["data"]
-                    if isinstance(data, dict):
-                        for key, value in data.items():
-                            if key not in ["status", "message"]:
-                                print(f"📊 {key.title()}: {value}")
-                    else:
-                        print(f"📊 Data: {data}")
-            else:
-                print(f"❌ Status: {result.get('status', 'Unknown')}")
-                if "error" in result:
-                    print(f"🚨 Error: {result['error']}")
+            # Print key data fields
+            if "data" in result:
+                data = result["data"]
+                if isinstance(data, dict):
+                    for key, value in data.items():
+                        if key not in ["status", "message"]:
+                            print(f"📊 {key.title()}: {value}")
+                else:
+                    print(f"📊 Data: {data}")
         else:
-            print(f"📊 Result: {result}")
+            print(f"❌ Status: {result.get('status', 'Unknown')}")
+            if "error" in result:
+                print(f"🚨 Error: {result['error']}")
+            elif "message" in result:
+                print(f"🚨 Message: {result['message']}")
 
         print()
 

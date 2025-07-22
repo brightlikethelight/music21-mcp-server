@@ -32,7 +32,7 @@ except ImportError:
                 "FastMCP package not installed. Please install with: pip install fastmcp"
             )
 
-    FastMCP = _FastMCP  # Assign to original name
+    FastMCP = _FastMCP  # type: ignore  # Fallback class for when fastmcp not installed
 
 
 # Import protocol adapter (isolates MCP concerns from core value)
