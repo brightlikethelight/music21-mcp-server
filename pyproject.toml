@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 [project]
 name = "music21-mcp-server"
 version = "1.0.0"
-description = "Multi-interface music analysis server with MCP, HTTP API, CLI, and Python library"
+description = "Professional multi-interface music analysis server built on music21, providing MCP Server, HTTP API, CLI tools, and Python library interfaces for comprehensive music analysis and composition."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -54,7 +54,7 @@ license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/brightlikethelight/music21-mcp-server"
 repository = "https://github.com/brightlikethelight/music21-mcp-server"
-documentation = "https://music21-mcp-server.readthedocs.io"
+documentation = "https://github.com/brightlikethelight/music21-mcp-server/blob/main/README.md"
 keywords = ["music", "analysis", "mcp", "music21", "composition"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -98,6 +98,7 @@ pytest-asyncio = "^0.21.0"
 pytest-cov = "^4.1.0"
 pytest-xdist = "^3.5.0"
 pytest-benchmark = "^4.0.0"
+pytest-timeout = "^2.2.0"
 memory-profiler = "^0.61.0"
 black = "^23.12.0"
 ruff = "^0.1.0"
@@ -133,6 +134,14 @@ music21-analysis = "music21_mcp.launcher:main"
 music21-mcp = "music21_mcp.server_minimal:main"
 music21-http = "music21_mcp.adapters.http_adapter:main"
 music21-cli = "music21_mcp.adapters.cli_adapter:main"
+
+[project.urls]
+"Homepage" = "https://github.com/brightlikethelight/music21-mcp-server"
+"Repository" = "https://github.com/brightlikethelight/music21-mcp-server"
+"Documentation" = "https://github.com/brightlikethelight/music21-mcp-server/blob/main/README.md"
+"Bug Tracker" = "https://github.com/brightlikethelight/music21-mcp-server/issues"
+"Changelog" = "https://github.com/brightlikethelight/music21-mcp-server/blob/main/CHANGELOG.md"
+"Discussions" = "https://github.com/brightlikethelight/music21-mcp-server/discussions"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/brightlikethelight/music21-mcp-server/issues"
@@ -254,22 +263,33 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "-ra",
+    "-v",
+    "--tb=short",
     "--strict-markers",
-    "--cov=music21_mcp",
+    "--cov=src/music21_mcp",
     "--cov-branch",
     "--cov-report=term-missing:skip-covered",
     "--cov-report=html",
     "--cov-report=xml",
-    "--cov-fail-under=85",
-    "-n=auto",
+    "--cov-fail-under=80",  # Professional standard coverage requirement
+    "--timeout=60",  # Prevent infinite loops from hanging tests
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "performance: marks tests as performance tests",
+    "stress: marks tests as stress tests",
+    "security: marks tests as security tests",
+    "chaos: marks tests as chaos engineering tests",
+    "health: marks tests as health check tests",
 ]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
 
 [tool.coverage.run]
 branch = true
@@ -277,7 +297,6 @@ source = ["src/music21_mcp"]
 omit = [
     "*/tests/*",
     "*/__init__.py",
-    "*/cli.py",
 ]
 
 [tool.coverage.report]

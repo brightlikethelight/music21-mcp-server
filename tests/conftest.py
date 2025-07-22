@@ -85,7 +85,7 @@ def event_loop():
 
 
 @pytest.fixture
-async def populated_score_storage(clean_score_storage, sample_bach_score):
+def populated_score_storage(clean_score_storage, sample_bach_score):
     """Score storage with sample Bach chorale loaded"""
     storage = clean_score_storage.copy()
     storage["bach_test"] = sample_bach_score

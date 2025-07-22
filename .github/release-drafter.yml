@@ -1,0 +1,123 @@
+name-template: 'Release v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+version-resolver:
+  major:
+    labels:
+      - 'breaking-change'
+      - 'major'
+  minor:
+    labels:
+      - 'feature'
+      - 'enhancement'
+      - 'minor'
+  patch:
+    labels:
+      - 'bugfix'
+      - 'patch'
+      - 'security'
+      - 'dependencies'
+  default: patch
+
+categories:
+  - title: '🚀 New Features'
+    labels:
+      - 'feature'
+      - 'enhancement'
+      - 'new-feature'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bugfix'
+      - 'fix'
+      - 'bug'
+  - title: '🔒 Security'
+    labels:
+      - 'security'
+  - title: '⚡ Performance'
+    labels:
+      - 'performance'
+      - 'optimization'
+  - title: '📚 Documentation'
+    labels:
+      - 'documentation'
+      - 'docs'
+  - title: '🧪 Testing'
+    labels:
+      - 'testing'
+      - 'tests'
+  - title: '🏗️ Build & CI'
+    labels:
+      - 'build'
+      - 'ci'
+      - 'cd'
+  - title: '📦 Dependencies'
+    labels:
+      - 'dependencies'
+      - 'deps'
+  - title: '♻️ Refactoring'
+    labels:
+      - 'refactoring'
+      - 'refactor'
+      - 'cleanup'
+  - title: '💥 Breaking Changes'
+    labels:
+      - 'breaking-change'
+
+exclude-labels:
+  - 'skip-changelog'
+  - 'no-changelog'
+  - 'duplicate'
+  - 'question'
+  - 'invalid'
+  - 'wontfix'
+
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&'
+
+template: |
+  ## 🎵 Music21 MCP Server v$RESOLVED_VERSION
+  
+  **Professional multi-interface music analysis server** built on music21, providing MCP Server, HTTP API, CLI tools, and Python library interfaces.
+  
+  $CHANGES
+  
+  ## 📦 Installation
+  
+  ```bash
+  pip install music21-mcp-server==$RESOLVED_VERSION
+  ```
+  
+  ## 🚀 Quick Start
+  
+  ```bash
+  # Launch MCP server
+  music21-mcp
+  
+  # Start HTTP API
+  music21-analysis --http
+  
+  # Use CLI tools
+  music21-cli analyze score.xml
+  
+  # Python library
+  from music21_mcp.services import MusicAnalysisService
+  service = MusicAnalysisService()
+  ```
+  
+  ## 🎯 Key Features
+  
+  - **13 comprehensive music analysis tools**
+  - **4 different interfaces**: MCP Server, HTTP API, CLI, Python Library  
+  - **Protocol-independent architecture** for maximum reliability
+  - **Professional CI/CD** with 80%+ test coverage
+  - **Security scanning** and type checking
+  
+  ## 📊 Stats
+  
+  - **Python**: 3.10+ supported
+  - **Test Coverage**: 80%+ with comprehensive test suite
+  - **Security**: Scanned with bandit, pip-audit, safety
+  - **Type Checking**: Full mypy coverage
+  
+  ---
+  
+  **Full Changelog**: https://github.com/brightlikethelight/music21-mcp-server/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION

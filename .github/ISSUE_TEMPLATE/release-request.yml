@@ -1,0 +1,125 @@
+name: 🚀 Release Request
+description: Request a new release of music21-mcp-server
+title: "[Release] Request v"
+labels: ["release", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Release Request
+        
+        Use this template to request a new release. Most releases should happen automatically via semantic-release, but manual releases can be requested for special cases.
+        
+  - type: input
+    id: version
+    attributes:
+      label: Requested Version
+      description: What version should be released? (e.g., 1.2.0)
+      placeholder: "1.2.0"
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: release_type
+    attributes:
+      label: Release Type
+      description: What type of release is this?
+      options:
+        - Patch (bug fixes)
+        - Minor (new features)
+        - Major (breaking changes)
+        - Pre-release (alpha/beta/rc)
+    validations:
+      required: true
+      
+  - type: textarea
+    id: changes
+    attributes:
+      label: Key Changes
+      description: What are the main changes in this release?
+      placeholder: |
+        - Added new harmonization algorithms
+        - Fixed memory leak in chord analysis
+        - Updated MCP server to FastMCP 2.9.0
+    validations:
+      required: true
+      
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-Release Checklist
+      description: Ensure all requirements are met before release
+      options:
+        - label: All tests pass in CI/CD pipeline
+          required: true
+        - label: CHANGELOG.md has been updated (if manual changes needed)
+          required: false
+        - label: Breaking changes are documented
+          required: false
+        - label: Security scan shows no high-severity issues
+          required: true
+        - label: Documentation is up to date
+          required: true
+        - label: Version number follows semantic versioning
+          required: true
+          
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Release Urgency
+      description: How urgent is this release?
+      options:
+        - Low (can wait for next scheduled release)
+        - Medium (release within 1-2 weeks)
+        - High (release within days)
+        - Critical (release ASAP - security/major bug)
+    validations:
+      required: true
+      
+  - type: textarea
+    id: test_plan
+    attributes:
+      label: Testing Plan
+      description: How should this release be tested?
+      placeholder: |
+        - Test PyPI upload first
+        - Verify all 4 interfaces work (MCP, HTTP, CLI, Python)
+        - Check compatibility with music21 9.1+
+        - Validate entry points and CLI commands
+    validations:
+      required: false
+      
+  - type: textarea
+    id: rollback_plan
+    attributes:
+      label: Rollback Plan
+      description: What's the plan if this release has issues?
+      placeholder: |
+        - Previous stable version: v1.1.0
+        - Known compatibility issues: None
+        - Rollback procedure: Standard PyPI yanking if needed
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: environments
+    attributes:
+      label: Target Environments
+      description: Which environments should this release support?
+      options:
+        - label: PyPI (production)
+        - label: Test PyPI (testing)
+        - label: GitHub Releases
+        - label: Docker Hub (if applicable)
+        
+  - type: textarea
+    id: additional_notes
+    attributes:
+      label: Additional Notes
+      description: Any other relevant information about this release
+      placeholder: |
+        - Dependencies updated
+        - Performance improvements
+        - New documentation added
+    validations:
+      required: false

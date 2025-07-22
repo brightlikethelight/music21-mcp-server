@@ -13,7 +13,7 @@ env:
 
 jobs:
   lint-and-type-check:
-    name: Lint and Type Check (Modern Stack)
+    name: Lint and Type Check
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -31,7 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --dev
-        uv add --dev ruff mypy bandit pip-audit
+        uv add --dev ruff mypy
     
     - name: Run Ruff linter
       run: |
@@ -43,7 +43,7 @@ jobs:
     
     - name: Run MyPy type checker
       run: |
-        uv run mypy src/music21_mcp/ --ignore-missing-imports || echo "MyPy warnings found but continuing"
+        uv run mypy src/music21_mcp/ --ignore-missing-imports
 
   test:
     name: Run Tests
@@ -88,48 +88,22 @@ jobs:
         print('Music21 configured for CI')
         "
 
-    - name: Run reality-based test suite
-      env:
-        LOG_LEVEL: INFO
+    - name: Run all tests with coverage
       run: |
-        # Reality-based testing: 95% core music21, 5% MCP adapter
-        echo "Running Reality-Based Test Suite"
-        uv run python tests/run_reality_tests.py || echo "Some MCP adapter failures expected (40-50% success rate)"
-
-    - name: Run core music21 tests (MUST PASS)
-      run: |
-        echo "Core Music21 Tests - Protocol Independent"
-        uv run pytest tests/core/ -v \
-          --cov=src/music21_mcp/services \
-          --cov=src/music21_mcp/tools \
+        uv run pytest tests/ -v \
+          --cov=src/music21_mcp \
           --cov-report=xml \
           --cov-report=term-missing \
-          --junitxml=junit/test-results-core-${{ matrix.python-version }}.xml \
-          -k "not (test_analyze_harmony or test_recognize_patterns or test_duplicate_score_id or test_null_values or test_comparative_analysis or test_analyze_voice_leading_chorale)" || echo "Some tests still need format fixes but core functionality works"
+          --cov-report=html \
+          --junitxml=junit/test-results-${{ matrix.python-version }}.xml \
+          --cov-fail-under=80
 
-    - name: Run adapter tests (failures expected)
-      run: |
-        echo "MCP Adapter Tests - Expect Failures (40-50% success rate)"
-        uv run pytest tests/adapters/ -v \
-          --cov=src/music21_mcp/adapters \
-          --cov-append \
-          --continue-on-collection-errors || echo "MCP adapter failures are expected in volatile ecosystem"
-
-    - name: Run unit tests
-      run: |
-        echo "Unit Tests - Tool Level"
-        uv run pytest tests/unit/ -v \
-          --cov=src/music21_mcp/tools \
-          --cov-append \
-          --junitxml=junit/test-results-unit-${{ matrix.python-version }}.xml
-
-    - name: Test all interfaces work
-      run: |
-        echo "Interface Integration Tests"
-        # Test that all 4 interfaces can be launched
-        timeout 5 uv run python -m music21_mcp.launcher || echo "Launcher works"
-        uv run python -c "from music21_mcp.services import MusicAnalysisService; s=MusicAnalysisService(); print(f'Core service: {len(s.get_available_tools())} tools')"
-        uv run python -c "from music21_mcp.adapters import create_sync_analyzer; a=create_sync_analyzer(); print(f'Python adapter: {a.get_status()[\"status\"]}')"
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: junit/
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -137,8 +111,8 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
         flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
+        name: codecov-${{ matrix.python-version }}
+        fail_ci_if_error: true
 
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
@@ -163,17 +137,22 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --dev
-        uv add --dev bandit pip-audit
+        uv add --dev bandit[toml] pip-audit safety
 
     - name: Run bandit security scan
       run: |
         uv run bandit -r src/ -f json -o bandit-results.json
-      continue-on-error: true
+        uv run bandit -r src/ -ll
 
     - name: Run pip-audit vulnerability scan
       run: |
-        uv run pip-audit --format=json --output=pip-audit-results.json
-      continue-on-error: true
+        uv run pip-audit --desc --format=json --output=pip-audit-results.json
+        uv run pip-audit --desc
+
+    - name: Run safety security scan
+      run: |
+        uv run safety check --json --output=safety-results.json
+        uv run safety check
 
     - name: Upload security results
       uses: actions/upload-artifact@v4
@@ -182,11 +161,44 @@ jobs:
         path: |
           bandit-results.json
           pip-audit-results.json
+          safety-results.json
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up UV
+      uses: astral-sh/setup-uv@v3
+
+    - name: Set up Python
+      run: uv python install ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Test all interfaces
+      run: |
+        # Test Python API
+        uv run python -c "from music21_mcp.services import MusicAnalysisService; s=MusicAnalysisService(); assert len(s.get_available_tools()) == 13"
+        
+        # Test HTTP API can launch
+        timeout 5 uv run python -m music21_mcp.launcher --http || true
+        
+        # Test CLI works
+        uv run python -m music21_mcp.cli --help
+        
+        # Test adapters
+        uv run python -c "from music21_mcp.adapters import create_sync_analyzer; a=create_sync_analyzer(); assert a.get_status()['status'] == 'ready'"
 
   build:
     name: Build and Test Distribution
     runs-on: ubuntu-latest
-    needs: [lint-and-type-check, test]
+    needs: [test, security]
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -207,6 +219,12 @@ jobs:
     - name: Check distribution
       run: |
         twine check dist/*
+        
+    - name: Test installation
+      run: |
+        pip install dist/*.whl
+        python -c "import music21_mcp; print(music21_mcp.__version__)"
+        pip uninstall -y music21-mcp-server
     
     - name: Store distribution packages
       uses: actions/upload-artifact@v4
@@ -214,68 +232,82 @@ jobs:
         name: distribution-packages
         path: dist/
 
-  # Docker and deployment jobs commented out - Docker files have been removed
-  # docker:
-  #   name: Docker Build and Security Scan
-  #   runs-on: ubuntu-latest
-  #   needs: [test, security]
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
+  docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    needs: lint-and-type-check
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-  #   - name: Set up Docker Buildx
-  #     uses: docker/setup-buildx-action@v3
+    - name: Set up UV
+      uses: astral-sh/setup-uv@v3
 
-  #   - name: Login to GitHub Container Registry
-  #     uses: docker/login-action@v3
-  #     with:
-  #       registry: ghcr.io
-  #       username: ${{ github.actor }}
-  #       password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Set up Python
+      run: uv python install ${{ env.PYTHON_VERSION }}
 
-  #   - name: Build and push Docker image
-  #     uses: docker/build-push-action@v5
-  #     with:
-  #       context: .
-  #       file: deploy/docker/Dockerfile
-  #       push: true
-  #       tags: |
-  #         ghcr.io/${{ github.repository }}:latest
-  #         ghcr.io/${{ github.repository }}:${{ github.sha }}
-  #       platforms: linux/amd64,linux/arm64
-  #       cache-from: type=gha
-  #       cache-to: type=gha,mode=max
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+        uv add --dev sphinx sphinx-rtd-theme
 
-  #   - name: Run Trivy vulnerability scan
-  #     uses: aquasecurity/trivy-action@master
-  #     with:
-  #       image-ref: 'ghcr.io/${{ github.repository }}:${{ github.sha }}'
-  #       format: 'sarif'
-  #       output: 'trivy-results.sarif'
+    - name: Check documentation builds without warnings
+      run: |
+        # When docs exist, build them
+        if [ -d "docs" ]; then
+          cd docs && uv run make html SPHINXOPTS="-W"
+        fi
 
-  #   - name: Upload Trivy scan results
-  #     uses: github/codeql-action/upload-sarif@v3
-  #     if: always()
-  #     with:
-  #       sarif_file: 'trivy-results.sarif'
+  performance:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-  # deployment-validation:
-  #   name: Deployment Config Validation
-  #   runs-on: ubuntu-latest
-  #   needs: [test, security]
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
+    - name: Set up UV
+      uses: astral-sh/setup-uv@v3
 
-  #   - name: Validate Docker configs
-  #     run: |
-  #       # Validate docker-compose files
-  #       if [ -f deploy/docker/docker-compose.yml ]; then
-  #         docker-compose -f deploy/docker/docker-compose.yml config
-  #       fi
+    - name: Set up Python
+      run: uv python install ${{ env.PYTHON_VERSION }}
 
-  #   - name: Validate YAML syntax
-  #     run: |
-  #       # Check all YAML files for syntax errors
-  #       find deploy/ -name "*.yaml" -o -name "*.yml" | xargs -I {} sh -c 'echo "Checking {}" && python -c "import yaml; yaml.safe_load(open(\"{}\"))"'
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+        uv add --dev pytest-benchmark
+
+    - name: Run performance benchmarks
+      run: |
+        if [ -d "tests/benchmarks" ]; then
+          uv run pytest tests/benchmarks/ -v --benchmark-only --benchmark-json=benchmark-results.json
+        fi
+
+  release-readiness:
+    name: Release Readiness Check
+    runs-on: ubuntu-latest
+    needs: [test, security, build]
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check CHANGELOG.md exists
+      run: |
+        if [ ! -f "CHANGELOG.md" ]; then
+          echo "ERROR: CHANGELOG.md is required for releases"
+          exit 1
+        fi
+
+    - name: Check version consistency
+      run: |
+        # Extract version from pyproject.toml
+        VERSION=$(grep -E "^version = " pyproject.toml | cut -d'"' -f2)
+        echo "Package version: $VERSION"
+        
+        # Check if version tag exists
+        if git tag -l "v$VERSION" | grep -q .; then
+          echo "Version $VERSION already released"
+        else
+          echo "Version $VERSION is ready for release"
+        fi
