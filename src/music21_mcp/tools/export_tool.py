@@ -75,9 +75,7 @@ class ExportScoreTool(BaseTool):
             # Export based on format
             try:
                 method = str(format_info["method"])
-                success = await self._export_score(
-                    score, method, output_path
-                )
+                success = await self._export_score(score, method, output_path)
 
                 if not success:
                     return self.create_error_response(f"Export to {format} failed")
