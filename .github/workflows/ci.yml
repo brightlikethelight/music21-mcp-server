@@ -160,7 +160,7 @@ jobs:
 
     - name: Run safety security scan
       run: |
-        uv run safety check --json --output=safety-results.json
+        uv run safety check --json > safety-results.json
         uv run safety check
 
     - name: Upload security results
