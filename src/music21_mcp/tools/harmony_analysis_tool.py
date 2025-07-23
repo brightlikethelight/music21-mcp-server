@@ -89,10 +89,22 @@ class HarmonyAnalysisTool(BaseTool):
         """Extract chords from the score"""
         chords = []
 
-        # Get all chord objects from the score
+        # First try to get existing chord objects
         for element in score.recurse():
             if isinstance(element, chord.Chord):
                 chords.append(element)
+
+        # If no chords found, try to chordify the score
+        if not chords:
+            try:
+                # Chordify will combine simultaneous notes into chords
+                chordified = score.chordify()
+                for element in chordified.recurse():
+                    if isinstance(element, chord.Chord):
+                        chords.append(element)
+            except:
+                # If chordify fails, return empty list
+                pass
 
         return chords
 
