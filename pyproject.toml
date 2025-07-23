@@ -43,6 +43,7 @@ dependencies = [
     "pathvalidate>=3.2.0",
     "fastapi>=0.115.0",
     "uvicorn>=0.31.0",
+    "starlette>=0.47.2",
 ]
 
 [tool.poetry]
@@ -321,3 +322,10 @@ exclude_lines = [
 # Bandit configuration is handled via command-line arguments in CI/CD
 # See .github/workflows/ci.yml for the security scan configuration
 exclude_dirs = ["tests", "examples", "debug_test.py"]
+
+[dependency-groups]
+dev = [
+    "bandit[toml]>=1.8.6",
+    "pip-audit>=2.9.0",
+    "safety>=3.2.9",
+]
