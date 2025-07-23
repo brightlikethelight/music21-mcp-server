@@ -7,8 +7,8 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
 
-# HTTP client for testing
-requests==2.31.0
+# HTTP client for testing (updated for CVE-2024-47081, CVE-2024-35195)
+requests>=2.32.4
 
 # MCP dependencies (FastMCP 2.0 for stability)
 mcp>=1.11.0
