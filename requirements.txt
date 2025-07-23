@@ -4,7 +4,7 @@ numpy>=1.21.0
 
 # REST API framework
 fastapi==0.104.1
-uvicorn[standard]==0.24.0
+uvicorn[standard]==0.35.0
 pydantic==2.5.0
 
 # HTTP client for testing (updated for CVE-2024-47081, CVE-2024-35195)
