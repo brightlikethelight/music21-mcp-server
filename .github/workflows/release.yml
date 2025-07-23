@@ -47,6 +47,7 @@ jobs:
     - name: Run full test suite
       run: |
         uv run pytest tests/ -v \
+          --asyncio-mode=auto \
           --cov=src/music21_mcp \
           --cov-report=xml \
           --cov-fail-under=80

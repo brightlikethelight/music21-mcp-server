@@ -318,8 +318,6 @@ exclude_lines = [
 ]
 
 [tool.bandit]
-exclude_dirs = ["tests", "examples"]
-# Skip specific checks that are false positives for music generation
-skips = ["B311"]  # Skip random usage warnings - used for music generation, not crypto
-# Skip try/except patterns in music analysis - they're acceptable for optional operations  
-# B110 (try/except pass) and B112 (try/except continue) already allowed in ruff config
+# Bandit configuration is handled via command-line arguments in CI/CD
+# See .github/workflows/ci.yml for the security scan configuration
+exclude_dirs = ["tests", "examples", "debug_test.py"]

@@ -391,7 +391,9 @@ class TestMusicAnalysisWorkflows:
 
         # Load different types of pieces
         await service.import_score("chorale", "bach/bwv66.6", "corpus")
-        await service.import_score("bach_inv", "bach/bwv4.8", "corpus")  # Another Bach piece
+        await service.import_score(
+            "bach_inv", "bach/bwv4.8", "corpus"
+        )  # Another Bach piece
 
         return service
 
