@@ -148,7 +148,8 @@ class HarmonyAnalysisTool(BaseTool):
                             float(chord_obj.beat)
                             if hasattr(chord_obj, "beat")
                             else (
-                                float(chord_obj.offset % 4) + 1  # Convert offset to beat
+                                float(chord_obj.offset % 4)
+                                + 1  # Convert offset to beat
                                 if hasattr(chord_obj, "offset")
                                 else 1.0
                             )
@@ -177,7 +178,8 @@ class HarmonyAnalysisTool(BaseTool):
                             float(chord_obj.beat)
                             if hasattr(chord_obj, "beat")
                             else (
-                                float(chord_obj.offset % 4) + 1  # Convert offset to beat
+                                float(chord_obj.offset % 4)
+                                + 1  # Convert offset to beat
                                 if hasattr(chord_obj, "offset")
                                 else 1.0
                             )
