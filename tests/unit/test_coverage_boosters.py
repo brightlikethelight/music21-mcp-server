@@ -43,7 +43,7 @@ class TestCoverageBooster:
     async def test_chord_analysis_basic_execution_paths(self, mock_score_storage):
         """Test basic chord analysis execution paths"""
         tool = ChordAnalysisTool(mock_score_storage)
-        
+
         # Test successful analysis path
         result = await tool.execute(score_id="test_score")
         assert result["status"] == "success"
@@ -58,11 +58,17 @@ class TestCoverageBooster:
         tool = CounterpointGeneratorTool(mock_score_storage)
 
         # Test generation (error expected with mock data, but covers code paths)
-        result = await tool.execute(score_id="test_score", species="first", voice_position="above")
-        assert result["status"] == "error"  # Mock data fails validation, but we get coverage
+        result = await tool.execute(
+            score_id="test_score", species="first", voice_position="above"
+        )
+        assert (
+            result["status"] == "error"
+        )  # Mock data fails validation, but we get coverage
 
         # Test missing score
-        result = await tool.execute(score_id="missing", species="first", voice_position="above")
+        result = await tool.execute(
+            score_id="missing", species="first", voice_position="above"
+        )
         assert result["status"] == "error"
 
     @pytest.mark.asyncio
@@ -72,7 +78,9 @@ class TestCoverageBooster:
 
         # Test harmonization (error expected with mock data, but covers code paths)
         result = await tool.execute(score_id="test_score")
-        assert result["status"] == "error"  # Mock data fails validation, but we get coverage
+        assert (
+            result["status"] == "error"
+        )  # Mock data fails validation, but we get coverage
 
         # Test missing score
         result = await tool.execute(score_id="missing")
@@ -82,10 +90,12 @@ class TestCoverageBooster:
     async def test_style_imitation_basic_execution_paths(self, mock_score_storage):
         """Test basic style imitation execution paths"""
         tool = StyleImitationTool(mock_score_storage)
-        
+
         # Test style imitation (error expected with mock data, but covers code paths)
         result = await tool.execute(score_id="test_score")
-        assert result["status"] == "error"  # Mock data fails validation, but we get coverage
+        assert (
+            result["status"] == "error"
+        )  # Mock data fails validation, but we get coverage
 
         # Test missing score
         result = await tool.execute(score_id="missing")
@@ -99,7 +109,9 @@ class TestCoverageBooster:
         tool = ImportScoreTool({})
 
         # Test invalid source types
-        result = await tool.execute(score_id="test", source="source", source_type="invalid_type")
+        result = await tool.execute(
+            score_id="test", source="source", source_type="invalid_type"
+        )
         assert result["status"] == "error"
 
         # Test empty parameters
@@ -115,7 +127,9 @@ class TestCoverageBooster:
 
         # Test different pattern types for coverage
         for pattern_type in ["melodic", "rhythmic", "harmonic", "motivic"]:
-            result = await tool.execute(score_id="test_score", pattern_type=pattern_type)
+            result = await tool.execute(
+                score_id="test_score", pattern_type=pattern_type
+            )
             # Should succeed or fail gracefully
             assert "status" in result
 
