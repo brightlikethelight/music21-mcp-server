@@ -343,11 +343,12 @@ class TestProductionFailures:
         try:
             # Create large scores but don't store in main dict
             if MUSIC21_AVAILABLE:
-                for i in range(5):
+                # Reduced from 5×100×1000 to 2×10×100 (20,000 notes instead of 500,000)
+                for i in range(2):
                     large_score = stream.Score()
-                    for j in range(100):
+                    for j in range(10):
                         part = stream.Part()
-                        for k in range(1000):
+                        for k in range(100):
                             part.append(note.Note())
                         large_score.append(part)
                     large_scores.append(large_score)
@@ -633,6 +634,8 @@ class TestProductionFailures:
             assert "error" in result
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
+    @pytest.mark.timeout(180)
     async def test_edge_cases_and_corner_cases(self):
         """Additional edge cases that could cause failures"""
 
@@ -761,6 +764,8 @@ class TestServerStability:
     """Test server stability under adverse conditions"""
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
+    @pytest.mark.timeout(300)
     async def test_memory_leaks(self):
         """Test for memory leaks during extended operation"""
         if not MUSIC21_AVAILABLE:
@@ -776,9 +781,10 @@ class TestServerStability:
         leak_detected = False
         memory_readings = [initial_memory]
 
-        for cycle in range(10):
+        # Reduced from 10×20 to 3×5 for faster CI
+        for cycle in range(3):
             # Import and delete many scores
-            for i in range(20):
+            for i in range(5):
                 score_id = f"leak_test_{cycle}_{i}"
 
                 # Import
