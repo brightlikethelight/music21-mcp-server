@@ -20,7 +20,7 @@ jobs:
       uses: actions/checkout@v4
     
     - name: Set up UV
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
         cache-dependency-glob: "**/pyproject.toml"
@@ -60,7 +60,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up UV
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
 
@@ -142,7 +142,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up UV
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v6
 
     - name: Set up Python
       run: uv python install ${{ env.PYTHON_VERSION }}
@@ -196,7 +196,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up UV
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v6
 
     - name: Set up Python
       run: uv python install ${{ env.PYTHON_VERSION }}
@@ -265,7 +265,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up UV
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v6
 
     - name: Set up Python
       run: uv python install ${{ env.PYTHON_VERSION }}
@@ -297,7 +297,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up UV
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v6
 
     - name: Set up Python
       run: uv python install ${{ env.PYTHON_VERSION }}
