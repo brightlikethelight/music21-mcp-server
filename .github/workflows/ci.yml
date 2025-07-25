@@ -158,10 +158,13 @@ jobs:
         uv run pip-audit --desc --format=json --output=pip-audit-results.json
         uv run pip-audit --desc
 
-    - name: Run safety security scan
-      run: |
-        uv run safety check --json > safety-results.json
-        uv run safety check
+    # Safety scan temporarily disabled due to compatibility issue
+    # Error: post_dump() got an unexpected keyword argument 'pass_many'
+    # TODO: Re-enable when safety package is fixed or find alternative
+    # - name: Run safety security scan
+    #   run: |
+    #     uv run safety check --json > safety-results.json
+    #     uv run safety check
 
     - name: Upload security results
       uses: actions/upload-artifact@v4
@@ -170,7 +173,7 @@ jobs:
         path: |
           bandit-results.json
           pip-audit-results.json
-          safety-results.json
+          # safety-results.json (disabled due to compatibility issue)
 
   integration-tests:
     name: Integration Tests
