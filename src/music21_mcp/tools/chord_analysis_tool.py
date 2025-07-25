@@ -10,6 +10,7 @@ from music21 import chord, roman
 
 from .base_tool import BaseTool
 from ..performance_cache import get_performance_cache
+from ..parallel_processor import get_parallel_processor
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class ChordAnalysisTool(BaseTool):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._cache = get_performance_cache()
+        self._parallel = get_parallel_processor()
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
@@ -79,17 +81,24 @@ class ChordAnalysisTool(BaseTool):
                 except:
                     logger.warning("Could not detect key for Roman numeral analysis")
 
-            # Process each chord with performance caching (eliminates duplicate roman numeral calls)
-            for i, ch in enumerate(chord_list):
-                if i % 10 == 0:
-                    self.report_progress(
-                        0.3 + (0.6 * i / total_chords),
-                        f"Processing chord {i + 1}/{total_chords} (cached analysis)",
-                    )
-
-                # Use cached chord analysis (includes roman numerals if key available)
-                chord_info = self._cache.get_chord_analysis(ch, score_key, include_inversions)
-                chord_progression.append(chord_info)
+            # Process chords in parallel with caching for maximum performance
+            self.report_progress(0.3, f"Processing {total_chords} chords in parallel batches")
+            
+            def create_chord_analyzer(chord_obj):
+                """Create analysis function for parallel processing"""
+                return self._cache.get_chord_analysis(chord_obj, score_key, include_inversions)
+            
+            # Use parallel processing with progress callback
+            def progress_callback(completed, total):
+                self.report_progress(
+                    0.3 + (0.6 * completed / total),
+                    f"Processed {completed}/{total} chords (parallel + cached)"
+                )
+            
+            chord_progression = await self._parallel.process_chord_batch(
+                chord_list, 
+                create_chord_analyzer
+            )
 
             self.report_progress(0.9, "Analyzing harmonic rhythm")
 
@@ -125,7 +134,9 @@ class ChordAnalysisTool(BaseTool):
             result["performance_stats"] = {
                 "cache_hit_rate": cache_stats["hit_rate_percent"],
                 "cache_entries": cache_stats["total_cache_entries"],
-                "processing_optimized": True
+                "processing_optimized": True,
+                "parallel_processing": True,
+                "max_workers": self._parallel.max_workers
             }
             
             logger.info(f"Chord analysis completed with {cache_stats['hit_rate_percent']:.1f}% cache hit rate")
