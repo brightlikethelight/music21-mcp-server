@@ -92,7 +92,7 @@ fastmcp = "==2.9.0"  # Pinned version for stability - MCP breaks frequently
 # Basic security and web dependencies  
 bleach = "^6.1.0"
 pathvalidate = "^3.2.0"
-fastapi = "^0.115.0"
+fastapi = "^0.116.1"
 uvicorn = "^0.31.0"
 
 [tool.poetry.group.dev.dependencies]
