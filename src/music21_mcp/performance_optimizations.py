@@ -191,13 +191,13 @@ class PerformanceOptimizer:
 
         # Common chord roots and qualities
         common_patterns = [
-            ("C", "major", "C major"),
-            ("D", "minor", "C major"),
-            ("E", "minor", "C major"),
-            ("F", "major", "C major"),
-            ("G", "major", "C major"),
-            ("A", "minor", "C major"),
-            ("B", "diminished", "C major"),
+            ("C", "major", "C"),
+            ("D", "minor", "C"),
+            ("E", "minor", "C"),
+            ("F", "major", "C"),
+            ("G", "major", "C"),
+            ("A", "minor", "C"),
+            ("B", "diminished", "C"),
         ]
 
         warmed = 0
