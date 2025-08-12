@@ -71,7 +71,7 @@ class KeyAnalysisTool(BaseTool):
                 f"Running {self.ALGORITHMS.get(algorithm, algorithm)} algorithm",
             )
 
-            result = self._analyze_with_algorithm(analysis_score, algorithm)
+            result = await self._analyze_with_algorithm(analysis_score, algorithm)
 
             if result is None:
                 return self.create_error_response(f"Failed to analyze with {algorithm}")
@@ -125,7 +125,7 @@ class KeyAnalysisTool(BaseTool):
             )
 
             try:
-                result = self._analyze_with_algorithm(score, alg)
+                result = await self._analyze_with_algorithm(score, alg)
                 if result:
                     key = result.tonic.name + (
                         " major" if result.mode == "major" else " minor"
@@ -139,21 +139,24 @@ class KeyAnalysisTool(BaseTool):
 
         return results
 
-    def _analyze_with_algorithm(self, score: stream.Stream, algorithm: str) -> Any:
-        """Run a specific key detection algorithm"""
-        try:
-            if algorithm == "krumhansl":
-                return score.analyze("key.krumhanslschmuckler")
-            if algorithm == "aarden":
-                return score.analyze("key.aardenessen")
-            if algorithm == "temperley":
-                return score.analyze("key.temperleykostkapayne")
-            if algorithm == "bellman":
-                return score.analyze("key.bellmanbudge")
-            return score.analyze("key")
-        except Exception as e:
-            logger.error(f"Key analysis with {algorithm} failed: {e}")
-            return None
+    async def _analyze_with_algorithm(self, score: stream.Stream, algorithm: str) -> Any:
+        """Run a specific key detection algorithm asynchronously"""
+        def _run_analysis():
+            try:
+                if algorithm == "krumhansl":
+                    return score.analyze("key.krumhanslschmuckler")
+                if algorithm == "aarden":
+                    return score.analyze("key.aardenessen")
+                if algorithm == "temperley":
+                    return score.analyze("key.temperleykostkapayne")
+                if algorithm == "bellman":
+                    return score.analyze("key.bellmanbudge")
+                return score.analyze("key")
+            except Exception as e:
+                logger.error(f"Key analysis with {algorithm} failed: {e}")
+                return None
+        
+        return await self.run_music21_operation(_run_analysis)
 
     def _find_consensus(self, results: dict[str, Any]) -> tuple:
         """Find consensus key from multiple algorithms"""
@@ -200,3 +203,4 @@ class KeyAnalysisTool(BaseTool):
             )
 
         return best_key, final_confidence, alternatives
+

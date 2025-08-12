@@ -241,7 +241,8 @@ class PatternRecognitionTool(BaseTool):
             try:
                 intv = interval.Interval(noteStart=melody[i], noteEnd=melody[i + 1])
                 intervals.append(intv.semitones)
-            except:
+            except (AttributeError, TypeError, ValueError) as e:
+                logger.debug(f"Interval calculation failed at position {i}: {e}")
                 intervals.append(0)
 
         # Look for repeated interval patterns
@@ -478,7 +479,8 @@ class PatternRecognitionTool(BaseTool):
             try:
                 intv = interval.Interval(noteStart=melody[i], noteEnd=melody[i + 1])
                 intervals.append(intv.directedName)
-            except:
+            except (AttributeError, TypeError, ValueError) as e:
+                logger.debug(f"Interval name calculation failed at position {i}: {e}")
                 intervals.append("P1")
 
         # Find recurring patterns
@@ -878,7 +880,8 @@ class PatternRecognitionTool(BaseTool):
                 try:
                     intv = interval.Interval(noteStart=melody[i], noteEnd=melody[i + 1])
                     interval_counts[intv.directedName] += 1
-                except:
+                except (AttributeError, TypeError, ValueError) as e:
+                    logger.debug(f"Interval counting failed at position {i}: {e}")
                     pass
 
         # Get top intervals

@@ -11,6 +11,9 @@ It survives protocol changes and breaking updates.
 import logging
 from typing import Any
 
+from .resource_manager import ResourceManager
+from .observability import get_logger, monitor_performance, with_context, get_metrics
+
 # Import tools but isolate from protocol concerns
 from .tools import (
     ChordAnalysisTool,
@@ -28,7 +31,7 @@ from .tools import (
     VoiceLeadingAnalysisTool,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger("music21_mcp.services")
 
 
 class MusicAnalysisService:
@@ -44,15 +47,27 @@ class MusicAnalysisService:
     It provides pure music analysis value that survives protocol changes.
     """
 
-    def __init__(self):
-        """Initialize the core music analysis service"""
-        # Core score storage - in-memory for simplicity
-        self.scores = {}
+    def __init__(self, max_memory_mb: int = 512, max_scores: int = 100):
+        """Initialize the core music analysis service with resource management"""
+        # Initialize resource manager with memory limits and automatic cleanup
+        self.resource_manager = ResourceManager(
+            max_memory_mb=max_memory_mb,
+            max_scores=max_scores,
+            score_ttl_seconds=3600  # 1 hour TTL
+        )
+        
+        # Use managed score storage instead of simple dictionary
+        self.scores = self.resource_manager.scores
 
-        # Initialize all analysis tools with shared storage
+        # Initialize all analysis tools with managed storage
         self._init_tools()
 
-        logger.info("Music analysis core service initialized")
+        logger.info(
+            "Music analysis core service initialized with resource management",
+            max_memory_mb=max_memory_mb,
+            max_scores=max_scores,
+            available_tools=len(self.get_available_tools())
+        )
 
     def _init_tools(self):
         """Initialize all music analysis tools"""
@@ -77,6 +92,7 @@ class MusicAnalysisService:
 
     # === Core Operations ===
 
+    @monitor_performance("music_analysis.import_score")
     async def import_score(
         self, score_id: str, source: str, source_type: str = "corpus"
     ) -> dict[str, Any]:
@@ -89,6 +105,7 @@ class MusicAnalysisService:
             logger.error(f"Import failed for {score_id}: {e}")
             raise
 
+    @monitor_performance("music_analysis.list_scores")
     async def list_scores(self) -> dict[str, Any]:
         """List all imported scores"""
         return await self.list_tool.execute()
@@ -109,10 +126,12 @@ class MusicAnalysisService:
 
     # === Analysis Operations ===
 
+    @monitor_performance("music_analysis.analyze_key")
     async def analyze_key(self, score_id: str) -> dict[str, Any]:
         """Analyze the key signature of a score"""
         return await self.key_tool.execute(score_id=score_id)
 
+    @monitor_performance("music_analysis.analyze_chords")
     async def analyze_chords(self, score_id: str) -> dict[str, Any]:
         """Analyze chord progressions in a score"""
         return await self.chord_tool.execute(score_id=score_id)
@@ -184,3 +203,64 @@ class MusicAnalysisService:
     def is_score_loaded(self, score_id: str) -> bool:
         """Check if a score is currently loaded"""
         return score_id in self.scores
+
+    # === Resource Management Methods ===
+
+    def get_resource_stats(self) -> dict[str, Any]:
+        """Get comprehensive resource usage statistics"""
+        return self.resource_manager.get_system_stats()
+
+    def check_health(self) -> dict[str, Any]:
+        """Perform health check and return system status"""
+        return self.resource_manager.check_health()
+
+    def cleanup_resources(self) -> dict[str, Any]:
+        """Force cleanup of expired resources and return statistics"""
+        return self.scores.cleanup()
+
+    def get_memory_usage(self) -> dict[str, Any]:
+        """Get current memory usage information"""
+        stats = self.get_resource_stats()
+        return {
+            "storage_memory_mb": stats["storage"]["memory_usage_mb"],
+            "storage_utilization_percent": stats["storage"]["memory_utilization_percent"],
+            "system_memory_mb": stats["system"]["process_memory_mb"],
+            "system_memory_percent": stats["system"]["process_memory_percent"],
+            "scores_loaded": stats["storage"]["total_scores"],
+            "max_scores": stats["storage"]["max_scores"],
+        }
+
+    def is_resource_healthy(self) -> bool:
+        """Quick check if resources are in healthy state"""
+        health = self.check_health()
+        return health["status"] == "healthy"
+
+    # === Observability Methods ===
+
+    def get_performance_metrics(self) -> dict[str, Any]:
+        """Get comprehensive performance metrics and statistics"""
+        return get_metrics()
+
+    def get_service_status(self) -> dict[str, Any]:
+        """Get comprehensive service status including health and metrics"""
+        health = self.check_health()
+        metrics = self.get_performance_metrics()
+        resource_stats = self.get_resource_stats()
+        
+        return {
+            "service": {
+                "name": "music21-mcp-server",
+                "version": "1.0.0",
+                "status": health["status"],
+                "uptime_seconds": metrics.get("metadata", {}).get("uptime_seconds", 0),
+            },
+            "health": health,
+            "resources": resource_stats,
+            "performance": {
+                "operation_counts": metrics.get("counters", {}),
+                "operation_timings": metrics.get("timers", {}),
+                "recent_operations": metrics.get("histograms", {}),
+            },
+            "timestamp": health["timestamp"],
+        }
+

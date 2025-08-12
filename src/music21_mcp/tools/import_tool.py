@@ -83,8 +83,8 @@ class ImportScoreTool(BaseTool):
             # Store the score
             self.score_manager[score_id] = score
 
-            # Get metadata
-            metadata = self._extract_metadata(score)
+            # Get metadata asynchronously
+            metadata = await self._extract_metadata(score)
 
             self.report_progress(1.0, "Import complete")
 
@@ -154,117 +154,155 @@ class ImportScoreTool(BaseTool):
         return False
 
     async def _import_from_file(self, file_path: str) -> stream.Score | None:
-        """Import from a file"""
+        """Import from a file using async execution"""
         if not os.path.exists(file_path):
             return None
 
         try:
-            self.report_progress(0.3, "Parsing file")
-            parsed = converter.parse(file_path)
+            # Parse file in background thread to avoid blocking event loop
+            def _parse_file():
+                return converter.parse(file_path)
+            
+            parsed = await self.run_with_progress(
+                _parse_file,
+                progress_start=0.3, 
+                progress_end=0.7,
+                message="Parsing file"
+            )
+            
             # Ensure we return a Score object
             if isinstance(parsed, stream.Score):
-                self.report_progress(0.7, "File parsed successfully")
                 return parsed
             if hasattr(parsed, "flatten"):
                 # Convert to Score if it's another stream type
-                score = stream.Score()
-                score.append(parsed)
-                self.report_progress(0.7, "File parsed and converted to Score")
-                return score
-            self.report_progress(0.7, "File parsed successfully")
+                def _convert_to_score():
+                    score = stream.Score()
+                    score.append(parsed)
+                    return score
+                
+                return await self.run_music21_operation(_convert_to_score)
             return None
         except Exception as e:
             logger.error(f"Failed to parse file {file_path}: {e}")
             return None
 
     async def _import_from_corpus(self, corpus_path: str) -> stream.Score | None:
-        """Import from music21 corpus"""
-        self.report_progress(0.3, "Loading from corpus")
-        parsed = corpus.parse(corpus_path)
-        # Ensure we return a Score object
-        if isinstance(parsed, stream.Score):
-            self.report_progress(0.7, "Corpus loaded successfully")
-            return parsed
-        if hasattr(parsed, "expandRepeats"):
-            # Convert to Score if it's another stream type
-            score = stream.Score()
-            score.append(parsed)
-            self.report_progress(0.7, "Corpus loaded and converted to Score")
-            return score
-        self.report_progress(0.7, "Corpus loaded successfully")
-        return None
+        """Import from music21 corpus using async execution"""
+        try:
+            # Parse corpus in background thread to avoid blocking event loop
+            def _parse_corpus():
+                return corpus.parse(corpus_path)
+            
+            parsed = await self.run_with_progress(
+                _parse_corpus,
+                progress_start=0.3,
+                progress_end=0.7,
+                message="Loading from corpus"
+            )
+            
+            # Ensure we return a Score object
+            if isinstance(parsed, stream.Score):
+                return parsed
+            if hasattr(parsed, "expandRepeats"):
+                # Convert to Score if it's another stream type
+                def _convert_to_score():
+                    score = stream.Score()
+                    score.append(parsed)
+                    return score
+                
+                return await self.run_music21_operation(_convert_to_score)
+            return None
+        except Exception as e:
+            logger.error(f"Failed to load corpus {corpus_path}: {e}")
+            return None
 
     async def _import_from_text(self, text: str) -> stream.Score | None:
-        """Import from text notation"""
+        """Import from text notation using async execution"""
         try:
             self.report_progress(0.3, "Parsing text notation")
 
             # Check if it's tinyNotation format
             if text.strip().startswith("tinyNotation:"):
-                # Use music21's tinyNotation parser
-                from music21 import converter
-
                 tiny_text = text.replace("tinyNotation:", "").strip()
-                parsed = converter.parse(f"tinyNotation: {tiny_text}")
+                
+                def _parse_tiny_notation():
+                    from music21 import converter
+                    return converter.parse(f"tinyNotation: {tiny_text}")
+                
+                # Parse in background thread
+                parsed = await self.run_music21_operation(_parse_tiny_notation)
+                
                 # Ensure we return a Score object
                 if isinstance(parsed, stream.Score):
                     self.report_progress(0.7, "TinyNotation parsed")
                     return parsed
+                
                 # Convert to Score if it's another stream type
-                score = stream.Score()
-                score.append(parsed)
+                def _convert_to_score():
+                    score = stream.Score()
+                    score.append(parsed)
+                    return score
+                
+                result = await self.run_music21_operation(_convert_to_score)
                 self.report_progress(0.7, "TinyNotation parsed and converted to Score")
-                return score
+                return result
 
             # Otherwise parse as space-separated notes
-            score = stream.Score()
-            part = stream.Part()
-
-            tokens = text.split()
-            total = len(tokens)
-
-            for i, note_str in enumerate(tokens):
-                try:
-                    n = note.Note(note_str)
-                    part.append(n)
-                    if i % 10 == 0:  # Update progress every 10 notes
-                        self.report_progress(
-                            0.3 + (0.4 * i / total), f"Parsing note {i + 1}/{total}"
-                        )
-                except Exception as e:
-                    logger.warning(f"Invalid note '{note_str}': {e}")
-                    return None
-
-            score.append(part)
-            self.report_progress(0.7, "Text notation parsed")
-            return score
+            def _parse_note_sequence():
+                score = stream.Score()
+                part = stream.Part()
+                tokens = text.split()
+                
+                for note_str in tokens:
+                    try:
+                        n = note.Note(note_str)
+                        part.append(n)
+                    except Exception as e:
+                        logger.warning(f"Invalid note '{note_str}': {e}")
+                        raise ValueError(f"Invalid note: {note_str}")
+                
+                score.append(part)
+                return score
+            
+            # Parse note sequence in background thread
+            result = await self.run_with_progress(
+                _parse_note_sequence,
+                progress_start=0.3,
+                progress_end=0.7,
+                message="Parsing text notation"
+            )
+            return result
 
         except Exception as e:
             logger.error(f"Failed to parse text notation: {e}")
             return None
 
-    def _extract_metadata(self, score: stream.Score) -> dict[str, Any]:
-        """Extract metadata from score"""
-        try:
-            num_notes = len(list(score.flatten().notes))
-            num_measures = len(list(score.flatten().getElementsByClass("Measure")))
-            num_parts = len(score.parts) if hasattr(score, "parts") else 1
+    async def _extract_metadata(self, score: stream.Score) -> dict[str, Any]:
+        """Extract metadata from score using async execution"""
+        def _extract_sync():
+            try:
+                num_notes = len(list(score.flatten().notes))
+                num_measures = len(list(score.flatten().getElementsByClass("Measure")))
+                num_parts = len(score.parts) if hasattr(score, "parts") else 1
 
-            # Get first and last notes for range
-            notes = list(score.flatten().notes)
-            if notes:
-                lowest = min(n.pitch.midi for n in notes if hasattr(n, "pitch"))
-                highest = max(n.pitch.midi for n in notes if hasattr(n, "pitch"))
-                pitch_range = highest - lowest
-            else:
-                pitch_range = 0
+                # Get first and last notes for range
+                notes = list(score.flatten().notes)
+                if notes:
+                    lowest = min(n.pitch.midi for n in notes if hasattr(n, "pitch"))
+                    highest = max(n.pitch.midi for n in notes if hasattr(n, "pitch"))
+                    pitch_range = highest - lowest
+                else:
+                    pitch_range = 0
 
-            return {
-                "num_notes": num_notes,
-                "num_measures": num_measures,
-                "num_parts": num_parts,
-                "pitch_range": pitch_range,
-            }
-        except Exception as e:
-            logger.warning(f"Error extracting metadata: {e}")
-            return {"num_notes": 0, "num_measures": 0, "num_parts": 0, "pitch_range": 0}
+                return {
+                    "num_notes": num_notes,
+                    "num_measures": num_measures,
+                    "num_parts": num_parts,
+                    "pitch_range": pitch_range,
+                }
+            except Exception as e:
+                logger.warning(f"Error extracting metadata: {e}")
+                return {"num_notes": 0, "num_measures": 0, "num_parts": 0, "pitch_range": 0}
+        
+        return await self.run_music21_operation(_extract_sync)
+

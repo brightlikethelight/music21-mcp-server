@@ -240,13 +240,19 @@ def create_http_server():
 
 # For direct execution
 if __name__ == "__main__":
+    import os
     import uvicorn
 
     app = create_http_server()
+    
+    # Get host and port from environment variables with defaults
+    host = os.getenv("MUSIC21_MCP_HOST", "0.0.0.0")
+    port = int(os.getenv("MUSIC21_MCP_PORT", "8000"))
+    display_host = "localhost" if host == "0.0.0.0" else host
 
     print("🎵 Music21 HTTP API Server")
     print("📊 REST API alternative to MCP protocol")
-    print("🌐 Starting server on http://localhost:8000")
-    print("📖 API docs: http://localhost:8000/docs")
+    print(f"🌐 Starting server on http://{display_host}:{port}")
+    print(f"📖 API docs: http://{display_host}:{port}/docs")
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)  # noqa: S104 # HTTP server needs to bind to all interfaces
+    uvicorn.run(app, host=host, port=port)  # noqa: S104 # HTTP server needs to bind to all interfaces

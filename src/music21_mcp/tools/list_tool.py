@@ -58,3 +58,4 @@ class ListScoresTool(BaseTool):
     def validate_inputs(self, **kwargs: Any) -> str | None:
         """No inputs to validate for list operation"""
         return None
+

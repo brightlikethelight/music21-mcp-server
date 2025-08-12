@@ -299,7 +299,8 @@ class StyleImitationTool(BaseTool):
                                 noteStart=current_note, noteEnd=next_note
                             )
                             intervals.append(intv.semitones)
-                        except:
+                        except (AttributeError, TypeError, ValueError) as e:
+                            logger.debug(f"Style interval calculation failed: {e}")
                             continue
 
                 # Calculate melodic statistics

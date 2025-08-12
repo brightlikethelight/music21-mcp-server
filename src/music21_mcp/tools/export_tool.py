@@ -153,3 +153,4 @@ class ExportScoreTool(BaseTool):
             if "lily" in method and "LilyPond" in str(e):
                 logger.info("LilyPond not installed. Install from: http://lilypond.org")
             return False
+

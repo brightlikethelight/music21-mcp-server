@@ -74,12 +74,18 @@ def start_http_server():
         app = create_http_server()
 
         print("🎵 Music21 HTTP API Server")
-        print("🌐 Starting server on http://localhost:8000")
-        print("📖 API docs: http://localhost:8000/docs")
-        print("🔗 Health check: http://localhost:8000/health")
+        # Get host and port from environment variables with defaults
+        import os
+        host = os.getenv("MUSIC21_MCP_HOST", "0.0.0.0")
+        port = int(os.getenv("MUSIC21_MCP_PORT", "8000"))
+        
+        display_host = "localhost" if host == "0.0.0.0" else host
+        print(f"🌐 Starting server on http://{display_host}:{port}")
+        print(f"📖 API docs: http://{display_host}:{port}/docs")
+        print(f"🔗 Health check: http://{display_host}:{port}/health")
         print()
 
-        uvicorn.run(app, host="0.0.0.0", port=8000)  # noqa: S104 # HTTP server needs to bind to all interfaces
+        uvicorn.run(app, host=host, port=port)  # noqa: S104 # HTTP server needs to bind to all interfaces
 
     except ImportError as e:
         print(f"❌ HTTP server not available: {e}")

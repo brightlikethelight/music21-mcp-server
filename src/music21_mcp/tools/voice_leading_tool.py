@@ -112,7 +112,8 @@ class VoiceLeadingAnalysisTool(BaseTool):
                                     ],
                                 }
                             )
-                    except:
+                    except (AttributeError, TypeError, ValueError) as e:
+                        logger.debug(f"Parallel interval calculation failed: {e}")
                         continue
 
         return parallel_issues
@@ -149,7 +150,8 @@ class VoiceLeadingAnalysisTool(BaseTool):
                                 "lower_note": str(notes2[j].pitch),
                             }
                         )
-                except:
+                except (AttributeError, TypeError, ValueError) as e:
+                    logger.debug(f"Voice crossing detection failed: {e}")
                     continue
 
         return voice_crossings
@@ -189,7 +191,8 @@ class VoiceLeadingAnalysisTool(BaseTool):
                         smoothness["leap_motion"] += 1
                     else:
                         smoothness["large_leap_motion"] += 1
-                except:
+                except (AttributeError, TypeError, ValueError) as e:
+                    logger.debug(f"Smoothness interval calculation failed: {e}")
                     continue
 
             smoothness["total_motion"] = total_intervals

@@ -117,8 +117,9 @@ class HarmonyAnalysisTool(BaseTool):
                 for element in chordified.recurse():
                     if isinstance(element, chord.Chord):
                         chords.append(element)
-            except:
+            except (AttributeError, TypeError, ValueError) as e:
                 # If chordify fails, return empty list
+                logger.warning(f"Chordify operation failed: {e}")
                 pass
 
         return chords
@@ -136,7 +137,8 @@ class HarmonyAnalysisTool(BaseTool):
             if not key_obj:
                 # Fallback to C major
                 key_obj = key.Key("C")
-        except:
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.warning(f"Key detection failed, using C major: {e}")
             key_obj = key.Key("C")
 
         for i, chord_obj in enumerate(chords):
@@ -297,3 +299,4 @@ class HarmonyAnalysisTool(BaseTool):
             )
 
         return rhythm
+

@@ -458,7 +458,8 @@ class HarmonizationTool(BaseTool):
 
             # Check if melody note is in chord
             return melodic_note.pitch.name in chord_pitches
-        except:
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.debug(f"Melody fitting check failed: {e}")
             return False
 
     def _realize_chord_classical(
@@ -770,8 +771,9 @@ class HarmonizationTool(BaseTool):
             # Full triad
             return list(rn.pitches)[:3]
 
-        except:
+        except (AttributeError, TypeError, ValueError) as e:
             # Fallback
+            logger.debug(f"Jazz chord realization failed, using fallback: {e}")
             return [key_obj.tonic, pitch.Pitch(midi=key_obj.tonic.midi + 7)]
 
     async def _harmonize_modal(
@@ -906,7 +908,8 @@ class HarmonizationTool(BaseTool):
             rn = roman.RomanNumeral(chord_symbol, modal_key)
             return list(rn.pitches)[:4]  # Quaternary harmony common in modal
 
-        except:
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.debug(f"Modal chord realization failed, using tonic: {e}")
             return [key_obj.tonic]
 
     def _check_voice_leading(

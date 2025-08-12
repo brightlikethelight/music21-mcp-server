@@ -10,6 +10,7 @@ Focus: 95% music21 core value, 5% protocol concerns.
 import asyncio
 
 import pytest
+import pytest_asyncio
 
 from music21_mcp.services import MusicAnalysisService
 
@@ -17,7 +18,7 @@ from music21_mcp.services import MusicAnalysisService
 class TestMusicAnalysisServiceCore:
     """Test core music analysis functionality - protocol independent"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def service(self):
         """Create clean service instance for each test"""
         service = MusicAnalysisService()
@@ -27,6 +28,7 @@ class TestMusicAnalysisServiceCore:
 
     # === Score Management Tests ===
 
+    @pytest.mark.asyncio
     async def test_import_bach_chorale_success(self, service):
         """Test importing Bach chorale from corpus (most common use case)"""
         result = await service.import_score("test_chorale", "bach/bwv66.6", "corpus")
@@ -41,6 +43,7 @@ class TestMusicAnalysisServiceCore:
         # Verify score is actually stored
         assert "test_chorale" in service.scores
 
+    @pytest.mark.asyncio
     async def test_import_invalid_corpus_piece(self, service):
         """Test importing non-existent piece fails gracefully"""
         result = await service.import_score("invalid", "bach/nonexistent", "corpus")
@@ -52,6 +55,7 @@ class TestMusicAnalysisServiceCore:
         )
         assert "invalid" not in service.scores
 
+    @pytest.mark.asyncio
     async def test_list_scores_empty(self, service):
         """Test listing scores when none imported"""
         result = await service.list_scores()
@@ -60,6 +64,7 @@ class TestMusicAnalysisServiceCore:
         assert result["scores"] == []
         assert result["count"] == 0
 
+    @pytest.mark.asyncio
     async def test_list_scores_with_content(self, service):
         """Test listing scores after importing"""
         # Import a score first
@@ -77,6 +82,7 @@ class TestMusicAnalysisServiceCore:
         assert "chorale1" in score_ids
         assert "chorale2" in score_ids
 
+    @pytest.mark.asyncio
     async def test_get_score_info_success(self, service):
         """Test getting detailed score information"""
         await service.import_score("info_test", "bach/bwv66.6", "corpus")
@@ -93,6 +99,7 @@ class TestMusicAnalysisServiceCore:
         assert "num_measures" in result
         assert "duration" in result
 
+    @pytest.mark.asyncio
     async def test_get_score_info_missing(self, service):
         """Test getting info for non-existent score"""
         result = await service.get_score_info("missing_score")
@@ -100,6 +107,7 @@ class TestMusicAnalysisServiceCore:
         assert result["status"] == "error"
         assert "not found" in result["message"].lower()
 
+    @pytest.mark.asyncio
     async def test_delete_score_success(self, service):
         """Test deleting existing score"""
         await service.import_score("delete_me", "bach/bwv66.6", "corpus")
@@ -110,6 +118,7 @@ class TestMusicAnalysisServiceCore:
         assert result["status"] == "success"
         assert "delete_me" not in service.scores
 
+    @pytest.mark.asyncio
     async def test_delete_score_missing(self, service):
         """Test deleting non-existent score"""
         result = await service.delete_score("never_existed")
@@ -119,6 +128,7 @@ class TestMusicAnalysisServiceCore:
 
     # === Key Analysis Tests ===
 
+    @pytest.mark.asyncio
     async def test_analyze_key_bach_chorale(self, service):
         """Test key analysis on Bach chorale (known result)"""
         await service.import_score("key_test", "bach/bwv66.6", "corpus")
@@ -134,6 +144,7 @@ class TestMusicAnalysisServiceCore:
         assert len(key_str) > 0  # Should have some key result
         assert "confidence" in result
 
+    @pytest.mark.asyncio
     async def test_analyze_key_missing_score(self, service):
         """Test key analysis on non-existent score"""
         result = await service.analyze_key("missing")
@@ -143,6 +154,7 @@ class TestMusicAnalysisServiceCore:
 
     # === Harmony Analysis Tests ===
 
+    @pytest.mark.asyncio
     async def test_analyze_harmony_roman_numerals(self, service):
         """Test Roman numeral harmony analysis"""
         await service.import_score("harmony_test", "bach/bwv66.6", "corpus")
@@ -159,6 +171,7 @@ class TestMusicAnalysisServiceCore:
         assert "offset" in first_harmony
         assert "roman_numeral" in first_harmony
 
+    @pytest.mark.asyncio
     async def test_analyze_harmony_functional(self, service):
         """Test functional harmony analysis"""
         await service.import_score("functional_test", "bach/bwv66.6", "corpus")
@@ -168,6 +181,7 @@ class TestMusicAnalysisServiceCore:
         assert result["status"] == "success"
         assert "roman_numerals" in result
 
+    @pytest.mark.asyncio
     async def test_analyze_harmony_invalid_type(self, service):
         """Test harmony analysis with invalid type"""
         await service.import_score("invalid_type", "bach/bwv66.6", "corpus")
@@ -180,6 +194,7 @@ class TestMusicAnalysisServiceCore:
 
     # === Voice Leading Analysis Tests ===
 
+    @pytest.mark.asyncio
     async def test_analyze_voice_leading_chorale(self, service):
         """Test voice leading analysis on 4-part chorale"""
         await service.import_score("voice_test", "bach/bwv66.6", "corpus")
@@ -197,6 +212,7 @@ class TestMusicAnalysisServiceCore:
         # Large leaps info is in smoothness_analysis
         assert "leap_motion" in result["smoothness_analysis"]
 
+    @pytest.mark.asyncio
     async def test_analyze_voice_leading_missing_score(self, service):
         """Test voice leading analysis on missing score"""
         result = await service.analyze_voice_leading("missing")
@@ -206,6 +222,7 @@ class TestMusicAnalysisServiceCore:
 
     # === Pattern Recognition Tests ===
 
+    @pytest.mark.asyncio
     async def test_recognize_melodic_patterns(self, service):
         """Test melodic pattern recognition"""
         await service.import_score("pattern_test", "bach/bwv66.6", "corpus")
@@ -216,6 +233,7 @@ class TestMusicAnalysisServiceCore:
         assert "melodic_patterns" in result
         assert isinstance(result["melodic_patterns"], dict)
 
+    @pytest.mark.asyncio
     async def test_recognize_rhythmic_patterns(self, service):
         """Test rhythmic pattern recognition"""
         await service.import_score("rhythm_test", "bach/bwv66.6", "corpus")
@@ -225,6 +243,7 @@ class TestMusicAnalysisServiceCore:
         assert result["status"] == "success"
         assert "rhythmic_patterns" in result
 
+    @pytest.mark.asyncio
     async def test_recognize_invalid_pattern_type(self, service):
         """Test pattern recognition with invalid type"""
         await service.import_score("invalid_pattern", "bach/bwv66.6", "corpus")
@@ -261,10 +280,12 @@ class TestMusicAnalysisServiceCore:
         for tool in expected_tools:
             assert tool in tools
 
-    def test_get_score_count_empty(self, service):
+    @pytest.mark.asyncio
+    async def test_get_score_count_empty(self, service):
         """Test score count when no scores loaded"""
         assert service.get_score_count() == 0
 
+    @pytest.mark.asyncio
     async def test_get_score_count_with_scores(self, service):
         """Test score count after loading scores"""
         await service.import_score("count1", "bach/bwv66.6", "corpus")
@@ -278,6 +299,7 @@ class TestMusicAnalysisServiceCore:
 
     # === Error Handling and Edge Cases ===
 
+    @pytest.mark.asyncio
     async def test_duplicate_score_id_import(self, service):
         """Test importing with duplicate score ID"""
         await service.import_score("duplicate", "bach/bwv66.6", "corpus")
@@ -289,6 +311,7 @@ class TestMusicAnalysisServiceCore:
         assert "already exists" in result["message"]
         assert service.get_score_count() == 1
 
+    @pytest.mark.asyncio
     async def test_empty_score_id(self, service):
         """Test importing with empty score ID"""
         result = await service.import_score("", "bach/bwv66.6", "corpus")
@@ -299,6 +322,7 @@ class TestMusicAnalysisServiceCore:
             or "empty" in result["message"].lower()
         )
 
+    @pytest.mark.asyncio
     async def test_null_values(self, service):
         """Test handling null/None values gracefully"""
         # Service validates inputs and returns error response
@@ -307,6 +331,7 @@ class TestMusicAnalysisServiceCore:
 
     # === Performance Tests ===
 
+    @pytest.mark.asyncio
     async def test_multiple_concurrent_operations(self, service):
         """Test multiple operations don't interfere"""
         # Import multiple scores concurrently
@@ -322,6 +347,7 @@ class TestMusicAnalysisServiceCore:
 
         assert service.get_score_count() == 3
 
+    @pytest.mark.asyncio
     async def test_large_corpus_handling(self, service):
         """Test handling larger corpus pieces"""
         # Try importing a longer piece
@@ -336,7 +362,7 @@ class TestMusicAnalysisServiceCore:
 class TestMusicAnalysisServiceExport:
     """Test export functionality separately"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def service_with_score(self):
         """Service with pre-loaded score"""
         service = MusicAnalysisService()
@@ -344,6 +370,7 @@ class TestMusicAnalysisServiceExport:
         await service.import_score("export_test", "bach/bwv66.6", "corpus")
         return service
 
+    @pytest.mark.asyncio
     async def test_export_musicxml(self, service_with_score):
         """Test export to MusicXML format"""
         result = await service_with_score.export_score("export_test", "musicxml")
@@ -351,6 +378,7 @@ class TestMusicAnalysisServiceExport:
         assert result["status"] == "success"
         assert "content" in result or "file_path" in result or "export_path" in result
 
+    @pytest.mark.asyncio
     async def test_export_midi(self, service_with_score):
         """Test export to MIDI format"""
         result = await service_with_score.export_score("export_test", "midi")
@@ -358,6 +386,7 @@ class TestMusicAnalysisServiceExport:
         assert result["status"] == "success"
         assert "content" in result or "file_path" in result or "export_path" in result
 
+    @pytest.mark.asyncio
     async def test_export_invalid_format(self, service_with_score):
         """Test export with invalid format"""
         result = await service_with_score.export_score("export_test", "invalid_format")
@@ -368,6 +397,7 @@ class TestMusicAnalysisServiceExport:
             or "invalid" in result["message"].lower()
         )
 
+    @pytest.mark.asyncio
     async def test_export_missing_score(self):
         """Test export of non-existent score"""
         service = MusicAnalysisService()
@@ -383,7 +413,7 @@ class TestMusicAnalysisServiceExport:
 class TestMusicAnalysisWorkflows:
     """Test complete analysis workflows - end-to-end music21 functionality"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def loaded_service(self):
         """Service with multiple test scores"""
         service = MusicAnalysisService()
@@ -397,6 +427,7 @@ class TestMusicAnalysisWorkflows:
 
         return service
 
+    @pytest.mark.asyncio
     async def test_complete_chorale_analysis_workflow(self, loaded_service):
         """Test complete analysis of Bach chorale"""
         score_id = "chorale"
@@ -425,6 +456,7 @@ class TestMusicAnalysisWorkflows:
         export = await loaded_service.export_score(score_id, "musicxml")
         assert export["status"] == "success"
 
+    @pytest.mark.asyncio
     async def test_comparative_analysis(self, loaded_service):
         """Test comparing analysis results between pieces"""
         # Analyze both pieces
@@ -441,6 +473,7 @@ class TestMusicAnalysisWorkflows:
         # Keys might be different
         # This tests that our analysis is consistent across different piece types
 
+    @pytest.mark.asyncio
     async def test_score_lifecycle(self, loaded_service):
         """Test complete score lifecycle"""
         # Import

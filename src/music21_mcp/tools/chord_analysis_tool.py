@@ -6,7 +6,7 @@ PERFORMANCE OPTIMIZED: Includes aggressive caching to reduce 14.7s analysis to <
 import logging
 from typing import Any
 
-from music21 import chord, roman
+from music21 import chord
 
 from .base_tool import BaseTool
 from ..performance_cache import get_performance_cache
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class ChordAnalysisTool(BaseTool):
     """Tool for analyzing chord progressions with Roman numeral analysis"""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._cache = get_performance_cache()
@@ -56,7 +56,7 @@ class ChordAnalysisTool(BaseTool):
                 except Exception as e:
                     logger.warning(f"Chordify failed, trying flatten: {e}")
                     return score.flatten().chordify()
-            
+
             chords = await self.run_with_progress(
                 _chordify_score,
                 progress_start=0.1,
@@ -78,25 +78,31 @@ class ChordAnalysisTool(BaseTool):
                 try:
                     key_result = score.analyze("key")
                     score_key = key_result
-                except:
-                    logger.warning("Could not detect key for Roman numeral analysis")
+                except (AttributeError, TypeError, ValueError) as e:
+                    logger.warning(
+                        f"Could not detect key for Roman numeral analysis: {e}"
+                    )
 
             # Process chords in parallel with caching for maximum performance
-            self.report_progress(0.3, f"Processing {total_chords} chords in parallel batches")
-            
+            self.report_progress(
+                0.3, f"Processing {total_chords} chords in parallel batches"
+            )
+
             def create_chord_analyzer(chord_obj):
                 """Create analysis function for parallel processing"""
-                return self._cache.get_chord_analysis(chord_obj, score_key, include_inversions)
-            
+                return self._cache.get_chord_analysis(
+                    chord_obj, score_key, include_inversions
+                )
+
             # Use parallel processing with progress callback
             def progress_callback(completed, total):
                 self.report_progress(
                     0.3 + (0.6 * completed / total),
                     f"Processed {completed}/{total} chords (parallel + cached)"
                 )
-            
+
             chord_progression = await self._parallel.process_chord_batch(
-                chord_list, 
+                chord_list,
                 create_chord_analyzer
             )
 
@@ -105,11 +111,12 @@ class ChordAnalysisTool(BaseTool):
             # Analyze harmonic rhythm
             harmonic_rhythm = self._analyze_harmonic_rhythm(chord_list)
 
-            # Extract Roman numerals from cached chord analysis (no duplicate computation!)
+            # Extract Roman numerals from cached analysis (no duplicate computation!)
             roman_numerals = []
             if include_roman_numerals and score_key:
                 logger.info("Extracting Roman numerals from cached analysis")
-                for chord_info in chord_progression[:50]:  # Limit to first 50 for performance
+                # Limit to first 50 for performance
+                for chord_info in chord_progression[:50]:
                     roman_numerals.append(chord_info.get("roman_numeral", "?"))
 
             self.report_progress(1.0, "Analysis complete")
@@ -128,7 +135,7 @@ class ChordAnalysisTool(BaseTool):
 
             # Add summary statistics
             result["summary"] = self._generate_chord_summary(chord_progression)
-            
+
             # Add cache performance statistics for monitoring
             cache_stats = self._cache.get_cache_stats()
             result["performance_stats"] = {
@@ -138,8 +145,11 @@ class ChordAnalysisTool(BaseTool):
                 "parallel_processing": True,
                 "max_workers": self._parallel.max_workers
             }
-            
-            logger.info(f"Chord analysis completed with {cache_stats['hit_rate_percent']:.1f}% cache hit rate")
+
+            logger.info(
+                f"Chord analysis completed with "
+                f"{cache_stats['hit_rate_percent']:.1f}% cache hit rate"
+            )
 
             return result
 
@@ -148,8 +158,10 @@ class ChordAnalysisTool(BaseTool):
         score_id = kwargs.get("score_id", "")
         return self.check_score_exists(score_id)
 
-    # NOTE: _analyze_chord method replaced by cached version in performance_cache.get_chord_analysis()
-    # This eliminates duplicate roman.romanNumeralFromChord() calls that were causing 14.7s delays
+    # NOTE: _analyze_chord method replaced by cached version in
+    # performance_cache.get_chord_analysis()
+    # This eliminates duplicate roman.romanNumeralFromChord() calls
+    # that were causing 14.7s delays
 
     def _analyze_harmonic_rhythm(self, chord_list: list[chord.Chord]) -> dict[str, Any]:
         """Analyze the harmonic rhythm (rate of chord changes)"""
