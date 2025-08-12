@@ -70,7 +70,7 @@ class ImportScoreTool(BaseTool):
                     )
 
                 if score is None:
-                    return self.create_error_response("Failed to import score")
+                    return self.create_error_response(f"Could not find or import score: {source}")
             except Exception as e:
                 # Return the specific error message from music21
                 error_msg = str(e)
