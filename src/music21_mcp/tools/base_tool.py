@@ -68,34 +68,34 @@ class BaseTool(ABC):
         self._progress_reporter.update(percent, message)
         if self._progress_callback:
             self._progress_callback(percent, message)
-    
+
     # === Async Execution Helpers ===
-    
+
     async def run_music21_operation(self, func: Callable, *args, **kwargs) -> Any:
         """
         Run a music21 operation asynchronously in a background thread
-        
+
         This prevents blocking the event loop during CPU-intensive operations.
-        
+
         Args:
             func: The music21 function to run
             *args: Positional arguments
             **kwargs: Keyword arguments
-            
+
         Returns:
             The result of the function
         """
         return await run_in_thread(func, *args, **kwargs)
-    
-    async def run_with_progress(self, 
-                              func: Callable, 
+
+    async def run_with_progress(self,
+                              func: Callable,
                               progress_start: float = 0.0,
                               progress_end: float = 1.0,
                               message: str = "Processing...",
                               *args, **kwargs) -> Any:
         """
         Run a function with progress reporting
-        
+
         Args:
             func: The function to run
             progress_start: Starting progress value (0.0-1.0)
@@ -103,7 +103,7 @@ class BaseTool(ABC):
             message: Message to display during execution
             *args: Function arguments
             **kwargs: Function keyword arguments
-            
+
         Returns:
             Function result
         """

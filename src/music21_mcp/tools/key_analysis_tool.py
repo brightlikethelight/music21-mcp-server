@@ -155,7 +155,7 @@ class KeyAnalysisTool(BaseTool):
             except Exception as e:
                 logger.error(f"Key analysis with {algorithm} failed: {e}")
                 return None
-        
+
         return await self.run_music21_operation(_run_analysis)
 
     def _find_consensus(self, results: dict[str, Any]) -> tuple:

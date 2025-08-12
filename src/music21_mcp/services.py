@@ -8,11 +8,10 @@ without any dependencies on MCP, HTTP, or other protocols.
 It survives protocol changes and breaking updates.
 """
 
-import logging
 from typing import Any
 
+from .observability import get_logger, get_metrics, monitor_performance
 from .resource_manager import ResourceManager
-from .observability import get_logger, monitor_performance, with_context, get_metrics
 
 # Import tools but isolate from protocol concerns
 from .tools import (
@@ -55,7 +54,7 @@ class MusicAnalysisService:
             max_scores=max_scores,
             score_ttl_seconds=3600  # 1 hour TTL
         )
-        
+
         # Use managed score storage instead of simple dictionary
         self.scores = self.resource_manager.scores
 
@@ -246,7 +245,7 @@ class MusicAnalysisService:
         health = self.check_health()
         metrics = self.get_performance_metrics()
         resource_stats = self.get_resource_stats()
-        
+
         return {
             "service": {
                 "name": "music21-mcp-server",

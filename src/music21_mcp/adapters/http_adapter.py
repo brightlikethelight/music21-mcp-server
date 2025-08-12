@@ -241,10 +241,11 @@ def create_http_server():
 # For direct execution
 if __name__ == "__main__":
     import os
+
     import uvicorn
 
     app = create_http_server()
-    
+
     # Get host and port from environment variables with defaults
     host = os.getenv("MUSIC21_MCP_HOST", "0.0.0.0")
     port = int(os.getenv("MUSIC21_MCP_PORT", "8000"))

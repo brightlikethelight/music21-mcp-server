@@ -7,13 +7,14 @@ to further improve performance beyond caching alone.
 
 import asyncio
 import logging
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable, List, TypeVar
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
-R = TypeVar('R')
+T = TypeVar("T")
+R = TypeVar("R")
 
 
 class ParallelProcessor:
@@ -36,11 +37,11 @@ class ParallelProcessor:
 
     async def process_batch(
         self,
-        items: List[T],
+        items: list[T],
         processor_func: Callable[[T], R],
         batch_size: int = 10,
         progress_callback: Callable[[int, int], None] = None
-    ) -> List[R]:
+    ) -> list[R]:
         """
         Process a batch of items in parallel
 
@@ -91,8 +92,8 @@ class ParallelProcessor:
         return results
 
     async def process_chord_batch(
-        self, chord_items: List[Any], analysis_func: Callable
-    ) -> List[dict]:
+        self, chord_items: list[Any], analysis_func: Callable
+    ) -> list[dict]:
         """
         Specialized method for processing chord batches
 
@@ -111,7 +112,7 @@ class ParallelProcessor:
                 logger.warning(f"Parallel chord analysis failed: {e}")
                 pitches = (
                     [str(p) for p in item.pitches]
-                    if hasattr(item, 'pitches') else []
+                    if hasattr(item, "pitches") else []
                 )
                 return {
                     "error": str(e),
@@ -128,7 +129,7 @@ class ParallelProcessor:
 
     def __del__(self):
         """Clean up executor on deletion"""
-        if hasattr(self, '_executor'):
+        if hasattr(self, "_executor"):
             self._executor.shutdown(wait=False)
 
 

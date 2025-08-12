@@ -10,7 +10,7 @@ Addresses critical performance bottlenecks in chord and harmony analysis:
 import hashlib
 import logging
 from functools import lru_cache
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from cachetools import TTLCache
 from music21 import chord, key, roman
@@ -43,7 +43,7 @@ class PerformanceCache:
         self._misses = 0
 
     def _generate_chord_key(
-        self, chord_obj: chord.Chord, key_obj: Optional[key.Key] = None
+        self, chord_obj: chord.Chord, key_obj: key.Key | None = None
     ) -> str:
         """
         Generate stable cache key for chord + key combination
@@ -64,7 +64,7 @@ class PerformanceCache:
 
         # Include chord metadata that affects roman numeral analysis
         inversion = (
-            chord_obj.inversion() if hasattr(chord_obj, 'inversion') else 0
+            chord_obj.inversion() if hasattr(chord_obj, "inversion") else 0
         )
 
         # Create composite key
@@ -75,7 +75,7 @@ class PerformanceCache:
 
     def get_roman_numeral(
         self, chord_obj: chord.Chord, key_obj: key.Key
-    ) -> Optional[Tuple[str, int]]:
+    ) -> tuple[str, int] | None:
         """
         Get Roman numeral analysis with caching
 
@@ -114,7 +114,7 @@ class PerformanceCache:
             return None
 
     @lru_cache(maxsize=1000)
-    def get_key_analysis(self, score_hash: str) -> Optional[key.Key]:
+    def get_key_analysis(self, score_hash: str) -> key.Key | None:
         """
         Get key analysis with caching
 
@@ -129,7 +129,7 @@ class PerformanceCache:
         return None
 
     def get_chord_analysis(
-        self, chord_obj: chord.Chord, key_obj: Optional[key.Key],
+        self, chord_obj: chord.Chord, key_obj: key.Key | None,
         include_inversions: bool
     ) -> dict[str, Any]:
         """

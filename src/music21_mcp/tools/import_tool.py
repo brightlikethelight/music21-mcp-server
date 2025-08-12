@@ -162,14 +162,14 @@ class ImportScoreTool(BaseTool):
             # Parse file in background thread to avoid blocking event loop
             def _parse_file():
                 return converter.parse(file_path)
-            
+
             parsed = await self.run_with_progress(
                 _parse_file,
-                progress_start=0.3, 
+                progress_start=0.3,
                 progress_end=0.7,
                 message="Parsing file"
             )
-            
+
             # Ensure we return a Score object
             if isinstance(parsed, stream.Score):
                 return parsed
@@ -179,7 +179,7 @@ class ImportScoreTool(BaseTool):
                     score = stream.Score()
                     score.append(parsed)
                     return score
-                
+
                 return await self.run_music21_operation(_convert_to_score)
             return None
         except Exception as e:
@@ -192,14 +192,14 @@ class ImportScoreTool(BaseTool):
             # Parse corpus in background thread to avoid blocking event loop
             def _parse_corpus():
                 return corpus.parse(corpus_path)
-            
+
             parsed = await self.run_with_progress(
                 _parse_corpus,
                 progress_start=0.3,
                 progress_end=0.7,
                 message="Loading from corpus"
             )
-            
+
             # Ensure we return a Score object
             if isinstance(parsed, stream.Score):
                 return parsed
@@ -209,7 +209,7 @@ class ImportScoreTool(BaseTool):
                     score = stream.Score()
                     score.append(parsed)
                     return score
-                
+
                 return await self.run_music21_operation(_convert_to_score)
             return None
         except Exception as e:
@@ -224,25 +224,25 @@ class ImportScoreTool(BaseTool):
             # Check if it's tinyNotation format
             if text.strip().startswith("tinyNotation:"):
                 tiny_text = text.replace("tinyNotation:", "").strip()
-                
+
                 def _parse_tiny_notation():
                     from music21 import converter
                     return converter.parse(f"tinyNotation: {tiny_text}")
-                
+
                 # Parse in background thread
                 parsed = await self.run_music21_operation(_parse_tiny_notation)
-                
+
                 # Ensure we return a Score object
                 if isinstance(parsed, stream.Score):
                     self.report_progress(0.7, "TinyNotation parsed")
                     return parsed
-                
+
                 # Convert to Score if it's another stream type
                 def _convert_to_score():
                     score = stream.Score()
                     score.append(parsed)
                     return score
-                
+
                 result = await self.run_music21_operation(_convert_to_score)
                 self.report_progress(0.7, "TinyNotation parsed and converted to Score")
                 return result
@@ -252,7 +252,7 @@ class ImportScoreTool(BaseTool):
                 score = stream.Score()
                 part = stream.Part()
                 tokens = text.split()
-                
+
                 for note_str in tokens:
                     try:
                         n = note.Note(note_str)
@@ -260,10 +260,10 @@ class ImportScoreTool(BaseTool):
                     except Exception as e:
                         logger.warning(f"Invalid note '{note_str}': {e}")
                         raise ValueError(f"Invalid note: {note_str}")
-                
+
                 score.append(part)
                 return score
-            
+
             # Parse note sequence in background thread
             result = await self.run_with_progress(
                 _parse_note_sequence,
@@ -303,6 +303,6 @@ class ImportScoreTool(BaseTool):
             except Exception as e:
                 logger.warning(f"Error extracting metadata: {e}")
                 return {"num_notes": 0, "num_measures": 0, "num_parts": 0, "pitch_range": 0}
-        
+
         return await self.run_music21_operation(_extract_sync)
 

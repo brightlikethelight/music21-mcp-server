@@ -8,9 +8,9 @@ from typing import Any
 
 from music21 import chord
 
-from .base_tool import BaseTool
-from ..performance_cache import get_performance_cache
 from ..parallel_processor import get_parallel_processor
+from ..performance_cache import get_performance_cache
+from .base_tool import BaseTool
 
 logger = logging.getLogger(__name__)
 

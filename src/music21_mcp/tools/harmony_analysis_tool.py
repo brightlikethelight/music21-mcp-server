@@ -6,10 +6,10 @@ PERFORMANCE OPTIMIZED: Includes aggressive caching to reduce 12.7s analysis to <
 import logging
 from typing import Any
 
-from music21 import chord, key, roman, stream
+from music21 import chord, key, stream
 
-from .base_tool import BaseTool
 from ..performance_cache import get_performance_cache
+from .base_tool import BaseTool
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class HarmonyAnalysisTool(BaseTool):
 
             # Add cache performance statistics
             cache_stats = self._cache.get_cache_stats()
-            
+
             result = self.create_success_response(
                 f"Harmony analysis complete: {len(roman_numerals)} chords analyzed",
                 roman_numerals=roman_numerals,
@@ -82,15 +82,15 @@ class HarmonyAnalysisTool(BaseTool):
                 harmonic_rhythm=rhythm,
                 chord_count=len(chords),
             )
-            
+
             result["performance_stats"] = {
                 "cache_hit_rate": cache_stats["hit_rate_percent"],
                 "cache_entries": cache_stats["total_cache_entries"],
                 "processing_optimized": True
             }
-            
+
             logger.info(f"Harmony analysis completed with {cache_stats['hit_rate_percent']:.1f}% cache hit rate")
-            
+
             return result
 
     def validate_inputs(self, **kwargs: Any) -> str | None:
@@ -145,7 +145,7 @@ class HarmonyAnalysisTool(BaseTool):
             try:
                 # Use cached Roman numeral analysis (eliminates 250ms per chord delay)
                 roman_result = self._cache.get_roman_numeral(chord_obj, key_obj)
-                
+
                 if roman_result:
                     roman_numeral_str, scale_degree = roman_result
                 else:

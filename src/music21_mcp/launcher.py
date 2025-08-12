@@ -78,7 +78,7 @@ def start_http_server():
         import os
         host = os.getenv("MUSIC21_MCP_HOST", "0.0.0.0")
         port = int(os.getenv("MUSIC21_MCP_PORT", "8000"))
-        
+
         display_host = "localhost" if host == "0.0.0.0" else host
         print(f"🌐 Starting server on http://{display_host}:{port}")
         print(f"📖 API docs: http://{display_host}:{port}/docs")
