@@ -178,17 +178,24 @@ class KeyAnalysisTool(BaseTool):
         # Sort by votes, then by average confidence
         sorted_keys = sorted(
             key_votes.items(),
-            key=lambda x: (x[1]["votes"], x[1]["total_confidence"] / x[1]["votes"]),
+            key=lambda x: (
+                x[1]["votes"],
+                x[1]["total_confidence"] / x[1]["votes"] if x[1]["votes"] > 0 else 0
+            ),
             reverse=True,
         )
 
         # Best key
         best_key = sorted_keys[0][0]
         best_data = sorted_keys[0][1]
-        avg_confidence = best_data["total_confidence"] / best_data["votes"]
+        avg_confidence = (
+            best_data["total_confidence"] / best_data["votes"]
+            if best_data["votes"] > 0
+            else 0.0
+        )
 
         # Adjust confidence based on consensus
-        consensus_factor = best_data["votes"] / len(results)
+        consensus_factor = best_data["votes"] / len(results) if len(results) > 0 else 0
         final_confidence = avg_confidence * (0.5 + 0.5 * consensus_factor)
 
         # Alternatives
@@ -197,7 +204,11 @@ class KeyAnalysisTool(BaseTool):
             alternatives.append(
                 {
                     "key": key,
-                    "confidence": data["total_confidence"] / data["votes"],
+                    "confidence": (
+                        data["total_confidence"] / data["votes"]
+                        if data["votes"] > 0
+                        else 0.0
+                    ),
                     "votes": data["votes"],
                 }
             )

@@ -52,7 +52,7 @@ class MusicAnalysisExample:
         print("🎵 Starting Music21 MCP Server...")
         
         # Start the server using stdio transport
-        server_script = Path(__file__).parent.parent / "src" / "music21_mcp" / "server.py"
+        server_script = Path(__file__).parent.parent / "src" / "music21_mcp" / "server_minimal.py"
         
         self.server_process = await asyncio.create_subprocess_exec(
             sys.executable, str(server_script),

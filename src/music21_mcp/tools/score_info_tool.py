@@ -341,5 +341,9 @@ class ScoreInfoTool(BaseTool):
             flat = score.flatten()
             tempos = list(flat.getElementsByClass(tempo.MetronomeMark))
             return tempos[0] if tempos else None
-        except:
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.debug(f"Failed to extract tempo from score: {e}")
+            return None
+        except Exception as e:
+            logger.warning(f"Unexpected error extracting tempo: {e}")
             return None

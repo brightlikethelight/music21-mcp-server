@@ -122,7 +122,8 @@ class PerformanceOptimizer:
             lookup_key = (mode, degree, quality)
             return self.common_romans.get(lookup_key)
 
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to get Roman numeral for degree {degree}: {e}")
             return None
 
     async def analyze_chords_parallel(

@@ -43,8 +43,8 @@ class ScoreStorage(MutableMapping):
         max_memory_mb: int = 512,
         cleanup_interval_seconds: int = 300,  # 5 minutes
     ):
-        self.max_scores = max_scores
-        self.max_memory_mb = max_memory_mb
+        self.max_scores = max(1, max_scores)  # Ensure at least 1
+        self.max_memory_mb = max(1, max_memory_mb)  # Ensure at least 1 MB
         self.cleanup_interval = cleanup_interval_seconds
 
         # TTL cache for automatic expiration
@@ -252,8 +252,8 @@ class ResourceManager:
         max_scores: int = 100,
         score_ttl_seconds: int = 3600,
     ):
-        self.max_memory_mb = max_memory_mb
-        self.max_scores = max_scores
+        self.max_memory_mb = max(1, max_memory_mb)  # Ensure at least 1 MB
+        self.max_scores = max(1, max_scores)  # Ensure at least 1
 
         # Create managed score storage
         self.scores = ScoreStorage(

@@ -1,0 +1,385 @@
+{
+  "name": "music21-mcp-server",
+  "version": "1.0.0",
+  "description": "Professional music analysis and generation MCP server built on MIT's music21 toolkit. Provides comprehensive tools for music theory education, computational musicology research, and algorithmic composition.",
+  "author": {
+    "name": "brightliu",
+    "email": "brightliu@college.harvard.edu",
+    "url": "https://github.com/brightliu"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/brightliu/music21-mcp-server",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brightliu/music21-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/brightliu/music21-mcp-server/issues"
+  },
+  "mcp": {
+    "version": "1.0",
+    "transport": "stdio",
+    "tools": [
+      {
+        "name": "import_score",
+        "description": "Import musical scores from various sources (files, URLs, music21 corpus)",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Unique identifier for the imported score",
+            "required": true
+          },
+          "source": {
+            "type": "string",
+            "description": "Path, URL, or corpus identifier",
+            "required": true
+          },
+          "source_type": {
+            "type": "string",
+            "enum": ["file", "url", "corpus", "abc", "musicxml", "midi"],
+            "description": "Type of source",
+            "default": "corpus"
+          }
+        }
+      },
+      {
+        "name": "export_score",
+        "description": "Export scores to various formats (MusicXML, MIDI, LilyPond, PDF)",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Score identifier to export",
+            "required": true
+          },
+          "format": {
+            "type": "string",
+            "enum": ["musicxml", "midi", "lilypond", "pdf", "png", "abc"],
+            "description": "Export format",
+            "required": true
+          },
+          "file_path": {
+            "type": "string",
+            "description": "Optional output file path"
+          }
+        }
+      },
+      {
+        "name": "analyze_key",
+        "description": "Detect musical key using multiple algorithms with confidence scoring",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Score to analyze",
+            "required": true
+          },
+          "algorithm": {
+            "type": "string",
+            "enum": ["krumhansl", "aarden", "temperley", "all"],
+            "description": "Key detection algorithm",
+            "default": "all"
+          }
+        }
+      },
+      {
+        "name": "analyze_chords",
+        "description": "Perform comprehensive chord analysis including Roman numerals and progressions",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Score to analyze",
+            "required": true
+          },
+          "include_inversions": {
+            "type": "boolean",
+            "description": "Include chord inversions",
+            "default": true
+          },
+          "include_extensions": {
+            "type": "boolean",
+            "description": "Include extended chords (7ths, 9ths, etc.)",
+            "default": true
+          }
+        }
+      },
+      {
+        "name": "analyze_harmony",
+        "description": "Deep harmonic analysis including voice leading, cadences, and non-chord tones",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Score to analyze",
+            "required": true
+          },
+          "include_voice_leading": {
+            "type": "boolean",
+            "default": true
+          },
+          "include_cadences": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      {
+        "name": "harmonize",
+        "description": "Generate harmonizations in various styles (classical, jazz, pop, modal)",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Melody to harmonize",
+            "required": true
+          },
+          "style": {
+            "type": "string",
+            "enum": ["classical", "jazz", "pop", "modal"],
+            "description": "Harmonization style",
+            "required": true
+          },
+          "voice_parts": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 4,
+            "description": "Number of voice parts",
+            "default": 4
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional constraints (e.g., 'diatonic_only', 'no_substitutions')"
+          }
+        }
+      },
+      {
+        "name": "generate_counterpoint",
+        "description": "Generate counterpoint following species rules (1st through 5th species)",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Cantus firmus score",
+            "required": true
+          },
+          "species": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Counterpoint species",
+            "required": true
+          },
+          "voice_position": {
+            "type": "string",
+            "enum": ["above", "below"],
+            "description": "Position relative to cantus firmus",
+            "default": "above"
+          }
+        }
+      },
+      {
+        "name": "analyze_voice_leading",
+        "description": "Analyze voice leading quality, detect parallel fifths/octaves, and measure smoothness",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Score to analyze",
+            "required": true
+          },
+          "strict": {
+            "type": "boolean",
+            "description": "Apply strict classical rules",
+            "default": true
+          }
+        }
+      },
+      {
+        "name": "detect_patterns",
+        "description": "Find recurring melodic, rhythmic, and harmonic patterns",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Score to analyze",
+            "required": true
+          },
+          "pattern_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["melodic", "rhythmic", "harmonic"]
+            },
+            "description": "Types of patterns to detect",
+            "default": ["melodic", "rhythmic", "harmonic"]
+          },
+          "min_occurrences": {
+            "type": "integer",
+            "minimum": 2,
+            "description": "Minimum pattern occurrences",
+            "default": 2
+          }
+        }
+      },
+      {
+        "name": "imitate_style",
+        "description": "Generate new music imitating analyzed style characteristics",
+        "parameters": {
+          "style_source": {
+            "type": "string",
+            "description": "Score ID to analyze for style"
+          },
+          "composer": {
+            "type": "string",
+            "enum": ["bach", "mozart", "beethoven", "chopin"],
+            "description": "Predefined composer style"
+          },
+          "generation_length": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 64,
+            "description": "Measures to generate",
+            "default": 16
+          },
+          "complexity": {
+            "type": "string",
+            "enum": ["simple", "medium", "complex"],
+            "description": "Output complexity",
+            "default": "medium"
+          }
+        }
+      },
+      {
+        "name": "get_score_info",
+        "description": "Retrieve comprehensive metadata and statistics about a score",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Score identifier",
+            "required": true
+          },
+          "include_statistics": {
+            "type": "boolean",
+            "description": "Include detailed statistics",
+            "default": true
+          }
+        }
+      },
+      {
+        "name": "list_scores",
+        "description": "List all loaded scores with metadata",
+        "parameters": {}
+      },
+      {
+        "name": "delete_score",
+        "description": "Remove a score from memory",
+        "parameters": {
+          "score_id": {
+            "type": "string",
+            "description": "Score to delete",
+            "required": true
+          }
+        }
+      }
+    ],
+    "resources": [
+      {
+        "name": "scores",
+        "description": "Browse and manage loaded musical scores",
+        "endpoint": "/scores",
+        "methods": ["GET", "DELETE"]
+      }
+    ]
+  },
+  "categories": ["music", "analysis", "education", "creativity", "research"],
+  "tags": [
+    "music-theory",
+    "harmonic-analysis",
+    "counterpoint",
+    "music21",
+    "computational-musicology",
+    "algorithmic-composition",
+    "music-education",
+    "bach-chorales",
+    "roman-numerals",
+    "voice-leading"
+  ],
+  "keywords": [
+    "music",
+    "music theory",
+    "harmony",
+    "counterpoint",
+    "analysis",
+    "composition",
+    "musicxml",
+    "midi",
+    "education",
+    "research",
+    "musicology",
+    "bach",
+    "mozart",
+    "classical music",
+    "jazz harmony"
+  ],
+  "requirements": {
+    "python": ">=3.9",
+    "dependencies": [
+      "music21>=9.1.0",
+      "numpy>=1.24.0",
+      "mcp>=1.0.0",
+      "fastmcp>=0.2.0"
+    ]
+  },
+  "installation": {
+    "pip": "pip install music21-mcp-server",
+    "source": "git clone https://github.com/brightliu/music21-mcp-server.git && cd music21-mcp-server && pip install -e ."
+  },
+  "configuration": {
+    "claude_desktop": {
+      "name": "music21-mcp-server",
+      "command": "python",
+      "args": ["-m", "music21_mcp.server_minimal"],
+      "env": {
+        "PYTHONPATH": "/path/to/music21-mcp-server/src"
+      }
+    },
+    "vscode": {
+      "mcp.servers": {
+        "music21": {
+          "command": "python",
+          "args": ["-m", "music21_mcp.server_minimal"]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "Analyze Bach Chorale",
+      "description": "Import and analyze a Bach chorale for key and harmony",
+      "code": "analyzer.import_score('bach', 'bach/bwv66.6', 'corpus')\nanalyzer.analyze_key('bach')\nanalyzer.analyze_harmony('bach')"
+    },
+    {
+      "name": "Generate Counterpoint",
+      "description": "Create first species counterpoint above a cantus firmus",
+      "code": "analyzer.import_score('cf', 'cantus_firmus.xml', 'file')\nanalyzer.generate_counterpoint('cf', species=1, voice_position='above')"
+    },
+    {
+      "name": "Harmonize Melody",
+      "description": "Generate four-part classical harmonization",
+      "code": "analyzer.import_score('melody', 'melody.mid', 'file')\nanalyzer.harmonize('melody', style='classical', voice_parts=4)"
+    }
+  ],
+  "security": {
+    "permissions": ["file_read", "file_write"],
+    "sandboxed": true,
+    "no_network": false,
+    "no_code_execution": true
+  },
+  "performance": {
+    "caching": true,
+    "async": true,
+    "max_memory_mb": 512,
+    "timeout_seconds": 300
+  },
+  "monitoring": {
+    "telemetry": false,
+    "logging": "structured",
+    "metrics": true
+  }
+}

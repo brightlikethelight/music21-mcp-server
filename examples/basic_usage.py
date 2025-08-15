@@ -11,36 +11,32 @@ This example demonstrates the fundamental workflow:
 Perfect for getting started with the server!
 """
 
-import asyncio
 import sys
 from pathlib import Path
 
 # Add src to path for local development
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-# Import the server tools
-from music21_mcp.server import (
-    analyze_chords,
-    analyze_key,
-    delete_score,
-    export_score,
-    get_score_info,
-    import_score,
-)
+# Import the server tools using the adapter
+from music21_mcp.adapters import create_sync_analyzer
 
 
-async def basic_workflow_example():
+def basic_workflow_example():
     """Demonstrate basic analysis workflow"""
     
     print("🎼 Music21 MCP Server - Basic Usage Example")
     print("=" * 50)
     
+    # Create a synchronous analyzer
+    analyzer = create_sync_analyzer()
+    
     # Step 1: Import a Bach chorale from the music21 corpus
     print("\n📥 Step 1: Importing Bach Chorale...")
     
-    result = await import_score(
+    result = analyzer.import_score(
         score_id="bach_example",
-        source="bach/bwv66.6"  # Famous Bach chorale
+        source="bach/bwv66.6",  # Famous Bach chorale
+        source_type="corpus"
     )
     
     if result["status"] == "success":
@@ -55,7 +51,7 @@ async def basic_workflow_example():
     # Step 2: Analyze the musical key
     print("\n🔑 Step 2: Analyzing Musical Key...")
     
-    key_result = await analyze_key("bach_example")
+    key_result = analyzer.analyze_key("bach_example")
     
     if key_result["status"] == "success":
         print(f"✅ Key detected: {key_result['key']}")
@@ -72,10 +68,7 @@ async def basic_workflow_example():
     # Step 3: Analyze chord progression
     print("\n🎹 Step 3: Analyzing Chord Progression...")
     
-    chord_result = await analyze_chords(
-        "bach_example", 
-        include_roman_numerals=True
-    )
+    chord_result = analyzer.analyze_chords("bach_example")
     
     if chord_result["status"] == "success":
         print(f"✅ Found {chord_result['total_chords']} chords")
@@ -91,116 +84,50 @@ async def basic_workflow_example():
     # Step 4: Get detailed score information
     print("\n📊 Step 4: Getting Score Metadata...")
     
-    info_result = await get_score_info("bach_example")
+    info_result = analyzer.get_score_info("bach_example")
     
     if info_result["status"] == "success":
         print("✅ Score Information:")
         print(f"   Title: {info_result.get('title', 'Unknown')}")
         print(f"   Composer: {info_result.get('composer', 'Unknown')}")
-        print(f"   Duration: {info_result['duration_quarters']} quarter notes")
-        
-        # Show time signatures if present
-        if info_result.get('time_signatures'):
-            print(f"   Time Signature: {info_result['time_signatures'][0]['signature']}")
-        
-        # Show tempo if present
-        if info_result.get('tempo_markings'):
-            tempo = info_result['tempo_markings'][0]
-            print(f"   Tempo: {tempo['bpm']} BPM")
+        print(f"   Time Signature: {info_result.get('time_signature', 'Unknown')}")
+        print(f"   Duration: {info_result.get('duration_seconds', 0):.1f} seconds")
+        print(f"   Ambitus: {info_result.get('lowest_note', '?')} - {info_result.get('highest_note', '?')}")
     else:
-        print(f"❌ Score info failed: {info_result['message']}")
+        print(f"❌ Info retrieval failed: {info_result['message']}")
     
-    # Step 5: Export to different formats
-    print("\n💾 Step 5: Exporting to Different Formats...")
+    # Step 5: Export to MusicXML
+    print("\n💾 Step 5: Exporting to MusicXML...")
     
-    formats = ["midi", "musicxml"]
+    export_result = analyzer.export_score(
+        "bach_example",
+        format="musicxml"
+    )
     
-    for fmt in formats:
-        export_result = await export_score("bach_example", fmt)
-        
-        if export_result["status"] == "success":
-            file_path = export_result["file_path"]
-            file_size = export_result["file_size"]
-            print(f"✅ Exported {fmt.upper()}: {file_path} ({file_size} bytes)")
-        else:
-            print(f"❌ Export to {fmt} failed: {export_result['message']}")
+    if export_result["status"] == "success":
+        print(f"✅ Exported to: {export_result['file_path']}")
+        print(f"   Format: {export_result['format']}")
+    else:
+        print(f"❌ Export failed: {export_result['message']}")
     
-    # Step 6: Clean up
-    print("\n🧹 Step 6: Cleaning Up...")
+    # Step 6: Clean up - delete the score from memory
+    print("\n🧹 Step 6: Cleaning up...")
     
-    delete_result = await delete_score("bach_example")
+    delete_result = analyzer.delete_score("bach_example")
+    
     if delete_result["status"] == "success":
-        print(f"✅ {delete_result['message']}")
-    
-    print("\n🎉 Basic workflow complete!")
-    print("\nThis example showed:")
-    print("  - How to import scores from the music21 corpus")
-    print("  - Basic key detection and confidence scoring")
-    print("  - Chord progression analysis with Roman numerals")
-    print("  - Extracting score metadata and structure")
-    print("  - Exporting to multiple formats")
-    print("  - Proper cleanup and memory management")
-
-
-async def text_import_example():
-    """Demonstrate importing from text notation"""
+        print("✅ Score removed from memory")
+    else:
+        print(f"❌ Cleanup failed: {delete_result['message']}")
     
     print("\n" + "=" * 50)
-    print("📝 Bonus: Text Notation Import Example")
-    print("=" * 50)
-    
-    # Create a simple C major scale
-    scale_text = "C4 D4 E4 F4 G4 A4 B4 C5"
-    
-    print(f"\n📥 Importing text: '{scale_text}'")
-    
-    result = await import_score("scale_example", scale_text)
-    
-    if result["status"] == "success":
-        print(f"✅ Successfully created scale with {result['num_notes']} notes")
-        
-        # Analyze the scale
-        key_result = await analyze_key("scale_example")
-        if key_result["status"] == "success":
-            print(f"🔑 Detected key: {key_result['key']} (confidence: {key_result['confidence']:.2%})")
-        
-        # Export to MIDI for playback
-        export_result = await export_score("scale_example", "midi")
-        if export_result["status"] == "success":
-            print(f"🎵 Exported playable MIDI: {export_result['file_path']}")
-        
-        # Cleanup
-        await delete_score("scale_example")
-        print("✅ Cleaned up scale example")
-    else:
-        print(f"❌ Text import failed: {result['message']}")
+    print("✨ Basic workflow complete!")
+    print("\nNext steps:")
+    print("  - Try analyzing your own MIDI/MusicXML files")
+    print("  - Explore harmony analysis and voice leading")
+    print("  - Generate harmonizations and counterpoint")
 
 
-async def main():
-    """Run all examples"""
-    try:
-        # Run the basic workflow
-        await basic_workflow_example()
-        
-        # Run the text import example
-        await text_import_example()
-        
-        print("\n🎯 Next Steps:")
-        print("  - Try other examples in this directory")
-        print("  - Experiment with your own MIDI/XML files")
-        print("  - Check out the comprehensive API docs")
-        print("  - Integrate with MCP client for AI-powered analysis")
-        
-    except Exception as e:
-        print(f"\n❌ Example failed with error: {e}")
-        print("   Make sure music21 is installed: pip install music21")
-        print("   Make sure the server package is installed: pip install -e .")
-        return 1
-    
-    return 0
-
-
+# Run the example
 if __name__ == "__main__":
-    # Run the example
-    exit_code = asyncio.run(main())
-    sys.exit(exit_code)
+    basic_workflow_example()
