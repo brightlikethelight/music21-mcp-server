@@ -35,6 +35,20 @@ Based on 2025 research showing **MCP has 40-50% production success rate**, this 
 
 ### Installation
 
+#### Install from PyPI (Recommended)
+
+```bash
+# Install the package
+pip install music21-mcp-server
+
+# Start the server
+music21-mcp-server --mode mcp   # For Claude Desktop
+music21-mcp-server --mode http  # REST API at localhost:8000
+music21-mcp-server --mode cli   # Interactive CLI
+```
+
+#### Install from Source
+
 ```bash
 # Clone repository
 git clone https://github.com/brightlikethelight/music21-mcp-server.git

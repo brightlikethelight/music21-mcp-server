@@ -9,7 +9,7 @@ from collections import Counter, defaultdict
 from typing import Any
 
 import numpy as np
-from music21 import chord, interval, note, pitch, stream
+from music21 import chord, interval, key, note, pitch, stream
 
 from .base_tool import BaseTool
 
