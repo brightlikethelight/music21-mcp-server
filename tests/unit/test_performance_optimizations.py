@@ -119,7 +119,7 @@ class TestPerformanceOptimizer:
         assert len(optimizer.roman_cache) >= initial_size
         
         # Common progressions should be cached
-        c_key = key.Key("C major")
+        c_key = key.Key("C")
         c_major = chord.Chord(["C", "E", "G"])
         cached = optimizer.get_cached_roman_numeral(c_major, c_key)
         assert cached is not None

@@ -843,10 +843,13 @@ class HarmonizationTool(BaseTool):
         pitch_classes = {p.pitchClass for p in pitches}
 
         # Check for characteristic modal notes
-        if 9 in pitch_classes and 5 not in pitch_classes:  # Flat 7, no 4
+        # Mixolydian: has flat 7 (Bb in C = pitch class 10)
+        if 10 in pitch_classes and 5 not in pitch_classes:  # Flat 7, no 4
             return "mixolydian"
-        if 6 in pitch_classes and 2 in pitch_classes:  # Natural 6 and 2 in minor
+        # Dorian: has natural 6 and 2 in minor context  
+        if 11 in pitch_classes and 2 in pitch_classes:  # Natural 6 (B) and 2 (D) 
             return "dorian"
+        # Lydian: has raised 4 (F# in C = pitch class 6)
         if 6 in pitch_classes:  # Raised 4
             return "lydian"
         return "ionian"  # Default to major

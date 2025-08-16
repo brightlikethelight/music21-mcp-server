@@ -197,6 +197,10 @@ ignore = [
     "SIM102", # nested if statements (sometimes clearer)
     "C401",   # unnecessary generator (performance not critical)
     "RET504", # unnecessary assignment before return (clarity)
+    "S104",   # Binding to all interfaces (intentional for servers)
+    "S324",   # MD5 hash for caching (not used for security)
+    "B019",   # LRU cache on methods (acceptable for performance)
+    "B904",   # Exception raising without 'from' (acceptable)
     "F841",   # unused variable (sometimes for documentation)
     "PLR",    # too many arguments/branches/statements (complexity needed)
 ]

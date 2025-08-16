@@ -87,4 +87,4 @@ class TestImportScoreTool:
         )
 
         assert result["status"] == "error"
-        assert "Failed to import" in result["message"]
+        assert "Could not find or import" in result["message"]
