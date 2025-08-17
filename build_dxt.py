@@ -1,282 +1,406 @@
 #!/usr/bin/env python3
 """
-Build script for Music21 MCP Server Desktop Extension (.dxt)
-
-This script creates a complete .dxt package that can be installed with one click.
-The .dxt file is a ZIP archive containing all necessary files for the extension.
+Build Desktop Extension (.dxt) for Music21 MCP Server
+Creates a one-click installable package for Claude Desktop
 """
 
-import os
-import sys
 import json
-import zipfile
+import os
 import shutil
+import subprocess
+import sys
 import tempfile
+import zipfile
 from pathlib import Path
-from datetime import datetime
+from typing import Dict, Any
 
-
-def log(message: str, level: str = "INFO"):
-    """Simple logging function"""
-    timestamp = datetime.now().strftime("%H:%M:%S")
-    print(f"[{timestamp}] [{level}] {message}")
-
-
-def validate_manifest(manifest_path: Path):
-    """Validate the manifest.json file"""
-    try:
-        with open(manifest_path, 'r') as f:
-            manifest = json.load(f)
+class DesktopExtensionBuilder:
+    """Build a Desktop Extension package for easy installation"""
+    
+    def __init__(self):
+        self.root_dir = Path(__file__).parent
+        self.dist_dir = self.root_dir / "dist"
+        self.dxt_dir = self.root_dir / "dxt"
+        self.version = self._get_version()
         
-        # Check required fields
-        required_fields = ["dxt_version", "name", "version", "description", "author", "server"]
-        for field in required_fields:
-            if field not in manifest:
-                log(f"Missing required field in manifest: {field}", "ERROR")
-                return False
+    def _get_version(self) -> str:
+        """Get version from pyproject.toml"""
+        try:
+            pyproject_path = self.root_dir / "pyproject.toml"
+            with open(pyproject_path, 'r') as f:
+                for line in f:
+                    if line.startswith('version = '):
+                        return line.split('"')[1]
+        except Exception:
+            pass
+        return "1.0.0"
+    
+    def build(self):
+        """Build the Desktop Extension package"""
+        print("🎵 Building Music21 MCP Server Desktop Extension")
+        print("=" * 50)
         
-        log("Manifest validation passed", "INFO")
-        return True, manifest
+        # Clean and create directories
+        self._prepare_directories()
         
-    except json.JSONDecodeError as e:
-        log(f"Invalid JSON in manifest: {e}", "ERROR")
-        return False, None
-    except Exception as e:
-        log(f"Error validating manifest: {e}", "ERROR")
-        return False, None
-
-
-def copy_source_files(src_dir: Path, temp_dir: Path):
-    """Copy source files to temporary build directory"""
-    try:
-        # Copy the src directory
-        src_dest = temp_dir / "src"
-        shutil.copytree(src_dir / "src", src_dest)
-        log(f"Copied source files to {src_dest}", "INFO")
+        # Create extension manifest
+        self._create_manifest()
         
-        # Copy essential files
-        essential_files = [
-            "README.md",
-            "LICENSE",
-            "CHANGELOG.md",
-            "pyproject.toml"
+        # Copy server code
+        self._copy_server_code()
+        
+        # Create installation scripts
+        self._create_install_scripts()
+        
+        # Bundle dependencies
+        self._bundle_dependencies()
+        
+        # Create configuration templates
+        self._create_config_templates()
+        
+        # Create the .dxt package
+        package_path = self._create_package()
+        
+        print(f"\n✅ Desktop Extension created: {package_path}")
+        print("\n📦 Installation Instructions:")
+        print("1. Open Claude Desktop")
+        print("2. Go to Settings > Extensions")
+        print("3. Click 'Install Extension'")
+        print(f"4. Select {package_path}")
+        print("5. The Music21 MCP Server will be automatically configured!")
+        
+        return package_path
+    
+    def _prepare_directories(self):
+        """Prepare build directories"""
+        print("\n📁 Preparing directories...")
+        
+        # Clean existing build
+        if self.dxt_dir.exists():
+            shutil.rmtree(self.dxt_dir)
+        
+        # Create fresh directories
+        self.dxt_dir.mkdir(exist_ok=True)
+        self.dist_dir.mkdir(exist_ok=True)
+        
+        # Create subdirectories
+        (self.dxt_dir / "server").mkdir()
+        (self.dxt_dir / "scripts").mkdir()
+        (self.dxt_dir / "config").mkdir()
+        (self.dxt_dir / "dependencies").mkdir()
+    
+    def _create_manifest(self):
+        """Create the extension manifest"""
+        print("📝 Creating extension manifest...")
+        
+        manifest = {
+            "name": "music21-mcp-server",
+            "version": self.version,
+            "displayName": "Music21 Analysis & Generation",
+            "description": "Professional music analysis and generation tools powered by MIT's music21",
+            "author": {
+                "name": "brightliu",
+                "email": "brightliu@college.harvard.edu"
+            },
+            "type": "mcp-server",
+            "icon": "🎵",
+            "categories": ["music", "analysis", "education", "composition"],
+            "requirements": {
+                "claudeDesktop": ">=1.0.0",
+                "python": ">=3.9"
+            },
+            "installation": {
+                "type": "automatic",
+                "steps": [
+                    {
+                        "action": "check_python",
+                        "minVersion": "3.9"
+                    },
+                    {
+                        "action": "install_dependencies",
+                        "requirements": "requirements.txt"
+                    },
+                    {
+                        "action": "configure_mcp",
+                        "config": "config/claude_desktop.json"
+                    },
+                    {
+                        "action": "test_connection",
+                        "endpoint": "health_check"
+                    }
+                ]
+            },
+            "server": {
+                "command": "python",
+                "args": ["-m", "music21_mcp.server_minimal"],
+                "env": {
+                    "PYTHONPATH": "${extension_dir}/server/src",
+                    "MUSIC21_MCP_TIMEOUT": "30"
+                }
+            },
+            "tools": [
+                {
+                    "name": "import_score",
+                    "description": "Import musical scores from files, URLs, or corpus"
+                },
+                {
+                    "name": "analyze_key",
+                    "description": "Detect musical key with confidence scoring"
+                },
+                {
+                    "name": "analyze_chords",
+                    "description": "Analyze chord progressions with Roman numerals"
+                },
+                {
+                    "name": "harmonize_melody",
+                    "description": "Generate harmonizations in classical, jazz, pop, or modal styles"
+                },
+                {
+                    "name": "generate_counterpoint",
+                    "description": "Create species counterpoint following traditional rules"
+                },
+                {
+                    "name": "imitate_style",
+                    "description": "Generate new music in the style of Bach, Mozart, or Chopin"
+                },
+                {
+                    "name": "analyze_voice_leading",
+                    "description": "Check voice leading quality and detect errors"
+                },
+                {
+                    "name": "detect_patterns",
+                    "description": "Find recurring melodic, rhythmic, and harmonic patterns"
+                },
+                {
+                    "name": "export_score",
+                    "description": "Export to MusicXML, MIDI, PDF, or other formats"
+                }
+            ],
+            "quickStart": {
+                "examples": [
+                    {
+                        "title": "Analyze a Bach Chorale",
+                        "prompt": "Import Bach BWV 66.6 and analyze its key and harmony"
+                    },
+                    {
+                        "title": "Harmonize a Melody",
+                        "prompt": "Import my melody and create a classical harmonization"
+                    },
+                    {
+                        "title": "Generate Counterpoint",
+                        "prompt": "Create first species counterpoint above this cantus firmus"
+                    }
+                ]
+            },
+            "support": {
+                "documentation": "https://github.com/brightliu/music21-mcp-server",
+                "issues": "https://github.com/brightliu/music21-mcp-server/issues"
+            }
+        }
+        
+        manifest_path = self.dxt_dir / "manifest.json"
+        with open(manifest_path, 'w') as f:
+            json.dump(manifest, f, indent=2)
+    
+    def _copy_server_code(self):
+        """Copy the server source code"""
+        print("📦 Copying server code...")
+        
+        src_dir = self.root_dir / "src" / "music21_mcp"
+        dest_dir = self.dxt_dir / "server" / "src" / "music21_mcp"
+        
+        # Copy Python source files
+        shutil.copytree(src_dir, dest_dir, 
+                       ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.pytest_cache'))
+        
+        # Copy pyproject.toml for dependencies
+        shutil.copy2(self.root_dir / "pyproject.toml", self.dxt_dir / "server")
+        
+        # Create requirements.txt from pyproject.toml
+        self._create_requirements_txt()
+    
+    def _create_requirements_txt(self):
+        """Extract requirements from pyproject.toml"""
+        print("📋 Creating requirements.txt...")
+        
+        requirements = [
+            "music21>=9.1.0",
+            "numpy>=1.24.0",
+            "fastmcp>=0.2.0",
+            "mcp>=1.0.0",
+            "cachetools>=5.3.0",
+            "aiofiles>=23.0.0"
         ]
         
-        for file_name in essential_files:
-            src_file = src_dir / file_name
-            if src_file.exists():
-                shutil.copy2(src_file, temp_dir)
-                log(f"Copied {file_name}", "INFO")
-            else:
-                log(f"Optional file not found: {file_name}", "WARNING")
+        req_path = self.dxt_dir / "requirements.txt"
+        with open(req_path, 'w') as f:
+            f.write('\n'.join(requirements))
+    
+    def _create_install_scripts(self):
+        """Create installation helper scripts"""
+        print("🔧 Creating installation scripts...")
         
-        return True
-    except Exception as e:
-        log(f"Error copying source files: {e}", "ERROR")
-        return False
+        # Windows install script
+        windows_script = '''@echo off
+echo Installing Music21 MCP Server...
+echo.
 
+REM Check Python version
+python --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo ERROR: Python is not installed!
+    echo Please install Python 3.9 or later from python.org
+    pause
+    exit /b 1
+)
 
-def create_assets(temp_dir: Path):
-    """Create or copy asset files (icons, screenshots, etc.)"""
-    assets_dir = temp_dir / "assets"
-    assets_dir.mkdir(exist_ok=True)
-    
-    # Create a simple text-based icon if none exists
-    icon_content = """
-🎵 Music21 MCP Server
+REM Install dependencies
+echo Installing dependencies...
+pip install -r requirements.txt
 
-This is a placeholder icon for the Music21 Analysis Server.
-The actual icon would be a PNG file with musical notation or
-a visual representation of music analysis tools.
-"""
-    
-    icon_file = assets_dir / "music21-icon.txt"
-    with open(icon_file, 'w') as f:
-        f.write(icon_content.strip())
-    
-    # Create screenshot placeholders
-    screenshots_dir = assets_dir / "screenshots"
-    screenshots_dir.mkdir(exist_ok=True)
-    
-    demo_content = """
-Music21 Analysis Demo Screenshot
+REM Configure music21
+echo Configuring music21 corpus...
+python -c "from music21 import corpus; corpus.cacheMetadata()"
 
-This would show the extension in action:
-- Importing a musical score
-- Performing key analysis
-- Displaying harmony analysis results
-- Showing chord progressions
-"""
-    
-    for screenshot_name in ["analysis-demo.txt", "harmonization-demo.txt"]:
-        screenshot_file = screenshots_dir / screenshot_name
-        with open(screenshot_file, 'w') as f:
-            f.write(demo_content.strip())
-    
-    log("Created asset placeholders", "INFO")
-    return True
-
-
-def copy_dxt_files(dxt_dir: Path, temp_dir: Path):
-    """Copy DXT-specific files (manifest, scripts, etc.)"""
-    try:
-        # Copy manifest.json
-        manifest_src = dxt_dir / "manifest.json"
-        manifest_dest = temp_dir / "manifest.json"
-        shutil.copy2(manifest_src, manifest_dest)
-        log("Copied manifest.json", "INFO")
+echo.
+echo ✅ Installation complete!
+echo The Music21 MCP Server is ready to use with Claude Desktop.
+pause
+'''
         
-        # Copy scripts directory
-        scripts_src = dxt_dir / "scripts"
-        if scripts_src.exists():
-            scripts_dest = temp_dir / "scripts"
-            shutil.copytree(scripts_src, scripts_dest)
-            log("Copied scripts directory", "INFO")
-        
-        # Copy requirements.txt
-        requirements_src = dxt_dir / "requirements.txt"
-        if requirements_src.exists():
-            requirements_dest = temp_dir / "requirements.txt"
-            shutil.copy2(requirements_src, requirements_dest)
-            log("Copied requirements.txt", "INFO")
-        
-        return True
-    except Exception as e:
-        log(f"Error copying DXT files: {e}", "ERROR")
-        return False
+        # macOS/Linux install script
+        unix_script = '''#!/bin/bash
+echo "Installing Music21 MCP Server..."
+echo
 
+# Check Python version
+if ! command -v python3 &> /dev/null; then
+    echo "ERROR: Python 3 is not installed!"
+    echo "Please install Python 3.9 or later"
+    exit 1
+fi
 
-def create_dxt_package(temp_dir: Path, output_file: Path, manifest: dict):
-    """Create the final .dxt package (ZIP file)"""
-    try:
-        with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Walk through all files in temp directory
-            for root, dirs, files in os.walk(temp_dir):
+# Install dependencies
+echo "Installing dependencies..."
+pip3 install -r requirements.txt
+
+# Configure music21
+echo "Configuring music21 corpus..."
+python3 -c "from music21 import corpus; corpus.cacheMetadata()"
+
+echo
+echo "✅ Installation complete!"
+echo "The Music21 MCP Server is ready to use with Claude Desktop."
+'''
+        
+        # Save scripts
+        win_path = self.dxt_dir / "scripts" / "install_windows.bat"
+        with open(win_path, 'w') as f:
+            f.write(windows_script)
+        
+        unix_path = self.dxt_dir / "scripts" / "install_unix.sh"
+        with open(unix_path, 'w') as f:
+            f.write(unix_script)
+        os.chmod(unix_path, 0o755)
+    
+    def _bundle_dependencies(self):
+        """Bundle critical dependencies"""
+        print("📚 Bundling dependencies...")
+        
+        # Copy workflow templates
+        docs_src = self.root_dir / "docs" / "WORKFLOW_TEMPLATES.md"
+        if docs_src.exists():
+            shutil.copy2(docs_src, self.dxt_dir / "WORKFLOWS.md")
+        
+        # Copy examples
+        examples_dir = self.root_dir / "examples"
+        if examples_dir.exists():
+            dest_examples = self.dxt_dir / "examples"
+            dest_examples.mkdir(exist_ok=True)
+            for example in examples_dir.glob("*.py"):
+                if example.name in ["basic_usage.py", "simple_example.py"]:
+                    shutil.copy2(example, dest_examples)
+    
+    def _create_config_templates(self):
+        """Create configuration templates"""
+        print("⚙️ Creating configuration templates...")
+        
+        # Claude Desktop configuration
+        claude_config = {
+            "mcpServers": {
+                "music21": {
+                    "command": "python",
+                    "args": ["-m", "music21_mcp.server_minimal"],
+                    "env": {
+                        "PYTHONPATH": "${extension_dir}/server/src"
+                    }
+                }
+            }
+        }
+        
+        config_path = self.dxt_dir / "config" / "claude_desktop.json"
+        with open(config_path, 'w') as f:
+            json.dump(claude_config, f, indent=2)
+        
+        # VS Code configuration
+        vscode_config = {
+            "mcp.servers": {
+                "music21": {
+                    "command": "python",
+                    "args": ["-m", "music21_mcp.server_minimal"],
+                    "cwd": "${extension_dir}/server"
+                }
+            }
+        }
+        
+        vscode_path = self.dxt_dir / "config" / "vscode.json"
+        with open(vscode_path, 'w') as f:
+            json.dump(vscode_config, f, indent=2)
+    
+    def _create_package(self) -> Path:
+        """Create the final .dxt package"""
+        print("\n📦 Creating .dxt package...")
+        
+        package_name = f"music21-mcp-server-{self.version}.dxt"
+        package_path = self.dist_dir / package_name
+        
+        # Create ZIP archive with .dxt extension
+        with zipfile.ZipFile(package_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # Add all files from dxt directory
+            for root, dirs, files in os.walk(self.dxt_dir):
                 for file in files:
                     file_path = Path(root) / file
-                    # Get relative path from temp_dir
-                    arc_name = file_path.relative_to(temp_dir)
-                    zipf.write(file_path, arc_name)
-                    
-            log(f"Created DXT package: {output_file}", "INFO")
-            
-            # Print package info
-            file_size = output_file.stat().st_size
-            file_size_mb = file_size / (1024 * 1024)
-            log(f"Package size: {file_size_mb:.2f} MB", "INFO")
-            
-        return True
-    except Exception as e:
-        log(f"Error creating DXT package: {e}", "ERROR")
-        return False
-
-
-def generate_package_info(output_file: Path, manifest: dict):
-    """Generate information about the created package"""
-    info = {
-        "package_name": output_file.name,
-        "package_path": str(output_file.absolute()),
-        "package_size_bytes": output_file.stat().st_size,
-        "package_size_mb": round(output_file.stat().st_size / (1024 * 1024), 2),
-        "created_at": datetime.now().isoformat(),
-        "extension_info": {
-            "name": manifest.get("name"),
-            "display_name": manifest.get("display_name"),
-            "version": manifest.get("version"),
-            "description": manifest.get("description"),
-            "author": manifest.get("author", {}).get("name"),
-            "tools_count": len(manifest.get("tools", [])),
-        }
-    }
-    
-    info_file = output_file.with_suffix(".info.json")
-    with open(info_file, 'w') as f:
-        json.dump(info, f, indent=2)
-    
-    log(f"Package info saved to: {info_file}", "INFO")
-    return info
-
-
-def main():
-    """Main build process"""
-    log("Starting Music21 MCP Server DXT build process...", "INFO")
-    
-    # Get project root directory
-    project_root = Path(__file__).parent.absolute()
-    log(f"Project root: {project_root}", "INFO")
-    
-    # Paths
-    dxt_dir = project_root / "dxt"
-    manifest_path = dxt_dir / "manifest.json"
-    
-    # Validate manifest
-    if not manifest_path.exists():
-        log(f"Manifest not found: {manifest_path}", "ERROR")
-        sys.exit(1)
-    
-    valid, manifest = validate_manifest(manifest_path)
-    if not valid:
-        log("Manifest validation failed", "ERROR")
-        sys.exit(1)
-    
-    # Create output directory
-    output_dir = project_root / "dist"
-    output_dir.mkdir(exist_ok=True)
-    
-    # Generate output filename
-    name = manifest["name"]
-    version = manifest["version"]
-    output_file = output_dir / f"{name}-{version}.dxt"
-    
-    # Remove existing package if it exists
-    if output_file.exists():
-        output_file.unlink()
-        log(f"Removed existing package: {output_file}", "INFO")
-    
-    # Create temporary build directory
-    with tempfile.TemporaryDirectory() as temp_dir_str:
-        temp_dir = Path(temp_dir_str)
-        log(f"Using temporary directory: {temp_dir}", "INFO")
+                    arcname = file_path.relative_to(self.dxt_dir)
+                    zf.write(file_path, arcname)
         
-        # Copy all necessary files
-        if not copy_source_files(project_root, temp_dir):
-            log("Failed to copy source files", "ERROR")
-            sys.exit(1)
+        # Create checksum
+        self._create_checksum(package_path)
         
-        if not copy_dxt_files(dxt_dir, temp_dir):
-            log("Failed to copy DXT files", "ERROR")
-            sys.exit(1)
-        
-        if not create_assets(temp_dir):
-            log("Failed to create assets", "ERROR")
-            sys.exit(1)
-        
-        # Create the DXT package
-        if not create_dxt_package(temp_dir, output_file, manifest):
-            log("Failed to create DXT package", "ERROR")
-            sys.exit(1)
+        return package_path
     
-    # Generate package information
-    package_info = generate_package_info(output_file, manifest)
-    
-    # Print success message
-    print("\n" + "="*60)
-    print("🎉 DXT Package Build Successful!")
-    print("="*60)
-    print(f"📦 Package: {output_file.name}")
-    print(f"📂 Location: {output_file.parent}")
-    print(f"📏 Size: {package_info['package_size_mb']} MB")
-    print(f"🎵 Extension: {manifest['display_name']} v{manifest['version']}")
-    print(f"🛠️  Tools: {len(manifest.get('tools', []))} available")
-    print()
-    print("📋 Installation Instructions:")
-    print("1. Double-click the .dxt file to install")
-    print("2. OR drag and drop it onto Claude Desktop")
-    print("3. OR use the Claude Desktop extension manager")
-    print()
-    print("🔗 Share this file with users for one-click installation!")
-    print("="*60)
+    def _create_checksum(self, package_path: Path):
+        """Create SHA256 checksum for the package"""
+        import hashlib
+        
+        sha256 = hashlib.sha256()
+        with open(package_path, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b''):
+                sha256.update(chunk)
+        
+        checksum_path = package_path.with_suffix('.sha256')
+        with open(checksum_path, 'w') as f:
+            f.write(f"{sha256.hexdigest()}  {package_path.name}\n")
+        
+        print(f"📝 Checksum: {sha256.hexdigest()[:16]}...")
 
 
 if __name__ == "__main__":
-    main()
+    builder = DesktopExtensionBuilder()
+    try:
+        package_path = builder.build()
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n❌ Build failed: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

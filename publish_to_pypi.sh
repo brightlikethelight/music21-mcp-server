@@ -23,9 +23,25 @@ fi
 # Function to check package validity
 check_packages() {
     echo "📦 Checking package validity..."
+    
+    # Check if packages exist
+    if [ ! -f dist/*.whl ] || [ ! -f dist/*.tar.gz ]; then
+        echo "❌ Error: Missing package files. Expected .whl and .tar.gz files in dist/"
+        echo "   Run 'python -m build' to create packages."
+        exit 1
+    fi
+    
+    # Validate with twine
     python -m twine check dist/*
     if [ $? -eq 0 ]; then
         echo "✅ Package validation passed!"
+        
+        # Show package info
+        echo ""
+        echo "📋 Package Information:"
+        for file in dist/*; do
+            echo "   📦 $(basename "$file") ($(du -h "$file" | cut -f1))"
+        done
     else
         echo "❌ Package validation failed. Fix issues before publishing."
         exit 1

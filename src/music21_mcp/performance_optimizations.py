@@ -343,9 +343,10 @@ def cached_analysis(cache_attr: str, key_func=None):
         async def wrapper(self, *args, **kwargs):
             # Generate cache key
             if key_func:
-                cache_key = key_func(*args, **kwargs)
+                # Include self in the arguments for key generation
+                cache_key = key_func(self, *args, **kwargs)
             else:
-                # Simple key based on args
+                # Simple key based on args (excluding self)
                 cache_key = f"{func.__name__}:{str(args)}:{str(kwargs)}"
 
             # Get cache

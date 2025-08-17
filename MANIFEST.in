@@ -1,0 +1,57 @@
+# Include essential documentation files
+include README.md
+include CHANGELOG.md
+include LICENSE
+include SECURITY.md
+
+# Include configuration files
+include pyproject.toml
+include pytest.ini
+include requirements.txt
+
+# Include MCP-specific configuration
+include mcp.json
+
+# Include example files and documentation
+recursive-include examples *.py *.md
+recursive-include docs *.md *.txt
+
+# Include test data for corpus examples (but exclude actual test files)
+include test_corpus/imslp/corpus_metadata.json
+
+# Include scripts directory
+recursive-include scripts *.py *.sh
+
+# Exclude unwanted files
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude .pytest_cache
+global-exclude *.so
+global-exclude .DS_Store
+global-exclude .coverage
+global-exclude htmlcov
+global-exclude dist
+global-exclude build
+global-exclude *.egg-info
+
+# Exclude development and testing files
+exclude test_*.py
+exclude *_test.py
+recursive-exclude tests *
+exclude coverage.xml
+exclude bandit-results.json
+exclude pip-audit-results.json
+exclude .github
+exclude .gitignore
+exclude poetry.lock
+exclude uv.lock
+
+# Exclude DXT build artifacts
+exclude build_dxt.py
+recursive-exclude dxt *
+
+# Exclude performance testing and investigation files
+exclude performance_*.py
+exclude memory_profiler.py
+exclude http_performance_test.py
+exclude deep_performance_profiler.py
