@@ -62,8 +62,9 @@ class ScoreStorage(MutableMapping):
         self._cleanup_runs = 0
         self._memory_warnings = 0
 
-        # Start background cleanup
+        # Background thread management
         self._cleanup_thread = None
+        self._shutdown_event = threading.Event()
         self._start_cleanup_thread()
 
         logger.info(
@@ -220,14 +221,25 @@ class ScoreStorage(MutableMapping):
         self.cleanup()
 
     def _start_cleanup_thread(self) -> None:
-        """Start background cleanup thread"""
+        """Start background cleanup thread with proper shutdown mechanism"""
         def cleanup_worker():
-            while True:
+            logger.debug("Cleanup worker thread started")
+            while not self._shutdown_event.is_set():
                 try:
-                    time.sleep(self.cleanup_interval)
-                    self.cleanup()
+                    # Use wait() instead of sleep() to allow immediate shutdown
+                    if self._shutdown_event.wait(timeout=self.cleanup_interval):
+                        # Shutdown event was set, exit
+                        break
+                    
+                    # Perform cleanup if not shutting down
+                    if not self._shutdown_event.is_set():
+                        self.cleanup()
+                        
                 except Exception as e:
                     logger.error(f"Error in cleanup thread: {e}")
+                    # Continue running even if cleanup fails
+                    
+            logger.debug("Cleanup worker thread exiting")
 
         self._cleanup_thread = threading.Thread(
             target=cleanup_worker,
@@ -236,6 +248,35 @@ class ScoreStorage(MutableMapping):
         )
         self._cleanup_thread.start()
         logger.debug("Background cleanup thread started")
+
+    def shutdown(self) -> None:
+        """Gracefully shutdown the background cleanup thread"""
+        if self._shutdown_event and not self._shutdown_event.is_set():
+            logger.debug("Initiating ScoreStorage shutdown")
+            self._shutdown_event.set()
+            
+            # Wait for cleanup thread to finish with timeout
+            if self._cleanup_thread and self._cleanup_thread.is_alive():
+                self._cleanup_thread.join(timeout=5.0)
+                if self._cleanup_thread.is_alive():
+                    logger.warning("Cleanup thread did not shutdown within timeout")
+                else:
+                    logger.debug("Cleanup thread shutdown completed")
+                    
+            # Final cleanup
+            try:
+                self.cleanup()
+                logger.info("ScoreStorage shutdown completed")
+            except Exception as e:
+                logger.error(f"Error during final cleanup: {e}")
+
+    def __del__(self):
+        """Ensure cleanup thread is shutdown when object is destroyed"""
+        try:
+            self.shutdown()
+        except Exception:
+            # Ignore errors during destruction
+            pass
 
 
 class ResourceManager:
@@ -263,6 +304,24 @@ class ResourceManager:
         )
 
         logger.info(f"ResourceManager initialized with {max_memory_mb}MB limit")
+
+    def shutdown(self) -> None:
+        """Gracefully shutdown the resource manager and all its components"""
+        logger.info("Shutting down ResourceManager")
+        try:
+            # Shutdown score storage (which shuts down its cleanup thread)
+            self.scores.shutdown()
+            logger.info("ResourceManager shutdown completed")
+        except Exception as e:
+            logger.error(f"Error during ResourceManager shutdown: {e}")
+
+    def __del__(self):
+        """Ensure proper cleanup when ResourceManager is destroyed"""
+        try:
+            self.shutdown()
+        except Exception:
+            # Ignore errors during destruction
+            pass
 
     def get_system_stats(self) -> dict[str, Any]:
         """Get comprehensive system resource statistics"""

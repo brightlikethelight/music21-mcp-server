@@ -3,16 +3,21 @@ Base class for all music21 MCP tools
 Provides common functionality and interface contracts with proper async execution
 """
 
+import asyncio
 import logging
+import os
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Optional
 
 from ..async_executor import AsyncProgressReporter, run_in_thread
 
 logger = logging.getLogger(__name__)
+
+# Default timeout for tool operations (configurable via environment)
+DEFAULT_TOOL_TIMEOUT = int(os.getenv("MUSIC21_TOOL_TIMEOUT", "30"))
 
 
 class BaseTool(ABC):
@@ -24,11 +29,18 @@ class BaseTool(ABC):
     - Memory-efficient processing
     """
 
-    def __init__(self, score_manager: dict[str, Any]):
-        """Initialize with reference to score manager"""
+    def __init__(self, score_manager: dict[str, Any], timeout: Optional[float] = None):
+        """
+        Initialize with reference to score manager
+        
+        Args:
+            score_manager: Dictionary containing music scores
+            timeout: Default timeout for this tool's operations (defaults to DEFAULT_TOOL_TIMEOUT)
+        """
         self.score_manager = score_manager
         self._progress_callback: Callable | None = None
         self._progress_reporter = AsyncProgressReporter()
+        self.timeout = timeout or DEFAULT_TOOL_TIMEOUT
 
     @property
     def scores(self) -> dict[str, Any]:
@@ -38,7 +50,7 @@ class BaseTool(ABC):
     @abstractmethod
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """
-        Execute the tool operation
+        Execute the tool operation with timeout protection
 
         Returns:
             Dict with at minimum:
@@ -47,6 +59,33 @@ class BaseTool(ABC):
             - Additional tool-specific fields
         """
         pass
+
+    async def execute_with_timeout(self, timeout: Optional[float] = None, **kwargs: Any) -> dict[str, Any]:
+        """
+        Execute the tool operation with specified timeout
+        
+        Args:
+            timeout: Timeout in seconds (uses tool's default if not specified)
+            **kwargs: Arguments passed to execute method
+            
+        Returns:
+            Dict with execution results or timeout error
+        """
+        operation_timeout = timeout or self.timeout
+        
+        try:
+            return await asyncio.wait_for(self.execute(**kwargs), timeout=operation_timeout)
+        except asyncio.TimeoutError:
+            error_msg = (
+                f"Tool operation timed out after {operation_timeout} seconds. "
+                f"The operation took too long to complete, possibly due to "
+                f"complex music analysis or high computational load."
+            )
+            logger.error(f"Tool {self.__class__.__name__} timed out: {error_msg}")
+            return self.create_error_response(
+                message=error_msg,
+                details={"timeout_seconds": operation_timeout, "tool": self.__class__.__name__}
+            )
 
     @abstractmethod
     def validate_inputs(self, **kwargs: Any) -> str | None:
@@ -71,44 +110,55 @@ class BaseTool(ABC):
 
     # === Async Execution Helpers ===
 
-    async def run_music21_operation(self, func: Callable, *args, **kwargs) -> Any:
+    async def run_music21_operation(self, func: Callable, *args, timeout: Optional[float] = None, **kwargs) -> Any:
         """
-        Run a music21 operation asynchronously in a background thread
+        Run a music21 operation asynchronously in a background thread with timeout
 
         This prevents blocking the event loop during CPU-intensive operations.
 
         Args:
             func: The music21 function to run
             *args: Positional arguments
+            timeout: Timeout in seconds (uses tool's default if not specified)
             **kwargs: Keyword arguments
 
         Returns:
             The result of the function
+            
+        Raises:
+            asyncio.TimeoutError: If operation exceeds timeout
         """
-        return await run_in_thread(func, *args, **kwargs)
+        operation_timeout = timeout or self.timeout
+        return await run_in_thread(func, *args, timeout=operation_timeout, **kwargs)
 
     async def run_with_progress(self,
                               func: Callable,
                               progress_start: float = 0.0,
                               progress_end: float = 1.0,
                               message: str = "Processing...",
+                              timeout: Optional[float] = None,
                               *args, **kwargs) -> Any:
         """
-        Run a function with progress reporting
+        Run a function with progress reporting and timeout
 
         Args:
             func: The function to run
             progress_start: Starting progress value (0.0-1.0)
             progress_end: Ending progress value (0.0-1.0)
             message: Message to display during execution
+            timeout: Timeout in seconds (uses tool's default if not specified)
             *args: Function arguments
             **kwargs: Function keyword arguments
 
         Returns:
             Function result
+            
+        Raises:
+            asyncio.TimeoutError: If operation exceeds timeout
         """
+        operation_timeout = timeout or self.timeout
         return await self._progress_reporter.run_with_progress(
-            func, progress_start, progress_end, message, *args, **kwargs
+            func, progress_start, progress_end, message, operation_timeout, *args, **kwargs
         )
 
     @contextmanager

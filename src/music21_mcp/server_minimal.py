@@ -120,6 +120,24 @@ async def pattern_recognition(score_id: str, pattern_type: str = "melodic"):
     return await mcp_adapter.pattern_recognition(score_id, pattern_type)
 
 
+@mcp.tool()
+async def harmonize_melody(score_id: str, style: str = "classical", voice_parts: int = 4):
+    """Generate harmonization for a melody in various styles (classical, jazz, pop, modal)"""
+    return await mcp_adapter.harmonize_melody(score_id, style, voice_parts)
+
+
+@mcp.tool()
+async def generate_counterpoint(score_id: str, species: int = 1, voice_position: str = "above"):
+    """Generate species counterpoint (1=note-against-note, 2=2:1, 3=3:1, 4=syncopated, 5=florid)"""
+    return await mcp_adapter.generate_counterpoint(score_id, species, voice_position)
+
+
+@mcp.tool()
+async def imitate_style(score_id: str = None, composer: str = None, generation_length: int = 16, complexity: str = "medium"):
+    """Generate music imitating a specific composer style (bach, mozart, chopin, debussy) or analyze score for style"""
+    return await mcp_adapter.imitate_style(score_id, composer, generation_length, complexity)
+
+
 # Additional tools available through adapter but simplified for MCP
 @mcp.tool()
 async def health_check():
@@ -177,7 +195,7 @@ def main():
         return
 
     logger.info("🎵 Music21 MCP Server - Minimal Implementation")
-    logger.info("📊 13 music analysis tools available")
+    logger.info("📊 16 music analysis and generation tools available")
     logger.info("🚀 Starting server...")
 
     try:

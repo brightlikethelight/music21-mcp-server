@@ -303,8 +303,6 @@ async def main():
     print("This will demonstrate the core functionality.")
     print()
     
-    input("Press Enter to start the demonstration...")
-    
     success = await example.run_complete_example()
     
     if not success:

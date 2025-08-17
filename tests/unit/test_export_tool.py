@@ -118,7 +118,7 @@ class TestExportScoreTool:
         )
 
         assert result["status"] == "error"
-        assert "failed" in result["message"].lower()
+        assert "outside allowed directories" in result["message"]
 
     @pytest.mark.asyncio
     async def test_export_all_supported_formats(self, populated_score_storage):

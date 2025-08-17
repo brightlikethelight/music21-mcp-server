@@ -7,6 +7,7 @@ Provides REST API access to music21 functionality when MCP fails.
 Completely independent of MCP protocol concerns.
 """
 
+import asyncio
 import builtins
 import contextlib
 import os
@@ -19,6 +20,12 @@ from pydantic import BaseModel
 
 from ..services import MusicAnalysisService
 
+# Security constants
+MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB limit for file uploads
+
+# Timeout constants
+HTTP_REQUEST_TIMEOUT = 60.0  # 60 seconds for HTTP operations
+UPLOAD_TIMEOUT = 120.0  # 2 minutes for file uploads
 
 # Request/Response Models
 class ImportRequest(BaseModel):
@@ -64,6 +71,30 @@ class HTTPAdapter:
         )
         self._setup_routes()
 
+    async def _with_timeout(self, coro, timeout: float = HTTP_REQUEST_TIMEOUT):
+        """
+        Wrapper to apply timeout to async operations with graceful error handling
+        
+        Args:
+            coro: The coroutine to execute
+            timeout: Timeout in seconds
+            
+        Returns:
+            Result of the coroutine
+            
+        Raises:
+            HTTPException: 504 Gateway Timeout if operation exceeds timeout
+        """
+        try:
+            return await asyncio.wait_for(coro, timeout=timeout)
+        except asyncio.TimeoutError:
+            raise HTTPException(
+                status_code=504,
+                detail=f"Operation timed out after {timeout} seconds. "
+                       "The request took too long to process, possibly due to "
+                       "complex music analysis or high server load."
+            )
+
     def _setup_routes(self):
         """Setup FastAPI routes"""
 
@@ -94,8 +125,10 @@ class HTTPAdapter:
         async def import_score(request: ImportRequest):
             """Import a score from various sources"""
             try:
-                result = await self.core_service.import_score(
-                    request.score_id, request.source, request.source_type
+                result = await self._with_timeout(
+                    self.core_service.import_score(
+                        request.score_id, request.source, request.source_type
+                    )
                 )
                 return JSONResponse(content=result)
             except Exception as e:
@@ -105,17 +138,25 @@ class HTTPAdapter:
         async def upload_score(score_id: str, file: UploadFile = File(...)):
             """Upload and import a score file"""
             try:
+                # Check file size before processing
+                content = await file.read()
+                if len(content) > MAX_FILE_SIZE:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB"
+                    )
+                
                 # Save uploaded file temporarily
                 with tempfile.NamedTemporaryFile(
                     delete=False, suffix=Path(file.filename or "").suffix
                 ) as tmp:
-                    content = await file.read()
                     tmp.write(content)
                     tmp_path = tmp.name
 
-                # Import from temporary file
-                result = await self.core_service.import_score(
-                    score_id, tmp_path, "file"
+                # Import from temporary file with longer timeout for file uploads
+                result = await self._with_timeout(
+                    self.core_service.import_score(score_id, tmp_path, "file"),
+                    timeout=UPLOAD_TIMEOUT
                 )
 
                 # Cleanup
@@ -171,7 +212,9 @@ class HTTPAdapter:
         async def analyze_key(request: AnalysisRequest):
             """Analyze the key signature of a score"""
             try:
-                result = await self.core_service.analyze_key(request.score_id)
+                result = await self._with_timeout(
+                    self.core_service.analyze_key(request.score_id)
+                )
                 return JSONResponse(content=result)
             except Exception as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
@@ -180,7 +223,9 @@ class HTTPAdapter:
         async def analyze_chords(request: AnalysisRequest):
             """Analyze chord progressions in a score"""
             try:
-                result = await self.core_service.analyze_chords(request.score_id)
+                result = await self._with_timeout(
+                    self.core_service.analyze_chords(request.score_id)
+                )
                 return JSONResponse(content=result)
             except Exception as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
@@ -189,8 +234,10 @@ class HTTPAdapter:
         async def analyze_harmony(request: HarmonyAnalysisRequest):
             """Perform harmony analysis"""
             try:
-                result = await self.core_service.analyze_harmony(
-                    request.score_id, request.analysis_type
+                result = await self._with_timeout(
+                    self.core_service.analyze_harmony(
+                        request.score_id, request.analysis_type
+                    )
                 )
                 return JSONResponse(content=result)
             except Exception as e:
@@ -200,7 +247,9 @@ class HTTPAdapter:
         async def analyze_voice_leading(request: AnalysisRequest):
             """Analyze voice leading quality"""
             try:
-                result = await self.core_service.analyze_voice_leading(request.score_id)
+                result = await self._with_timeout(
+                    self.core_service.analyze_voice_leading(request.score_id)
+                )
                 return JSONResponse(content=result)
             except Exception as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
@@ -209,8 +258,10 @@ class HTTPAdapter:
         async def recognize_patterns(request: PatternRequest):
             """Recognize musical patterns"""
             try:
-                result = await self.core_service.recognize_patterns(
-                    request.score_id, request.pattern_type
+                result = await self._with_timeout(
+                    self.core_service.recognize_patterns(
+                        request.score_id, request.pattern_type
+                    )
                 )
                 return JSONResponse(content=result)
             except Exception as e:
@@ -247,9 +298,11 @@ if __name__ == "__main__":
     app = create_http_server()
 
     # Get host and port from environment variables with defaults
-    host = os.getenv("MUSIC21_MCP_HOST", "0.0.0.0")
+    # SECURITY: Default to localhost only. Set MUSIC21_MCP_HOST=0.0.0.0 to bind to all interfaces
+    # WARNING: Binding to 0.0.0.0 exposes the service to external network access
+    host = os.getenv("MUSIC21_MCP_HOST", "127.0.0.1")
     port = int(os.getenv("MUSIC21_MCP_PORT", "8000"))
-    display_host = "localhost" if host == "0.0.0.0" else host
+    display_host = "localhost" if host in ["0.0.0.0", "127.0.0.1"] else host
 
     print("🎵 Music21 HTTP API Server")
     print("📊 REST API alternative to MCP protocol")

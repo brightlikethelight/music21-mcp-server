@@ -19,32 +19,39 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 class TestBaseTool:
     """Test base_tool.py for easy coverage wins"""
+    
+    def create_test_tool(self, storage=None):
+        """Create a concrete BaseTool implementation for testing"""
+        from music21_mcp.tools.base_tool import BaseTool
+        
+        class TestTool(BaseTool):
+            async def execute(self, **kwargs):
+                return {"status": "success"}
+            
+            def validate_inputs(self, **kwargs):
+                return None
+        
+        return TestTool(storage or {})
 
     def test_base_tool_initialization(self):
         """Test BaseTool initialization"""
-        from music21_mcp.tools.base_tool import BaseTool
-        
         storage = {}
-        tool = BaseTool(storage)
+        tool = self.create_test_tool(storage)
         
         assert tool.score_storage is storage
         assert hasattr(tool, 'tool_name')
 
     def test_base_tool_logging(self):
         """Test BaseTool logging functionality"""
-        from music21_mcp.tools.base_tool import BaseTool
-        
-        tool = BaseTool({})
+        tool = self.create_test_tool()
         
         # Test logger exists
         assert hasattr(tool, 'logger')
-        assert tool.logger.name.endswith('BaseTool')
+        assert 'TestTool' in tool.logger.name
 
     def test_base_tool_error_handling_context(self):
         """Test BaseTool error handling context manager"""
-        from music21_mcp.tools.base_tool import BaseTool
-        
-        tool = BaseTool({})
+        tool = self.create_test_tool()
         
         # Test successful operation
         with tool.error_handling("test operation"):
@@ -57,9 +64,7 @@ class TestBaseTool:
 
     def test_base_tool_create_error_response(self):
         """Test BaseTool error response creation"""
-        from music21_mcp.tools.base_tool import BaseTool
-        
-        tool = BaseTool({})
+        tool = self.create_test_tool()
         
         error_response = tool.create_error_response("Test error message")
         
@@ -70,9 +75,7 @@ class TestBaseTool:
 
     def test_base_tool_create_success_response(self):
         """Test BaseTool success response creation"""
-        from music21_mcp.tools.base_tool import BaseTool
-        
-        tool = BaseTool({})
+        tool = self.create_test_tool()
         
         test_data = {"key": "value", "number": 42}
         success_response = tool.create_success_response(test_data)
@@ -84,9 +87,7 @@ class TestBaseTool:
 
     def test_base_tool_validate_inputs_basic(self):
         """Test BaseTool basic input validation"""
-        from music21_mcp.tools.base_tool import BaseTool
-        
-        tool = BaseTool({})
+        tool = self.create_test_tool()
         
         # Test with valid inputs
         error = tool.validate_inputs(score_id="test", source="test_source")
@@ -124,7 +125,7 @@ class TestBaseTool:
         mock_metadata.composer = "Test Composer"
         mock_score.metadata = mock_metadata
         
-        tool = BaseTool({})
+        tool = self.create_test_tool()
         metadata = tool.get_score_metadata(mock_score)
         
         assert "title" in metadata
@@ -140,7 +141,7 @@ class TestBaseTool:
         mock_score = Mock()
         mock_score.metadata = None
         
-        tool = BaseTool({})
+        tool = self.create_test_tool()
         metadata = tool.get_score_metadata(mock_score)
         
         assert isinstance(metadata, dict)

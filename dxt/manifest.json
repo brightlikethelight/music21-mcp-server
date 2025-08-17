@@ -1,0 +1,189 @@
+{
+  "dxt_version": "0.1",
+  "name": "music21-mcp-server",
+  "display_name": "Music21 Analysis Server",
+  "version": "1.0.0",
+  "description": "Professional music analysis server providing comprehensive MCP tools for music theory, composition, and analysis using the music21 library.",
+  "long_description": "# Music21 Analysis Server\n\nA comprehensive Model Context Protocol (MCP) server that provides professional music analysis and composition tools. Built on the powerful music21 library, this extension offers:\n\n## Features\n- **13 Analysis Tools**: Key analysis, harmony analysis, chord progressions, voice leading\n- **Advanced Composition**: Harmonization, counterpoint generation, style imitation\n- **Multiple Formats**: Import/export MusicXML, MIDI, ABC notation, LilyPond\n- **Research Grade**: Based on MIT's music21 library used in academic research\n- **Zero Configuration**: Works immediately after installation\n\n## Available Tools\n- Import & Export scores (MusicXML, MIDI, ABC, corpus)\n- Key signature analysis with multiple algorithms\n- Roman numeral harmony analysis\n- Chord progression identification\n- Voice leading analysis\n- Pattern recognition (melodic, rhythmic, harmonic)\n- Bach-style harmonization\n- Species counterpoint generation\n- Composer style imitation\n- Score information and metadata\n\nPerfect for music students, composers, researchers, and anyone working with musical data in Claude Desktop.",
+  "author": {
+    "name": "Bright Liu",
+    "email": "brightliu@college.harvard.edu",
+    "url": "https://github.com/brightlikethelight"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/brightlikethelight/music21-mcp-server",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brightlikethelight/music21-mcp-server.git"
+  },
+  "documentation": "https://github.com/brightlikethelight/music21-mcp-server/blob/main/README.md",
+  "support": "https://github.com/brightlikethelight/music21-mcp-server/issues",
+  "keywords": ["music", "analysis", "composition", "music21", "theory", "harmony", "counterpoint", "midi", "musicxml"],
+  "icon": "assets/music21-icon.png",
+  "screenshots": [
+    "assets/screenshots/analysis-demo.png",
+    "assets/screenshots/harmonization-demo.png"
+  ],
+  "server": {
+    "type": "python",
+    "entry_point": "src/music21_mcp/server_minimal.py",
+    "mcp_config": {
+      "command": "python",
+      "args": [
+        "${__dirname}/src/music21_mcp/server_minimal.py"
+      ],
+      "env": {
+        "PYTHONPATH": "${__dirname}/src"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "import_score",
+      "description": "Import musical scores from various sources (MusicXML, MIDI, ABC, corpus)",
+      "parameters": ["score_id", "source", "source_type"]
+    },
+    {
+      "name": "list_scores",
+      "description": "List all available musical scores in the workspace",
+      "parameters": []
+    },
+    {
+      "name": "score_info",
+      "description": "Get detailed information about a musical score including metadata and structure",
+      "parameters": ["score_id"]
+    },
+    {
+      "name": "export_score",
+      "description": "Export musical scores to various formats (MusicXML, MIDI, ABC, LilyPond)",
+      "parameters": ["score_id", "format"]
+    },
+    {
+      "name": "delete_score",
+      "description": "Remove a musical score from the workspace",
+      "parameters": ["score_id"]
+    },
+    {
+      "name": "key_analysis",
+      "description": "Analyze the key signature and tonal center of a musical score",
+      "parameters": ["score_id"]
+    },
+    {
+      "name": "chord_analysis",
+      "description": "Analyze chord progressions and harmonic content in a musical score",
+      "parameters": ["score_id"]
+    },
+    {
+      "name": "harmony_analysis",
+      "description": "Perform Roman numeral or functional harmony analysis",
+      "parameters": ["score_id", "analysis_type"]
+    },
+    {
+      "name": "voice_leading_analysis",
+      "description": "Analyze voice leading patterns, parallel motion, and voice crossings",
+      "parameters": ["score_id"]
+    },
+    {
+      "name": "pattern_recognition",
+      "description": "Recognize melodic, rhythmic, or harmonic patterns in musical scores",
+      "parameters": ["score_id", "pattern_type"]
+    },
+    {
+      "name": "harmonize_melody",
+      "description": "Generate harmonization for melodies in various styles (classical, jazz, pop)",
+      "parameters": ["score_id", "style", "voice_parts"]
+    },
+    {
+      "name": "generate_counterpoint",
+      "description": "Generate species counterpoint following traditional rules",
+      "parameters": ["score_id", "species", "voice_position"]
+    },
+    {
+      "name": "imitate_style",
+      "description": "Generate music imitating specific composer styles or analyze existing styles",
+      "parameters": ["score_id", "composer", "generation_length", "complexity"]
+    },
+    {
+      "name": "health_check",
+      "description": "Check server health and verify all tools are functioning",
+      "parameters": []
+    }
+  ],
+  "configuration": [
+    {
+      "key": "music21_corpus_path",
+      "name": "Music21 Corpus Directory",
+      "description": "Path to the music21 corpus directory for accessing built-in musical examples",
+      "type": "directory",
+      "required": false,
+      "default": "~/.music21"
+    },
+    {
+      "key": "output_directory",
+      "name": "Output Directory",
+      "description": "Directory where exported musical files will be saved",
+      "type": "directory",
+      "required": false,
+      "default": "~/Music/music21-exports"
+    },
+    {
+      "key": "cache_enabled",
+      "name": "Enable Caching",
+      "description": "Enable caching of analysis results for improved performance",
+      "type": "boolean",
+      "required": false,
+      "default": true
+    },
+    {
+      "key": "log_level",
+      "name": "Log Level",
+      "description": "Set the logging level for the server",
+      "type": "string",
+      "required": false,
+      "default": "INFO",
+      "options": ["DEBUG", "INFO", "WARNING", "ERROR"]
+    }
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.7.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "python": ">=3.10"
+  },
+  "dependencies": {
+    "python_packages": [
+      "music21>=9.1.0",
+      "mcp>=1.11.0",
+      "fastmcp==2.9.0",
+      "numpy>=1.24.0",
+      "scipy>=1.11.0",
+      "matplotlib>=3.7.0",
+      "pillow>=10.0.0",
+      "pydantic>=2.11.0",
+      "aiofiles>=23.0.0",
+      "httpx>=0.28.0",
+      "requests>=2.32.4",
+      "cachetools>=5.3.0",
+      "python-dotenv>=1.0.0",
+      "psutil>=5.9.0",
+      "bleach>=6.1.0",
+      "pathvalidate>=3.2.0"
+    ],
+    "system_requirements": {
+      "disk_space": "500MB",
+      "memory": "256MB"
+    }
+  },
+  "installation": {
+    "pre_install_script": "scripts/pre_install.py",
+    "post_install_script": "scripts/post_install.py",
+    "requirements_file": "requirements.txt"
+  },
+  "security": {
+    "permissions": [
+      "file_system_read",
+      "file_system_write",
+      "network_access"
+    ],
+    "sandbox": false
+  }
+}

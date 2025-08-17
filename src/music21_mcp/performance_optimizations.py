@@ -13,7 +13,8 @@ Quick wins that can reduce response times by 50-70%.
 import asyncio
 import hashlib
 import logging
-from concurrent.futures import ThreadPoolExecutor
+import os
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from functools import lru_cache, wraps
 from typing import Any
 
@@ -21,6 +22,10 @@ from cachetools import TTLCache
 from music21 import chord, key, roman
 
 logger = logging.getLogger(__name__)
+
+# Timeout constants for performance operations
+CHORD_ANALYSIS_TIMEOUT = int(os.getenv("MUSIC21_CHORD_ANALYSIS_TIMEOUT", "60"))  # 60 seconds
+BATCH_PROCESSING_TIMEOUT = int(os.getenv("MUSIC21_BATCH_TIMEOUT", "30"))  # 30 seconds per batch
 
 
 class PerformanceOptimizer:
@@ -66,7 +71,7 @@ class PerformanceOptimizer:
     def chord_hash(self, chord_obj: chord.Chord) -> str:
         """Generate stable hash for chord based on pitch content"""
         pitches = sorted([p.nameWithOctave for p in chord_obj.pitches])
-        return hashlib.md5(str(pitches).encode()).hexdigest()[:16]
+        return hashlib.md5(str(pitches).encode(), usedforsecurity=False).hexdigest()[:16]
 
     def get_cached_roman_numeral(
         self, chord_obj: chord.Chord, key_obj: key.Key
@@ -127,31 +132,57 @@ class PerformanceOptimizer:
             return None
 
     async def analyze_chords_parallel(
-        self, chords: list[chord.Chord], key_obj: key.Key, batch_size: int = 10
+        self, chords: list[chord.Chord], key_obj: key.Key, batch_size: int = 10, timeout: float = CHORD_ANALYSIS_TIMEOUT
     ) -> list[dict[str, Any]]:
-        """Analyze chords in parallel batches for better performance"""
+        """Analyze chords in parallel batches for better performance with timeout protection"""
 
         # Split into batches
         batches = [chords[i:i+batch_size] for i in range(0, len(chords), batch_size)]
 
         async def process_batch(batch: list[chord.Chord]) -> list[dict[str, Any]]:
-            """Process a batch of chords in parallel"""
+            """Process a batch of chords in parallel with timeout"""
             loop = asyncio.get_event_loop()
 
-            # Run batch processing in thread pool
-            return await loop.run_in_executor(
-                self.executor,
-                self._process_chord_batch,
-                batch,
-                key_obj
+            try:
+                # Run batch processing in thread pool with timeout
+                return await asyncio.wait_for(
+                    loop.run_in_executor(
+                        self.executor,
+                        self._process_chord_batch,
+                        batch,
+                        key_obj
+                    ),
+                    timeout=BATCH_PROCESSING_TIMEOUT
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"Chord batch processing timed out after {BATCH_PROCESSING_TIMEOUT}s, returning partial results")
+                # Return basic chord info without Roman numerals for timed-out batch
+                return [
+                    {
+                        "pitches": [str(p) for p in chord_obj.pitches],
+                        "symbol": chord_obj.pitchedCommonName,
+                        "root": str(chord_obj.root()) if chord_obj.root() else None,
+                        "quality": chord_obj.quality,
+                        "roman_numeral": "TIMEOUT",
+                        "offset": float(chord_obj.offset) if hasattr(chord_obj, "offset") else 0.0,
+                    }
+                    for chord_obj in batch
+                ]
+
+        # Process all batches in parallel with overall timeout
+        try:
+            tasks = [process_batch(batch) for batch in batches]
+            results = await asyncio.wait_for(asyncio.gather(*tasks), timeout=timeout)
+            
+            # Flatten results
+            return [item for batch in results for item in batch]
+            
+        except asyncio.TimeoutError:
+            logger.error(f"Overall chord analysis timed out after {timeout}s")
+            raise asyncio.TimeoutError(
+                f"Chord analysis operation timed out after {timeout} seconds. "
+                f"Consider reducing the number of chords or increasing the timeout."
             )
-
-        # Process all batches in parallel
-        tasks = [process_batch(batch) for batch in batches]
-        results = await asyncio.gather(*tasks)
-
-        # Flatten results
-        return [item for batch in results for item in batch]
 
     def _process_chord_batch(
         self, batch: list[chord.Chord], key_obj: key.Key
@@ -216,6 +247,24 @@ class PerformanceOptimizer:
 
         logger.info(f"Cache warmed with {warmed} common progressions")
 
+    def shutdown(self) -> None:
+        """Gracefully shutdown the performance optimizer and its thread pool"""
+        logger.info("Shutting down PerformanceOptimizer")
+        try:
+            if hasattr(self, 'executor') and self.executor:
+                self.executor.shutdown(wait=True)
+                logger.info("ThreadPoolExecutor shutdown completed")
+        except Exception as e:
+            logger.error(f"Error during PerformanceOptimizer shutdown: {e}")
+
+    def __del__(self):
+        """Ensure proper cleanup when PerformanceOptimizer is destroyed"""
+        try:
+            self.shutdown()
+        except Exception:
+            # Ignore errors during destruction
+            pass
+
 
 class OptimizedChordAnalysisTool:
     """Optimized version of ChordAnalysisTool with caching and parallelization"""
@@ -225,55 +274,65 @@ class OptimizedChordAnalysisTool:
         self.optimizer = optimizer
 
     async def analyze_chords_optimized(
-        self, score_id: str, limit: int | None = None
+        self, score_id: str, limit: int | None = None, timeout: float = CHORD_ANALYSIS_TIMEOUT
     ) -> dict[str, Any]:
-        """Optimized chord analysis with caching and parallel processing"""
+        """Optimized chord analysis with caching, parallel processing, and timeout protection"""
 
-        # Get score
-        score = self.score_manager.get(score_id)
-        if not score:
-            return {"error": f"Score '{score_id}' not found"}
+        try:
+            # Get score
+            score = self.score_manager.get(score_id)
+            if not score:
+                return {"error": f"Score '{score_id}' not found"}
 
-        # Check if we have cached results
-        score_hash = hashlib.md5(str(score).encode()).hexdigest()[:16]
-        cache_key = f"chord_analysis:{score_hash}:{limit}"
+            # Check if we have cached results
+            score_hash = hashlib.md5(str(score).encode(), usedforsecurity=False).hexdigest()[:16]
+            cache_key = f"chord_analysis:{score_hash}:{limit}"
 
-        if cache_key in self.optimizer.chord_analysis_cache:
-            logger.info(f"Chord analysis cache hit for {score_id}")
-            return self.optimizer.chord_analysis_cache[cache_key]
+            if cache_key in self.optimizer.chord_analysis_cache:
+                logger.info(f"Chord analysis cache hit for {score_id}")
+                return self.optimizer.chord_analysis_cache[cache_key]
 
-        # Perform analysis
-        start_time = asyncio.get_event_loop().time()
+            # Perform analysis with timeout
+            start_time = asyncio.get_event_loop().time()
 
-        # 1. Chordify (still expensive but unavoidable)
-        chordified = score.chordify(removeRedundantPitches=True)
-        chord_list = list(chordified.flatten().getElementsByClass(chord.Chord))
+            # 1. Chordify (still expensive but unavoidable)
+            chordified = score.chordify(removeRedundantPitches=True)
+            chord_list = list(chordified.flatten().getElementsByClass(chord.Chord))
 
-        # Apply limit if specified
-        if limit:
-            chord_list = chord_list[:limit]
+            # Apply limit if specified
+            if limit:
+                chord_list = chord_list[:limit]
 
-        # 2. Key detection (cached)
-        key_obj = score.analyze("key")
+            # 2. Key detection (cached)
+            key_obj = score.analyze("key")
 
-        # 3. Parallel chord analysis with caching
-        analyzed_chords = await self.optimizer.analyze_chords_parallel(
-            chord_list, key_obj
-        )
+            # 3. Parallel chord analysis with caching and timeout
+            analyzed_chords = await self.optimizer.analyze_chords_parallel(
+                chord_list, key_obj, timeout=timeout
+            )
 
-        # 4. Build result
-        result = {
-            "score_id": score_id,
-            "total_chords": len(analyzed_chords),
-            "chords": analyzed_chords,
-            "key": str(key_obj),
-            "analysis_time_ms": (asyncio.get_event_loop().time() - start_time) * 1000,
-        }
+            # 4. Build result
+            result = {
+                "score_id": score_id,
+                "total_chords": len(analyzed_chords),
+                "chords": analyzed_chords,
+                "key": str(key_obj),
+                "analysis_time_ms": (asyncio.get_event_loop().time() - start_time) * 1000,
+                "timeout_applied": timeout,
+            }
 
-        # Cache the result
-        self.optimizer.chord_analysis_cache[cache_key] = result
+            # Cache the result
+            self.optimizer.chord_analysis_cache[cache_key] = result
 
-        return result
+            return result
+
+        except asyncio.TimeoutError as e:
+            return {
+                "error": str(e),
+                "score_id": score_id,
+                "timeout_seconds": timeout,
+                "status": "timeout"
+            }
 
 
 # Decorator for automatic caching
@@ -318,7 +377,7 @@ class OptimizedHarmonyAnalysisTool:
         self.optimizer = optimizer
         self.cache = TTLCache(maxsize=100, ttl=3600)
 
-    @cached_analysis("cache", key_func=lambda self, score_id: f"harmony:{score_id}")
+    @cached_analysis("cache", key_func=lambda score_id: f"harmony:{score_id}")
     async def analyze_harmony_optimized(self, score_id: str) -> dict[str, Any]:
         """Optimized harmony analysis"""
         score = self.score_manager.get(score_id)

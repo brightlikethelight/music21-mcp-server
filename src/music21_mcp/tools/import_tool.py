@@ -155,13 +155,16 @@ class ImportScoreTool(BaseTool):
 
     async def _import_from_file(self, file_path: str) -> stream.Score | None:
         """Import from a file using async execution"""
-        if not os.path.exists(file_path):
+        # Validate path for security (prevent directory traversal)
+        validated_path = self._validate_safe_path(file_path)
+        
+        if not os.path.exists(validated_path):
             return None
 
         try:
             # Parse file in background thread to avoid blocking event loop
             def _parse_file():
-                return converter.parse(file_path)
+                return converter.parse(validated_path)
 
             parsed = await self.run_with_progress(
                 _parse_file,
@@ -183,7 +186,7 @@ class ImportScoreTool(BaseTool):
                 return await self.run_music21_operation(_convert_to_score)
             return None
         except Exception as e:
-            logger.error(f"Failed to parse file {file_path}: {e}")
+            logger.error(f"Failed to parse file {validated_path}: {e}")
             return None
 
     async def _import_from_corpus(self, corpus_path: str) -> stream.Score | None:
@@ -305,4 +308,37 @@ class ImportScoreTool(BaseTool):
                 return {"num_notes": 0, "num_measures": 0, "num_parts": 0, "pitch_range": 0}
 
         return await self.run_music21_operation(_extract_sync)
+
+    def _validate_safe_path(self, file_path: str) -> str:
+        """Validate path for security (prevent directory traversal)"""
+        from pathlib import Path
+        import tempfile
+        
+        # Convert to Path object and resolve
+        path = Path(file_path).resolve()
+        
+        # Get allowed directories (current working directory and temp)
+        cwd = Path.cwd().resolve()
+        temp_dir = Path(tempfile.gettempdir()).resolve()
+        
+        # Check if path is within allowed directories
+        try:
+            # Check if path is under current directory
+            path.relative_to(cwd)
+            return str(path)
+        except ValueError:
+            pass
+        
+        try:
+            # Check if path is under temp directory
+            path.relative_to(temp_dir)
+            return str(path)
+        except ValueError:
+            pass
+        
+        # Path is outside allowed directories
+        raise ValueError(
+            f"Path '{file_path}' is outside allowed directories. "
+            "Files can only be imported from the current directory or temp directory."
+        )
 

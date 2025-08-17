@@ -32,7 +32,7 @@ class TestResourceManagerComprehensive:
     @pytest.fixture
     def score_storage(self):
         """Create a ScoreStorage instance"""
-        return ScoreStorage(max_scores=5, ttl=60, max_memory_mb=64)
+        return ScoreStorage(max_scores=5, score_ttl_seconds=60, max_memory_mb=64)
 
     def test_score_storage_initialization(self, score_storage):
         """Test ScoreStorage initialization"""

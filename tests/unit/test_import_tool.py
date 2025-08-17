@@ -87,4 +87,4 @@ class TestImportScoreTool:
         )
 
         assert result["status"] == "error"
-        assert "Could not find or import" in result["message"]
+        assert "Path '/nonexistent/path/score.xml' is outside allowed directories" in result["message"]

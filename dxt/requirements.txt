@@ -1,0 +1,54 @@
+# Music21 MCP Server Desktop Extension Requirements
+# These are the core dependencies needed for the extension to function
+
+# Core music analysis library
+music21>=9.1.0
+
+# MCP Protocol support
+mcp>=1.11.0
+fastmcp==2.9.0
+
+# Numerical computing
+numpy>=1.24.0
+scipy>=1.11.0
+
+# Visualization and image processing
+matplotlib>=3.7.0
+pillow>=10.0.0
+
+# Data validation and async file handling
+pydantic>=2.11.0
+aiofiles>=23.0.0
+
+# HTTP and network operations
+httpx>=0.28.0
+requests>=2.32.4
+
+# Caching and performance
+cachetools>=5.3.0
+
+# Configuration and environment
+python-dotenv>=1.0.0
+
+# System monitoring
+psutil>=5.9.0
+
+# Security and input validation
+bleach>=6.1.0
+pathvalidate>=3.2.0
+
+# Optional: Web server capabilities (for HTTP mode)
+fastapi>=0.115.0
+uvicorn>=0.31.0
+starlette>=0.47.2
+
+# Audio processing (optional)
+# Uncomment if you need audio playback features
+# pydub>=0.25.0
+# simpleaudio>=1.0.4
+# soundfile>=0.12.0
+
+# Visualization extras (optional)
+# Uncomment if you need advanced plotting
+# plotly>=5.17.0
+# seaborn>=0.12.0

@@ -70,8 +70,8 @@ class PerformanceCache:
         # Create composite key
         cache_key_data = f"{pitches_str}|{key_str}|{inversion}"
 
-        # Generate stable hash
-        return hashlib.md5(cache_key_data.encode()).hexdigest()
+        # Generate stable hash (not used for security purposes)
+        return hashlib.md5(cache_key_data.encode(), usedforsecurity=False).hexdigest()
 
     def get_roman_numeral(
         self, chord_obj: chord.Chord, key_obj: key.Key

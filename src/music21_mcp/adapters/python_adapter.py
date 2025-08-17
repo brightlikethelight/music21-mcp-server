@@ -319,13 +319,45 @@ class Music21Analysis:
         """Analyze harmony (synchronous)"""
         return self._run_async(self.adapter.analyze_harmony(score_id, analysis_type))
 
+    def analyze_chords(self, score_id: str) -> dict[str, Any]:
+        """Analyze chord progressions (synchronous)"""
+        return self._run_async(self.adapter.analyze_chords(score_id))
+
     def analyze_voice_leading(self, score_id: str) -> dict[str, Any]:
         """Analyze voice leading (synchronous)"""
         return self._run_async(self.adapter.analyze_voice_leading(score_id))
 
+    def recognize_patterns(
+        self, score_id: str, pattern_type: str = "melodic"
+    ) -> dict[str, Any]:
+        """Recognize musical patterns (synchronous)"""
+        return self._run_async(self.adapter.recognize_patterns(score_id, pattern_type))
+
+    def export_score(
+        self, score_id: str, format: str = "musicxml"
+    ) -> dict[str, Any]:
+        """Export a score to various formats (synchronous)"""
+        return self._run_async(self.adapter.export_score(score_id, format))
+
+    def delete_score(self, score_id: str) -> dict[str, Any]:
+        """Delete a score from storage (synchronous)"""
+        return self._run_async(self.adapter.delete_score(score_id))
+
+    def batch_import(self, scores: list[dict[str, str]]) -> dict[str, Any]:
+        """Import multiple scores in batch (synchronous)"""
+        return self._run_async(self.adapter.batch_import(scores))
+
     def quick_analysis(self, score_id: str) -> dict[str, Any]:
         """Quick comprehensive analysis (synchronous)"""
         return self._run_async(self.adapter.quick_analysis(score_id))
+
+    def get_available_tools(self) -> list[str]:
+        """Get list of all available analysis tools (synchronous)"""
+        return self.adapter.get_available_tools()
+
+    def get_score_count(self) -> int:
+        """Get number of imported scores (synchronous)"""
+        return self.adapter.get_score_count()
 
     def get_status(self) -> dict[str, Any]:
         """Get service status (synchronous)"""

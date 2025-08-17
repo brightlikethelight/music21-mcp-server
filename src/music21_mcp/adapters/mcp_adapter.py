@@ -137,6 +137,63 @@ class MCPAdapter:
                 f"Pattern recognition failed: {str(e)}", "pattern_recognition"
             )
 
+    async def harmonize_melody(
+        self, score_id: str, style: str = "classical", voice_parts: int = 4
+    ) -> dict[str, Any]:
+        """MCP tool: Generate harmonization for a melody"""
+        try:
+            result = await self.core_service.harmonize_melody(score_id, style)
+            return self._format_mcp_response(result, "harmonize_melody")
+        except Exception as e:
+            return self._format_mcp_error(
+                f"Harmonization failed: {str(e)}", "harmonize_melody"
+            )
+
+    async def generate_counterpoint(
+        self, score_id: str, species: int = 1, voice_position: str = "above"
+    ) -> dict[str, Any]:
+        """MCP tool: Generate counterpoint melody"""
+        try:
+            # Convert species number to string for the tool
+            species_map = {1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth"}
+            species_str = species_map.get(species, "first")
+            
+            # Call the tool directly since service method signature mismatch
+            result = await self.core_service.counterpoint_tool.execute(
+                score_id=score_id, species=species_str, voice_position=voice_position
+            )
+            return self._format_mcp_response(result, "generate_counterpoint")
+        except Exception as e:
+            return self._format_mcp_error(
+                f"Counterpoint generation failed: {str(e)}", "generate_counterpoint"
+            )
+
+    async def imitate_style(
+        self, score_id: str = None, composer: str = None, generation_length: int = 16, complexity: str = "medium"
+    ) -> dict[str, Any]:
+        """MCP tool: Generate music imitating a specific style"""
+        try:
+            if score_id:
+                # Use score as style source
+                result = await self.core_service.imitate_style(score_id, composer or "custom")
+            elif composer:
+                # Use predefined composer style
+                result = await self.core_service.style_tool.execute(
+                    composer=composer,
+                    generation_length=generation_length,
+                    complexity=complexity
+                )
+            else:
+                return self._format_mcp_error(
+                    "Must provide either score_id or composer", "imitate_style"
+                )
+            
+            return self._format_mcp_response(result, "imitate_style")
+        except Exception as e:
+            return self._format_mcp_error(
+                f"Style imitation failed: {str(e)}", "imitate_style"
+            )
+
     # === MCP Response Formatting ===
     # Handle MCP-specific response format requirements
 
@@ -182,6 +239,9 @@ class MCPAdapter:
             "harmony_analysis",
             "voice_leading_analysis",
             "pattern_recognition",
+            "harmonize_melody",
+            "generate_counterpoint",
+            "imitate_style",
         ]
 
     def check_protocol_compatibility(self) -> dict[str, Any]:

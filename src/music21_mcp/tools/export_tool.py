@@ -7,6 +7,7 @@ import contextlib
 import logging
 import os
 import tempfile
+from pathlib import Path
 from typing import Any
 
 from music21 import stream
@@ -69,6 +70,12 @@ class ExportScoreTool(BaseTool):
                 extension = format_info["extensions"][0]
                 fd, output_path = tempfile.mkstemp(suffix=extension)
                 os.close(fd)  # Close file descriptor, music21 will open it
+            else:
+                # Validate user-provided path for security
+                try:
+                    output_path = self._validate_safe_path(output_path)
+                except ValueError as e:
+                    return self.create_error_response(str(e))
 
             self.report_progress(0.3, f"Exporting to {os.path.basename(output_path)}")
 
@@ -153,4 +160,34 @@ class ExportScoreTool(BaseTool):
             if "lily" in method and "LilyPond" in str(e):
                 logger.info("LilyPond not installed. Install from: http://lilypond.org")
             return False
+    
+    def _validate_safe_path(self, file_path: str) -> str:
+        """Validate path for security (prevent directory traversal)"""
+        # Convert to Path object and resolve
+        path = Path(file_path).resolve()
+        
+        # Get allowed directories (current working directory and temp)
+        cwd = Path.cwd().resolve()
+        temp_dir = Path(tempfile.gettempdir()).resolve()
+        
+        # Check if path is within allowed directories
+        try:
+            # Check if path is under current directory
+            path.relative_to(cwd)
+            return str(path)
+        except ValueError:
+            pass
+        
+        try:
+            # Check if path is under temp directory
+            path.relative_to(temp_dir)
+            return str(path)
+        except ValueError:
+            pass
+        
+        # Path is outside allowed directories
+        raise ValueError(
+            f"Path '{file_path}' is outside allowed directories. "
+            "Files can only be saved in the current directory or temp directory."
+        )
 
