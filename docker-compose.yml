@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  music21-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: music21-mcp-server:latest
+    container_name: music21-mcp-server
+    restart: unless-stopped
+    ports:
+      - "${MUSIC21_PORT:-8000}:8000"
+    volumes:
+      # Persistent storage for scores and corpus
+      - music21_data:/app/data
+      - music21_logs:/app/logs
+      # Optional: Mount local directory for file imports
+      - ./imports:/app/imports:ro
+    environment:
+      # Server configuration
+      - MUSIC21_MCP_HOST=0.0.0.0
+      - MUSIC21_MCP_PORT=8000
+      - MUSIC21_LOG_LEVEL=${MUSIC21_LOG_LEVEL:-INFO}
+      
+      # Memory management
+      - MUSIC21_MAX_MEMORY_MB=${MUSIC21_MAX_MEMORY_MB:-512}
+      - MUSIC21_GC_THRESHOLD_MB=${MUSIC21_GC_THRESHOLD_MB:-100}
+      
+      # Timeouts
+      - MUSIC21_MCP_TIMEOUT=${MUSIC21_MCP_TIMEOUT:-30}
+      - MUSIC21_TOOL_TIMEOUT=${MUSIC21_TOOL_TIMEOUT:-30}
+      
+      # Performance
+      - MUSIC21_CACHE_ENABLED=${MUSIC21_CACHE_ENABLED:-true}
+      - MUSIC21_MAX_WORKERS=${MUSIC21_MAX_WORKERS:-4}
+    networks:
+      - music21_network
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Redis for distributed caching
+  redis:
+    image: redis:7-alpine
+    container_name: music21-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - music21_network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # Optional: Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: music21-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - music21_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # Optional: Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: music21-grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:3000}
+      - GF_INSTALL_PLUGINS=
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    networks:
+      - music21_network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  music21_network:
+    driver: bridge
+
+volumes:
+  music21_data:
+    driver: local
+  music21_logs:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

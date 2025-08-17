@@ -8,9 +8,23 @@ echo "🎵 Music21 MCP Server - PyPI Publication Script"
 echo "=============================================="
 echo ""
 
+# Pre-flight checks
+echo "🔍 Running pre-flight checks..."
+
+# Check if we're in the right directory
+if [ ! -f "pyproject.toml" ]; then
+    echo "❌ Error: pyproject.toml not found. Run this script from the project root."
+    exit 1
+fi
+
+# Check Python version
+python_version=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+echo "🐍 Python version: $python_version"
+
 # Check if dist directory exists
 if [ ! -d "dist" ]; then
-    echo "❌ Error: dist/ directory not found. Run 'python -m build' first."
+    echo "❌ Error: dist/ directory not found."
+    echo "   Run 'python -m build' to create distribution packages first."
     exit 1
 fi
 

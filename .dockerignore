@@ -1,28 +1,13 @@
+# Git
+.git
+.gitignore
+.github
+
 # Python
-__pycache__/
+__pycache__
 *.py[cod]
 *$py.class
 *.so
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git
-.mypy_cache
-.pytest_cache
-.hypothesis
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -39,74 +24,77 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# Documentation
-docs/_build/
-docs/build/
-.sphinx/
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
 
-# IDE
-.idea/
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+*.cover
+.coverage.*
+
+# IDEs
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
-# Project specific
-htmlcov/
-.nyc_output/
-test_corpus/
+# Documentation
+docs/_build/
+*.md
+!README.md
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.log
 logs/
-data/
-*.sqlite
-*.db
 
-# Docker
-Dockerfile*
-docker-compose*.yml
-.dockerignore
-
-# Development files
+# Test files
+tests/
 test_*.py
 *_test.py
-debug_*.py
-minimal_*.py
-verify_*.py
-brutal_*.py
-final_*.py
 
-# Reports and temporary files
-*REPORT*.md
-*SUMMARY*.md
-*GUIDE*.md
-CHANGELOG.md
-*.tmp
-*.temp
+# Development files
+*.ipynb
+.ipynb_checkpoints/
+notebooks/
 
-# Git
-.git/
-.gitignore
-.gitattributes
+# Build artifacts
+*.whl
+*.tar.gz
 
-# CI/CD
-.github/
-.gitlab-ci.yml
-.travis.yml
-Jenkinsfile
+# Local configuration
+.env
+.env.local
+*.local
 
-# Kubernetes
-k8s/
-helm/
+# Cache
+.cache/
+*.cache
 
-# Scripts that aren't needed in container
+# Examples (not needed in production)
+examples/
+
+# Development scripts
 scripts/
+*.sh
+!entrypoint.sh
+
+# Node modules (if any)
+node_modules/
+
+# Monitoring
+monitoring/
+prometheus_data/
+grafana_data/
