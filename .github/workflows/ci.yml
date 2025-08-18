@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     
     - name: Set up UV
       uses: astral-sh/setup-uv@v3
@@ -55,7 +55,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
@@ -139,7 +139,7 @@ jobs:
     needs: lint-and-type-check
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v3
@@ -193,7 +193,7 @@ jobs:
     needs: test
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v3
@@ -225,7 +225,7 @@ jobs:
     needs: [test, security]
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -262,7 +262,7 @@ jobs:
     needs: lint-and-type-check
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v3
@@ -294,7 +294,7 @@ jobs:
     needs: test
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v3
@@ -320,7 +320,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Check CHANGELOG.md exists
       run: |
