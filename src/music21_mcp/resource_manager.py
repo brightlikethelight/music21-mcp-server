@@ -11,10 +11,10 @@ import logging
 import threading
 import time
 from collections.abc import MutableMapping
-from typing import Any
+from typing import Any, Optional
 
 import psutil
-from cachetools import TTLCache
+from cachetools import TTLCache  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class ResourceExhaustedError(Exception):
     pass
 
 
-class ScoreStorage(MutableMapping):
+class ScoreStorage(MutableMapping[str, Any]):
     """
     Memory-managed score storage with automatic cleanup and limits.
 
@@ -64,7 +64,7 @@ class ScoreStorage(MutableMapping):
         self._memory_warnings = 0
 
         # Background thread management
-        self._cleanup_thread = None
+        self._cleanup_thread: Optional[threading.Thread] = None
         self._shutdown_event = threading.Event()
         self._start_cleanup_thread()
 
@@ -120,7 +120,7 @@ class ScoreStorage(MutableMapping):
             else:
                 raise KeyError(key)
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         with self._lock:
             return iter(self._cache)
 
@@ -150,7 +150,7 @@ class ScoreStorage(MutableMapping):
                 "memory_warnings": self._memory_warnings,
             }
 
-    def cleanup(self) -> dict[str, int]:
+    def cleanup(self) -> dict[str, Any]:
         """Force cleanup and return statistics"""
         with self._lock:
             initial_count = len(self._cache)
@@ -227,7 +227,7 @@ class ScoreStorage(MutableMapping):
     def _start_cleanup_thread(self) -> None:
         """Start background cleanup thread with proper shutdown mechanism"""
 
-        def cleanup_worker():
+        def cleanup_worker() -> None:
             logger.debug("Cleanup worker thread started")
             while not self._shutdown_event.is_set():
                 try:
@@ -273,7 +273,7 @@ class ScoreStorage(MutableMapping):
             except Exception as e:
                 logger.error(f"Error during final cleanup: {e}")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Ensure cleanup thread is shutdown when object is destroyed"""
         import contextlib
 
@@ -317,7 +317,7 @@ class ResourceManager:
         except Exception as e:
             logger.error(f"Error during ResourceManager shutdown: {e}")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Ensure proper cleanup when ResourceManager is destroyed"""
         import contextlib
 

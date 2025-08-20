@@ -9,7 +9,7 @@ import asyncio
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, TypeVar
+from typing import Any, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ R = TypeVar("R")
 class ParallelProcessor:
     """High-performance parallel processor for music analysis operations"""
 
-    def __init__(self, max_workers: int = None):
+    def __init__(self, max_workers: Optional[int] = None):
         """
         Initialize parallel processor
 
@@ -38,7 +38,7 @@ class ParallelProcessor:
         items: list[T],
         processor_func: Callable[[T], R],
         batch_size: int = 10,
-        progress_callback: Callable[[int, int], None] = None,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> list[R]:
         """
         Process a batch of items in parallel
@@ -56,7 +56,9 @@ class ParallelProcessor:
             return []
 
         total_items = len(items)
-        results = [None] * total_items  # Pre-allocate results list
+        results: list[R] = []
+        for _ in range(total_items):
+            results.append(None)  # type: ignore
 
         # Process items in batches to avoid overwhelming the system
         for batch_start in range(0, total_items, batch_size):
@@ -75,7 +77,7 @@ class ParallelProcessor:
 
             # Store results in correct positions
             for i, result in enumerate(batch_results):
-                results[batch_start + i] = result
+                results[batch_start + i] = result  # type: ignore
 
             # Report progress if callback provided
             if progress_callback:
@@ -88,8 +90,8 @@ class ParallelProcessor:
         return results
 
     async def process_chord_batch(
-        self, chord_items: list[Any], analysis_func: Callable
-    ) -> list[dict]:
+        self, chord_items: list[Any], analysis_func: Callable[..., dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Specialized method for processing chord batches
 
@@ -101,7 +103,7 @@ class ParallelProcessor:
             List of chord analysis dictionaries
         """
 
-        def safe_analysis(item):
+        def safe_analysis(item: Any) -> dict[str, Any]:
             """Wrapper to handle exceptions in parallel processing"""
             try:
                 return analysis_func(item)
@@ -119,14 +121,14 @@ class ParallelProcessor:
             batch_size=8,  # Optimized for chord analysis
         )
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Clean up executor on deletion"""
         if hasattr(self, "_executor"):
             self._executor.shutdown(wait=False)
 
 
 # Global processor instance
-_global_processor = None
+_global_processor: Optional[ParallelProcessor] = None
 
 
 def get_parallel_processor() -> ParallelProcessor:

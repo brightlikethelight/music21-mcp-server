@@ -12,7 +12,7 @@ import random
 import time
 from collections.abc import Callable
 from enum import Enum
-from typing import Any
+from typing import Any, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -107,10 +107,10 @@ class CircuitBreaker:
         self.expected_exception = expected_exception
 
         self.failure_count = 0
-        self.last_failure_time: float | None = None
+        self.last_failure_time: Optional[float] = None
         self.state = CircuitState.CLOSED
 
-    def call(self, func: Callable, *args, **kwargs) -> Any:
+    def call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Execute function with circuit breaker protection"""
         if self.state == CircuitState.OPEN:
             if self._should_attempt_reset():
@@ -128,7 +128,7 @@ class CircuitBreaker:
             self._on_failure()
             raise e
 
-    async def async_call(self, func: Callable, *args, **kwargs) -> Any:
+    async def async_call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Execute async function with circuit breaker protection"""
         if self.state == CircuitState.OPEN:
             if self._should_attempt_reset():
@@ -148,18 +148,18 @@ class CircuitBreaker:
 
     def _should_attempt_reset(self) -> bool:
         """Check if enough time has passed to attempt reset"""
-        return (
+        return bool(
             self.last_failure_time
             and time.time() - self.last_failure_time >= self.recovery_timeout
         )
 
-    def _on_success(self):
+    def _on_success(self) -> None:
         """Reset circuit breaker on successful call"""
         self.failure_count = 0
         self.state = CircuitState.CLOSED
         self.last_failure_time = None
 
-    def _on_failure(self):
+    def _on_failure(self) -> None:
         """Record failure and potentially open circuit"""
         self.failure_count += 1
         self.last_failure_time = time.time()
@@ -178,16 +178,16 @@ class CircuitBreakerOpenError(Exception):
 
 
 def retry(
-    policy: RetryPolicy | None = None,
-    circuit_breaker: CircuitBreaker | None = None,
-):
+    policy: Optional[RetryPolicy] = None,
+    circuit_breaker: Optional[CircuitBreaker] = None,
+) -> Callable[..., Any]:
     """Decorator for adding retry logic to functions"""
     if policy is None:
         policy = RetryPolicy()
 
-    def decorator(func):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             last_exception = None
 
             for attempt in range(policy.max_attempts):
@@ -215,10 +215,11 @@ def retry(
             logger.error(
                 f"All {policy.max_attempts} attempts failed for {func.__name__}"
             )
-            raise last_exception
+            if last_exception:
+                raise last_exception
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             last_exception = None
 
             for attempt in range(policy.max_attempts):
@@ -246,7 +247,8 @@ def retry(
             logger.error(
                 f"All {policy.max_attempts} attempts failed for {func.__name__}"
             )
-            raise last_exception
+            if last_exception:
+                raise last_exception
 
         # Return appropriate wrapper based on function type
         if asyncio.iscoroutinefunction(func):
@@ -312,7 +314,7 @@ DATABASE_POLICY = RetryPolicy(
 class RetryableMusic21Operation:
     """Wrapper for music21 operations with built-in retry logic"""
 
-    def __init__(self, policy: RetryPolicy | None = None):
+    def __init__(self, policy: Optional[RetryPolicy] = None):
         self.policy = policy or MUSIC21_POLICY
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=10,
@@ -320,7 +322,7 @@ class RetryableMusic21Operation:
         )
 
     @retry(policy=MUSIC21_POLICY)
-    async def parse_score(self, data: str | bytes) -> Any:
+    async def parse_score(self, data: Union[str, bytes]) -> Any:
         """Parse score with retry logic"""
         from music21 import converter
 
@@ -333,13 +335,15 @@ class RetryableMusic21Operation:
             raise
 
     @retry(policy=FILE_IO_POLICY)
-    async def write_file(self, path: str, content: str | bytes) -> None:
+    async def write_file(self, path: str, content: Union[str, bytes]) -> None:
         """Write file with retry logic"""
-        import aiofiles
+        try:
+            import aiofiles  # type: ignore
+        except ImportError:
+            raise ImportError("aiofiles is required for async file operations")
 
-        async with aiofiles.open(
-            path, "wb" if isinstance(content, bytes) else "w"
-        ) as f:
+        mode = "wb" if isinstance(content, bytes) else "w"
+        async with aiofiles.open(path, mode) as f:
             await f.write(content)
 
     @retry(policy=NETWORK_POLICY)
@@ -360,7 +364,7 @@ class BulkRetryExecutor:
 
     def __init__(
         self,
-        policy: RetryPolicy | None = None,
+        policy: Optional[RetryPolicy] = None,
         max_concurrent: int = 10,
     ):
         self.policy = policy or RetryPolicy()
@@ -369,22 +373,22 @@ class BulkRetryExecutor:
 
     async def execute_all(
         self,
-        operations: list[Callable],
+        operations: list[Callable[[], Any]],
         continue_on_error: bool = True,
     ) -> dict[str, Any]:
         """Execute all operations with retry logic"""
-        results = {
+        results: dict[str, Any] = {
             "successful": [],
             "failed": [],
             "total": len(operations),
         }
 
-        async def execute_with_retry(op_id: int, operation: Callable):
+        async def execute_with_retry(op_id: int, operation: Callable[[], Any]) -> None:
             async with self.semaphore:
                 try:
                     # Apply retry logic
                     @retry(policy=self.policy)
-                    async def wrapped():
+                    async def wrapped() -> Any:
                         if asyncio.iscoroutinefunction(operation):
                             return await operation()
                         return operation()
@@ -426,12 +430,12 @@ class BulkRetryExecutor:
 class ResilientTool:
     """Example of integrating retry logic into a tool"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.retry_executor = RetryableMusic21Operation()
         self.bulk_executor = BulkRetryExecutor()
 
     @retry(policy=MUSIC21_POLICY)
-    async def analyze_with_retry(self, score) -> dict[str, Any]:
+    async def analyze_with_retry(self, score: Any) -> dict[str, Any]:
         """Analyze score with automatic retry on transient failures"""
         try:
             # These operations might fail transiently

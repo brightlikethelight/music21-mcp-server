@@ -16,7 +16,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable
 from contextvars import ContextVar
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 # Context variables for request correlation
 REQUEST_ID: ContextVar[str] = ContextVar("request_id", default="")
@@ -63,7 +63,7 @@ class StructuredLogger:
         if not self.logger.handlers:
             self._configure_handler()
 
-    def _configure_handler(self):
+    def _configure_handler(self) -> None:
         """Configure structured JSON handler"""
         handler = logging.StreamHandler()
         formatter = StructuredFormatter()
@@ -71,7 +71,7 @@ class StructuredLogger:
         self.logger.addHandler(handler)
 
     def _build_log_entry(
-        self, level: LogLevel, message: str, **kwargs
+        self, level: LogLevel, message: str, **kwargs: Any
     ) -> dict[str, Any]:
         """Build structured log entry with context"""
         entry = {
@@ -99,22 +99,22 @@ class StructuredLogger:
 
         return entry
 
-    def debug(self, message: str, **kwargs):
+    def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug message"""
         entry = self._build_log_entry(LogLevel.DEBUG, message, **kwargs)
         self.logger.debug(json.dumps(entry))
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, **kwargs: Any) -> None:
         """Log info message"""
         entry = self._build_log_entry(LogLevel.INFO, message, **kwargs)
         self.logger.info(json.dumps(entry))
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning message"""
         entry = self._build_log_entry(LogLevel.WARNING, message, **kwargs)
         self.logger.warning(json.dumps(entry))
 
-    def error(self, message: str, error: Exception | None = None, **kwargs):
+    def error(self, message: str, error: Optional[Exception] = None, **kwargs: Any) -> None:
         """Log error message with optional exception details"""
         entry = self._build_log_entry(LogLevel.ERROR, message, **kwargs)
 
@@ -129,7 +129,7 @@ class StructuredLogger:
 
         self.logger.error(json.dumps(entry))
 
-    def critical(self, message: str, error: Exception | None = None, **kwargs):
+    def critical(self, message: str, error: Optional[Exception] = None, **kwargs: Any) -> None:
         """Log critical message"""
         entry = self._build_log_entry(LogLevel.CRITICAL, message, **kwargs)
 
@@ -148,7 +148,7 @@ class StructuredLogger:
 class StructuredFormatter(logging.Formatter):
     """Custom formatter for structured logging"""
 
-    def format(self, record):
+    def format(self, record: Any) -> str:
         # If the message is already JSON (from StructuredLogger), return as-is
         try:
             json.loads(record.getMessage())
@@ -182,38 +182,38 @@ class MetricsCollector:
 
         # Metric storage
         self._counters: dict[str, int] = defaultdict(int)
-        self._histograms: dict[str, deque] = defaultdict(
+        self._histograms: dict[str, deque[float]] = defaultdict(
             lambda: deque(maxlen=max_history)
         )
         self._gauges: dict[str, float] = {}
-        self._timers: dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
+        self._timers: dict[str, deque[float]] = defaultdict(lambda: deque(maxlen=max_history))
 
         # Metadata
         self._start_time = time.time()
         self._metric_metadata: dict[str, dict[str, Any]] = {}
 
-    def increment_counter(self, name: str, value: int = 1, **labels):
+    def increment_counter(self, name: str, value: int = 1, **labels: Any) -> None:
         """Increment a counter metric"""
         with self._lock:
             key = self._build_metric_key(name, labels)
             self._counters[key] += value
             self._record_metadata(key, MetricType.COUNTER, labels)
 
-    def record_histogram(self, name: str, value: float, **labels):
+    def record_histogram(self, name: str, value: float, **labels: Any) -> None:
         """Record a histogram value"""
         with self._lock:
             key = self._build_metric_key(name, labels)
             self._histograms[key].append(value)
             self._record_metadata(key, MetricType.HISTOGRAM, labels)
 
-    def set_gauge(self, name: str, value: float, **labels):
+    def set_gauge(self, name: str, value: float, **labels: Any) -> None:
         """Set a gauge value"""
         with self._lock:
             key = self._build_metric_key(name, labels)
             self._gauges[key] = value
             self._record_metadata(key, MetricType.GAUGE, labels)
 
-    def record_timer(self, name: str, duration: float, **labels):
+    def record_timer(self, name: str, duration: float, **labels: Any) -> None:
         """Record a timer duration"""
         with self._lock:
             key = self._build_metric_key(name, labels)
@@ -261,7 +261,7 @@ class MetricsCollector:
             }
             return metrics
 
-    def reset_metrics(self):
+    def reset_metrics(self) -> None:
         """Reset all metrics (useful for testing)"""
         with self._lock:
             self._counters.clear()
@@ -280,7 +280,7 @@ class MetricsCollector:
 
     def _record_metadata(
         self, key: str, metric_type: MetricType, labels: dict[str, Any]
-    ):
+    ) -> None:
         """Record metadata about a metric"""
         if key not in self._metric_metadata:
             self._metric_metadata[key] = {
@@ -291,7 +291,7 @@ class MetricsCollector:
 
         self._metric_metadata[key]["last_seen"] = time.time()
 
-    def _percentile(self, values: deque, percentile: float) -> float:
+    def _percentile(self, values: deque[float], percentile: float) -> float:
         """Calculate percentile of values"""
         if not values:
             return 0.0
@@ -316,19 +316,19 @@ def get_logger(name: str = "music21_mcp") -> StructuredLogger:
     return StructuredLogger(name)
 
 
-def with_context(request_id: str = None, user_id: str = None, operation: str = None):
+def with_context(request_id: Optional[str] = None, user_id: Optional[str] = None, operation: Optional[str] = None) -> Any:
     """Context manager for request correlation"""
 
     class ContextManager:
-        def __init__(self, req_id, usr_id, op):
+        def __init__(self, req_id: Optional[str], usr_id: Optional[str], op: Optional[str]) -> None:
             self.request_id = req_id or str(uuid.uuid4())
             self.user_id = usr_id
             self.operation = op
-            self.request_token = None
-            self.user_token = None
-            self.operation_token = None
+            self.request_token: Any = None
+            self.user_token: Any = None
+            self.operation_token: Any = None
 
-        def __enter__(self):
+        def __enter__(self) -> Any:
             self.request_token = REQUEST_ID.set(self.request_id)
             if self.user_id:
                 self.user_token = USER_ID.set(self.user_id)
@@ -336,7 +336,7 @@ def with_context(request_id: str = None, user_id: str = None, operation: str = N
                 self.operation_token = OPERATION.set(self.operation)
             return self
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
+        def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
             # Reset tokens in reverse order
             try:
                 if self.operation_token:
@@ -359,14 +359,14 @@ def with_context(request_id: str = None, user_id: str = None, operation: str = N
     return ContextManager(request_id, user_id, operation)
 
 
-def monitor_performance(operation_name: str = None, track_errors: bool = True):
+def monitor_performance(operation_name: Optional[str] = None, track_errors: bool = True) -> Any:
     """Decorator for monitoring function performance"""
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         op_name = operation_name or f"{func.__module__}.{func.__name__}"
 
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             logger = get_logger()
 
@@ -419,7 +419,7 @@ def monitor_performance(operation_name: str = None, track_errors: bool = True):
                 raise
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             logger = get_logger()
 
