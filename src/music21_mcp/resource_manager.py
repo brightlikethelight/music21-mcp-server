@@ -275,11 +275,10 @@ class ScoreStorage(MutableMapping):
 
     def __del__(self):
         """Ensure cleanup thread is shutdown when object is destroyed"""
-        try:
+        import contextlib
+
+        with contextlib.suppress(Exception):
             self.shutdown()
-        except Exception:
-            # Ignore errors during destruction
-            pass
 
 
 class ResourceManager:
@@ -320,11 +319,10 @@ class ResourceManager:
 
     def __del__(self):
         """Ensure proper cleanup when ResourceManager is destroyed"""
-        try:
+        import contextlib
+
+        with contextlib.suppress(Exception):
             self.shutdown()
-        except Exception:
-            # Ignore errors during destruction
-            pass
 
     def get_system_stats(self) -> dict[str, Any]:
         """Get comprehensive system resource statistics"""

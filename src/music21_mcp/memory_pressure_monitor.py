@@ -507,7 +507,7 @@ class MemoryPressureMonitor:
     def __del__(self):
         """Ensure cleanup on destruction"""
         import contextlib
-        
+
         with contextlib.suppress(Exception):
             self.shutdown()
 

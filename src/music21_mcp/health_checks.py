@@ -136,7 +136,7 @@ class HealthChecker:
 
         return {
             "status": overall_status.value,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "duration_ms": total_duration,
             "checks": [r.to_dict() for r in results],
             "system": {

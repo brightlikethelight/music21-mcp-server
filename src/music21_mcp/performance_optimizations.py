@@ -591,7 +591,7 @@ class PerformanceOptimizer:
     def __del__(self):
         """Ensure proper cleanup when PerformanceOptimizer is destroyed"""
         import contextlib
-        
+
         with contextlib.suppress(Exception):
             self.shutdown()
 

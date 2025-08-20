@@ -80,11 +80,7 @@ class RetryPolicy:
             return False
 
         # Retry known retryable exceptions
-        if isinstance(exception, self.retryable_exceptions):
-            return True
-
-        # Default: don't retry unknown exceptions
-        return False
+        return isinstance(exception, self.retryable_exceptions)
 
     def get_delay(self, attempt: int) -> float:
         """Calculate delay before next retry with exponential backoff"""
@@ -120,7 +116,7 @@ class CircuitBreaker:
             if self._should_attempt_reset():
                 self.state = CircuitState.HALF_OPEN
             else:
-                raise CircuitBreakerOpen(
+                raise CircuitBreakerOpenError(
                     f"Circuit breaker is OPEN. Failures: {self.failure_count}"
                 )
 
@@ -138,7 +134,7 @@ class CircuitBreaker:
             if self._should_attempt_reset():
                 self.state = CircuitState.HALF_OPEN
             else:
-                raise CircuitBreakerOpen(
+                raise CircuitBreakerOpenError(
                     f"Circuit breaker is OPEN. Failures: {self.failure_count}"
                 )
 
@@ -175,7 +171,7 @@ class CircuitBreaker:
             )
 
 
-class CircuitBreakerOpen(Exception):
+class CircuitBreakerOpenError(Exception):
     """Raised when circuit breaker is open"""
 
     pass
