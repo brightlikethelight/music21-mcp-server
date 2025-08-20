@@ -185,6 +185,7 @@ class RateLimiter:
             except Exception as e:
                 # Log error but continue
                 import logging
+
                 logging.getLogger(__name__).error(f"Error in rate limiter cleanup: {e}")
 
     def stop_cleanup_task(self):
