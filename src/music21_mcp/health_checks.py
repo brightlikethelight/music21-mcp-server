@@ -15,7 +15,7 @@ import os
 import platform
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -49,7 +49,7 @@ class HealthCheckResult:
         self.message = message
         self.details = details or {}
         self.duration_ms = duration_ms
-        self.timestamp = datetime.utcnow().isoformat()
+        self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
@@ -126,7 +126,7 @@ class HealthChecker:
 
         # Store in history
         self.check_history.extend(results)
-        self.last_check_time = datetime.utcnow()
+        self.last_check_time = datetime.now(timezone.utc)
 
         # Trim history to last 100 checks
         if len(self.check_history) > 100:
@@ -468,13 +468,13 @@ class HealthChecker:
 
             return {
                 "alive": True,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         except Exception as e:
             return {
                 "alive": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
 

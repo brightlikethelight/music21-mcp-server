@@ -155,11 +155,11 @@ class AsyncOptimizer:
         }
 
         # Build lookup for both modes
-        for (interval, quality), roman in major_patterns.items():
-            lookup[("major", interval, quality)] = roman
+        for (interval, quality), roman_str in major_patterns.items():
+            lookup[("major", interval, quality)] = roman_str
 
-        for (interval, quality), roman in minor_patterns.items():
-            lookup[("minor", interval, quality)] = roman
+        for (interval, quality), roman_str in minor_patterns.items():
+            lookup[("minor", interval, quality)] = roman_str
 
         logger.info(f"Built Roman numeral lookup table with {len(lookup)} patterns")
         return lookup

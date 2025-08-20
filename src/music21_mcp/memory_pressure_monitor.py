@@ -506,10 +506,10 @@ class MemoryPressureMonitor:
 
     def __del__(self):
         """Ensure cleanup on destruction"""
-        try:
+        import contextlib
+        
+        with contextlib.suppress(Exception):
             self.shutdown()
-        except Exception:
-            pass
 
 
 # Global instance

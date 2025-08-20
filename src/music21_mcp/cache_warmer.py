@@ -72,7 +72,7 @@ class CacheWarmer:
             "I-IV-V7-I": ["I", "IV", "V7", "I"],  # Authentic cadence
             "I-ii6-V-I": ["I", "ii6", "V", "I"],  # With first inversion
             "I-V-V7-I": ["I", "V", "V7", "I"],
-            "I-vi-ii-V": ["I", "vi", "ii", "V"],
+            "I-vi-IV-ii-V": ["I", "vi", "IV", "ii", "V"],  # Extended progression
             # Modal progressions
             "i-VII-VI-V": ["i", "VII", "VI", "V"],  # Andalusian cadence
             "i-iv-v-i": ["i", "iv", "v", "i"],  # Natural minor
