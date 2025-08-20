@@ -19,6 +19,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from ..services import MusicAnalysisService
+from ..health_checks import health_check, readiness_check, liveness_check, get_health_checker
+from ..rate_limiter import create_rate_limiter, RateLimitStrategy
 
 # Security constants
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB limit for file uploads
@@ -69,7 +71,54 @@ class HTTPAdapter:
             description="REST API for music analysis - MCP-independent",
             version="1.0.0",
         )
+        self._setup_middleware()
         self._setup_routes()
+
+    def _setup_middleware(self):
+        """Setup middleware for request tracking and monitoring"""
+        from fastapi import Request
+        import time
+        
+        # Add rate limiting middleware
+        rate_limiter = create_rate_limiter(
+            requests_per_minute=60,
+            requests_per_hour=1000,
+            strategy=RateLimitStrategy.SLIDING_WINDOW
+        )
+        
+        @self.app.middleware("http")
+        async def apply_rate_limiting(request: Request, call_next):
+            """Apply rate limiting to all requests"""
+            return await rate_limiter(request, call_next)
+        
+        @self.app.middleware("http")
+        async def track_requests(request: Request, call_next):
+            """Track request metrics for health monitoring"""
+            start_time = time.time()
+            
+            # Skip health check endpoints to avoid circular dependency
+            if request.url.path.startswith("/health"):
+                response = await call_next(request)
+                return response
+            
+            try:
+                response = await call_next(request)
+                
+                # Record successful request
+                response_time_ms = (time.time() - start_time) * 1000
+                health_checker = get_health_checker()
+                health_checker.record_request(response_time_ms, success=True)
+                
+                # Add response headers
+                response.headers["X-Response-Time-ms"] = str(response_time_ms)
+                return response
+                
+            except Exception as e:
+                # Record failed request
+                response_time_ms = (time.time() - start_time) * 1000
+                health_checker = get_health_checker()
+                health_checker.record_request(response_time_ms, success=False)
+                raise
 
     async def _with_timeout(self, coro, timeout: float = HTTP_REQUEST_TIMEOUT):
         """
@@ -110,14 +159,24 @@ class HTTPAdapter:
 
         @self.app.get("/health")
         async def health():
-            """Detailed health check"""
-            return {
-                "status": "healthy",
-                "service": "Music21 Analysis API",
-                "core_service": "MusicAnalysisService",
-                "tools": self.core_service.get_available_tools(),
-                "scores_count": self.core_service.get_score_count(),
-            }
+            """Comprehensive health check with detailed diagnostics"""
+            return await health_check()
+        
+        @self.app.get("/health/ready")
+        async def ready():
+            """Readiness check - is service ready to handle requests?"""
+            result = await readiness_check()
+            if not result["ready"]:
+                raise HTTPException(status_code=503, detail="Service not ready")
+            return result
+        
+        @self.app.get("/health/live")
+        async def live():
+            """Liveness check - is service alive?"""
+            result = await liveness_check()
+            if not result["alive"]:
+                raise HTTPException(status_code=503, detail="Service not alive")
+            return result
 
         # === Core Operations ===
 

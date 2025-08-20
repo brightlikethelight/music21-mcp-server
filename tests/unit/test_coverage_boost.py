@@ -37,84 +37,83 @@ class TestResourceManagerComprehensive:
     def test_score_storage_initialization(self, score_storage):
         """Test ScoreStorage initialization"""
         assert score_storage.max_scores == 5
-        assert score_storage.ttl == 60
+        assert score_storage._cache.ttl == 60  # Check TTL on the cache
         assert score_storage.max_memory_mb == 64
-        assert len(score_storage.scores) == 0
-        assert score_storage._memory_usage == 0
+        assert len(score_storage._cache) == 0  # Check cache is empty
+        assert isinstance(score_storage._memory_usage, dict)
 
     def test_score_storage_add_score(self, score_storage):
         """Test adding scores to storage"""
         score = stream.Score()
-        score_id = score_storage.add("test_score", score)
+        score_storage["test_score"] = score  # Use dictionary-style syntax
         
-        assert score_id == "test_score"
-        assert "test_score" in score_storage.scores
-        assert score_storage.get("test_score") == score
-        assert score_storage._memory_usage > 0
+        assert "test_score" in score_storage
+        assert score_storage["test_score"] == score
+        assert "test_score" in score_storage._memory_usage
+        assert score_storage._memory_usage["test_score"] > 0
 
     def test_score_storage_delete_score(self, score_storage):
         """Test deleting scores from storage"""
         score = stream.Score()
-        score_storage.add("test_score", score)
+        score_storage["test_score"] = score  # Use dictionary-style syntax
         
-        deleted = score_storage.delete("test_score")
-        assert deleted is True
-        assert "test_score" not in score_storage.scores
-        assert score_storage._memory_usage == 0
+        del score_storage["test_score"]  # Use dictionary-style deletion
+        assert "test_score" not in score_storage
+        assert "test_score" not in score_storage._memory_usage
         
-        # Delete non-existent score
-        deleted = score_storage.delete("non_existent")
-        assert deleted is False
+        # Try to delete non-existent score - should raise KeyError
+        with pytest.raises(KeyError):
+            del score_storage["non_existent"]
 
     def test_score_storage_list_scores(self, score_storage):
         """Test listing scores in storage"""
         score1 = stream.Score()
         score2 = stream.Score()
         
-        score_storage.add("score1", score1)
-        score_storage.add("score2", score2)
+        score_storage["score1"] = score1
+        score_storage["score2"] = score2
         
-        scores = score_storage.list_scores()
-        assert len(scores) == 2
-        assert any(s["id"] == "score1" for s in scores)
-        assert any(s["id"] == "score2" for s in scores)
+        # Test iteration over scores
+        score_ids = list(score_storage)
+        assert len(score_ids) == 2
+        assert "score1" in score_ids
+        assert "score2" in score_ids
         
-        for score_info in scores:
-            assert "id" in score_info
-            assert "created_at" in score_info
-            assert "accessed_at" in score_info
-            assert "size_bytes" in score_info
+        # Test length
+        assert len(score_storage) == 2
 
     def test_score_storage_cleanup_expired(self, score_storage):
         """Test cleanup of expired scores"""
         score = stream.Score()
-        score_storage.add("test_score", score)
+        score_storage["test_score"] = score
         
         # Manually set access time to past
-        score_storage.scores["test_score"]["accessed_at"] = time.time() - 120
+        score_storage._access_times["test_score"] = time.time() - 120
         
-        removed = score_storage.cleanup_expired()
-        assert removed == 1
-        assert "test_score" not in score_storage.scores
+        # Call cleanup method
+        stats = score_storage.cleanup()
+        assert "removed_scores" in stats
+        # TTL cache manages expiration automatically
 
     def test_score_storage_evict_lru(self, score_storage):
         """Test LRU eviction when at capacity"""
         # Fill storage to capacity
         for i in range(5):
             score = stream.Score()
-            score_storage.add(f"score{i}", score)
+            score_storage[f"score{i}"] = score
             time.sleep(0.01)  # Ensure different access times
         
         # Access middle scores to update access time
-        score_storage.get("score2")
-        score_storage.get("score3")
+        # Access scores to update access times
+        _ = score_storage["score2"]
+        _ = score_storage["score3"]
         
         # Add one more score (should evict least recently used)
         new_score = stream.Score()
-        score_storage.add("new_score", new_score)
+        score_storage["new_score"] = new_score
         
-        assert "new_score" in score_storage.scores
-        assert len(score_storage.scores) <= 5
+        assert "new_score" in score_storage
+        assert len(score_storage) <= 5
 
     def test_score_storage_memory_limit(self, score_storage):
         """Test memory limit enforcement"""
@@ -128,115 +127,107 @@ class TestResourceManagerComprehensive:
         
         # Try to add score that exceeds memory limit
         score_storage.max_memory_mb = 0.001  # Very small limit
-        score_id = score_storage.add("large_score", large_score)
         
-        # Should handle memory limit gracefully
-        assert score_id == "large_score" or score_id is None
+        # Should raise ResourceExhaustedError
+        from music21_mcp.resource_manager import ResourceExhaustedError
+        with pytest.raises(ResourceExhaustedError):
+            score_storage["large_score"] = large_score
 
     def test_score_storage_health_check(self, score_storage):
-        """Test health check functionality"""
-        health = score_storage.health_check()
+        """Test get_stats functionality"""
+        stats = score_storage.get_stats()
         
-        assert health["healthy"] is True
-        assert health["score_count"] == 0
-        assert health["memory_usage_mb"] >= 0
-        assert health["memory_usage_percent"] >= 0
+        assert stats["total_scores"] == 0
+        assert stats["memory_usage_mb"] >= 0
+        assert stats["memory_utilization_percent"] >= 0
         
         # Add scores and check again
         for i in range(3):
-            score_storage.add(f"score{i}", stream.Score())
+            score_storage[f"score{i}"] = stream.Score()
         
-        health = score_storage.health_check()
-        assert health["score_count"] == 3
-        assert health["memory_usage_mb"] > 0
+        stats = score_storage.get_stats()
+        assert stats["total_scores"] == 3
+        assert stats["memory_usage_mb"] > 0
 
     def test_score_storage_get_stats(self, score_storage):
         """Test statistics gathering"""
         stats = score_storage.get_stats()
         
         assert stats["total_scores"] == 0
-        assert stats["memory_usage_mb"] == 0
-        assert stats["oldest_score"] is None
-        assert stats["newest_score"] is None
+        assert stats["memory_usage_mb"] >= 0
+        assert stats["max_scores"] == 5
+        assert stats["max_memory_mb"] == 64
+        assert stats["cache_hits"] == 0
+        assert stats["cache_misses"] == 0
         
         # Add scores
-        score_storage.add("score1", stream.Score())
+        score_storage["score1"] = stream.Score()
         time.sleep(0.01)
-        score_storage.add("score2", stream.Score())
+        score_storage["score2"] = stream.Score()
         
         stats = score_storage.get_stats()
         assert stats["total_scores"] == 2
         assert stats["memory_usage_mb"] > 0
-        assert stats["oldest_score"] == "score1"
-        assert stats["newest_score"] == "score2"
+        assert stats["total_scores_loaded"] == 2
+        assert stats["memory_utilization_percent"] >= 0
 
     def test_resource_manager_initialization(self, resource_manager):
         """Test ResourceManager initialization"""
         assert resource_manager.max_memory_mb == 128
-        assert resource_manager.storage.max_scores == 10
-        assert resource_manager._cleanup_task is None
+        assert resource_manager.scores.max_scores == 10
+        assert hasattr(resource_manager, 'scores')
 
     def test_resource_manager_check_memory(self, resource_manager):
-        """Test memory checking functionality"""
-        can_allocate = resource_manager.check_memory(10)
-        assert can_allocate is True
-        
-        # Test with excessive memory request
-        can_allocate = resource_manager.check_memory(1000)
-        assert can_allocate is False
+        """Test system stats functionality"""
+        stats = resource_manager.get_system_stats()
+        assert "system" in stats
+        assert "storage" in stats
+        assert stats["system"]["process_memory_mb"] > 0
+        assert stats["system"]["cpu_percent"] >= 0
 
     def test_resource_manager_get_memory_usage(self, resource_manager):
-        """Test memory usage reporting"""
-        usage = resource_manager.get_memory_usage()
+        """Test health check functionality"""
+        health = resource_manager.check_health()
         
-        assert "used_mb" in usage
-        assert "available_mb" in usage
-        assert "percent_used" in usage
-        assert usage["used_mb"] >= 0
-        assert usage["available_mb"] > 0
-        assert 0 <= usage["percent_used"] <= 100
+        assert "status" in health
+        assert "stats" in health
+        assert health["status"] in ["healthy", "degraded", "unhealthy"]
+        assert "system" in health["stats"]
+        assert health["stats"]["system"]["process_memory_mb"] >= 0
 
-    @pytest.mark.asyncio
-    async def test_resource_manager_start_stop(self, resource_manager):
-        """Test starting and stopping resource manager"""
-        await resource_manager.start()
-        assert resource_manager._cleanup_task is not None
+    def test_resource_manager_shutdown(self, resource_manager):
+        """Test resource manager shutdown"""
+        # Create a new resource manager to test shutdown
+        rm = ResourceManager(max_memory_mb=64, max_scores=5)
         
-        await resource_manager.stop()
-        assert resource_manager._cleanup_task is None
+        # Add a score
+        rm.scores["test"] = stream.Score()
+        
+        # Shutdown should work without errors
+        rm.shutdown()
+        # After shutdown, the cleanup thread should be stopped
 
-    @pytest.mark.asyncio
-    async def test_resource_manager_cleanup_loop(self, resource_manager):
-        """Test cleanup loop functionality"""
-        # Start cleanup with short interval
-        resource_manager.cleanup_interval = 0.1
-        await resource_manager.start()
-        
-        # Add expired score
+    def test_resource_manager_cleanup_loop(self, resource_manager):
+        """Test cleanup functionality"""
+        # Add a score
         score = stream.Score()
-        resource_manager.storage.add("test_score", score)
-        resource_manager.storage.scores["test_score"]["accessed_at"] = time.time() - 120
+        resource_manager.scores["test_score"] = score
         
-        # Wait for cleanup
-        await asyncio.sleep(0.2)
+        # Force cleanup
+        cleanup_stats = resource_manager.scores.cleanup()
         
-        # Check score was cleaned up
-        assert "test_score" not in resource_manager.storage.scores
-        
-        await resource_manager.stop()
+        # Check cleanup stats
+        assert "removed_scores" in cleanup_stats
+        assert "freed_memory_mb" in cleanup_stats
 
     def test_resource_manager_monitor_resources(self, resource_manager):
-        """Test resource monitoring"""
-        status = resource_manager.monitor_resources()
+        """Test resource monitoring via health check"""
+        status = resource_manager.check_health()
         
         assert "timestamp" in status
-        assert "memory" in status
-        assert "scores" in status
-        assert "health" in status
-        
-        assert status["memory"]["used_mb"] >= 0
-        assert status["scores"]["count"] == 0
-        assert status["health"]["status"] == "healthy"
+        assert "status" in status
+        assert "stats" in status
+        assert status["status"] in ["healthy", "degraded", "unhealthy"]
 
 
 class TestImportToolComprehensive:

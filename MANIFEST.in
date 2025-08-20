@@ -1,57 +1,65 @@
-# Include essential documentation files
+# Include documentation
 include README.md
-include CHANGELOG.md
 include LICENSE
-include SECURITY.md
+include CHANGELOG.md
 
 # Include configuration files
 include pyproject.toml
-include pytest.ini
-include requirements.txt
+include .env.example
 
-# Include MCP-specific configuration
-include mcp.json
+# Include important project files
+recursive-include src *.py
+recursive-include src *.pyi
+recursive-include src py.typed
 
-# Include example files and documentation
-recursive-include examples *.py *.md
-recursive-include docs *.md *.txt
+# Include test files (for development installations)
+recursive-include tests *.py
+recursive-include tests *.json
+recursive-include tests *.xml
+recursive-include tests *.mid
 
-# Include test data for corpus examples (but exclude actual test files)
-include test_corpus/imslp/corpus_metadata.json
+# Include example files
+recursive-include examples *.py
+recursive-include examples *.md
 
-# Include scripts directory
-recursive-include scripts *.py *.sh
+# Include documentation
+recursive-include docs *.md
+recursive-include docs *.rst
+recursive-include docs *.txt
 
-# Exclude unwanted files
-global-exclude *.pyc
+# Exclude unnecessary files
 global-exclude __pycache__
-global-exclude .pytest_cache
-global-exclude *.so
+global-exclude *.py[co]
 global-exclude .DS_Store
+global-exclude .git*
+global-exclude .pytest_cache
 global-exclude .coverage
 global-exclude htmlcov
-global-exclude dist
-global-exclude build
-global-exclude *.egg-info
+global-exclude .mypy_cache
+global-exclude .ruff_cache
+global-exclude *.log
+global-exclude *.swp
+global-exclude *.bak
+global-exclude *~
 
-# Exclude development and testing files
-exclude test_*.py
-exclude *_test.py
-recursive-exclude tests *
-exclude coverage.xml
-exclude bandit-results.json
-exclude pip-audit-results.json
+# Exclude build artifacts
+prune build
+prune dist
+prune *.egg-info
+
+# Exclude CI/CD and development files
 exclude .github
-exclude .gitignore
-exclude poetry.lock
-exclude uv.lock
+exclude .pre-commit-config.yaml
+exclude .dockerignore
+exclude Dockerfile
+exclude docker-compose.yml
+exclude Makefile
 
-# Exclude DXT build artifacts
-exclude build_dxt.py
-recursive-exclude dxt *
-
-# Exclude performance testing and investigation files
-exclude performance_*.py
-exclude memory_profiler.py
-exclude http_performance_test.py
-exclude deep_performance_profiler.py
+# Exclude temporary and cache directories
+prune .venv
+prune venv
+prune env
+prune node_modules
+prune temp
+prune tmp
+prune cache
