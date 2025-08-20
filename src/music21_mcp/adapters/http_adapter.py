@@ -18,9 +18,14 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from ..health_checks import (
+    get_health_checker,
+    health_check,
+    liveness_check,
+    readiness_check,
+)
+from ..rate_limiter import RateLimitStrategy, create_rate_limiter
 from ..services import MusicAnalysisService
-from ..health_checks import health_check, readiness_check, liveness_check, get_health_checker
-from ..rate_limiter import create_rate_limiter, RateLimitStrategy
 
 # Security constants
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB limit for file uploads
@@ -28,6 +33,7 @@ MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB limit for file uploads
 # Timeout constants
 HTTP_REQUEST_TIMEOUT = 60.0  # 60 seconds for HTTP operations
 UPLOAD_TIMEOUT = 120.0  # 2 minutes for file uploads
+
 
 # Request/Response Models
 class ImportRequest(BaseModel):
@@ -76,43 +82,44 @@ class HTTPAdapter:
 
     def _setup_middleware(self):
         """Setup middleware for request tracking and monitoring"""
-        from fastapi import Request
         import time
-        
+
+        from fastapi import Request
+
         # Add rate limiting middleware
         rate_limiter = create_rate_limiter(
             requests_per_minute=60,
             requests_per_hour=1000,
-            strategy=RateLimitStrategy.SLIDING_WINDOW
+            strategy=RateLimitStrategy.SLIDING_WINDOW,
         )
-        
+
         @self.app.middleware("http")
         async def apply_rate_limiting(request: Request, call_next):
             """Apply rate limiting to all requests"""
             return await rate_limiter(request, call_next)
-        
+
         @self.app.middleware("http")
         async def track_requests(request: Request, call_next):
             """Track request metrics for health monitoring"""
             start_time = time.time()
-            
+
             # Skip health check endpoints to avoid circular dependency
             if request.url.path.startswith("/health"):
                 response = await call_next(request)
                 return response
-            
+
             try:
                 response = await call_next(request)
-                
+
                 # Record successful request
                 response_time_ms = (time.time() - start_time) * 1000
                 health_checker = get_health_checker()
                 health_checker.record_request(response_time_ms, success=True)
-                
+
                 # Add response headers
                 response.headers["X-Response-Time-ms"] = str(response_time_ms)
                 return response
-                
+
             except Exception as e:
                 # Record failed request
                 response_time_ms = (time.time() - start_time) * 1000
@@ -123,14 +130,14 @@ class HTTPAdapter:
     async def _with_timeout(self, coro, timeout: float = HTTP_REQUEST_TIMEOUT):
         """
         Wrapper to apply timeout to async operations with graceful error handling
-        
+
         Args:
             coro: The coroutine to execute
             timeout: Timeout in seconds
-            
+
         Returns:
             Result of the coroutine
-            
+
         Raises:
             HTTPException: 504 Gateway Timeout if operation exceeds timeout
         """
@@ -140,8 +147,8 @@ class HTTPAdapter:
             raise HTTPException(
                 status_code=504,
                 detail=f"Operation timed out after {timeout} seconds. "
-                       "The request took too long to process, possibly due to "
-                       "complex music analysis or high server load."
+                "The request took too long to process, possibly due to "
+                "complex music analysis or high server load.",
             )
 
     def _setup_routes(self):
@@ -161,7 +168,7 @@ class HTTPAdapter:
         async def health():
             """Comprehensive health check with detailed diagnostics"""
             return await health_check()
-        
+
         @self.app.get("/health/ready")
         async def ready():
             """Readiness check - is service ready to handle requests?"""
@@ -169,7 +176,7 @@ class HTTPAdapter:
             if not result["ready"]:
                 raise HTTPException(status_code=503, detail="Service not ready")
             return result
-        
+
         @self.app.get("/health/live")
         async def live():
             """Liveness check - is service alive?"""
@@ -202,9 +209,9 @@ class HTTPAdapter:
                 if len(content) > MAX_FILE_SIZE:
                     raise HTTPException(
                         status_code=413,
-                        detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB"
+                        detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB",
                     )
-                
+
                 # Save uploaded file temporarily
                 with tempfile.NamedTemporaryFile(
                     delete=False, suffix=Path(file.filename or "").suffix
@@ -215,7 +222,7 @@ class HTTPAdapter:
                 # Import from temporary file with longer timeout for file uploads
                 result = await self._with_timeout(
                     self.core_service.import_score(score_id, tmp_path, "file"),
-                    timeout=UPLOAD_TIMEOUT
+                    timeout=UPLOAD_TIMEOUT,
                 )
 
                 # Cleanup

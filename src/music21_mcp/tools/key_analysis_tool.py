@@ -139,8 +139,11 @@ class KeyAnalysisTool(BaseTool):
 
         return results
 
-    async def _analyze_with_algorithm(self, score: stream.Stream, algorithm: str) -> Any:
+    async def _analyze_with_algorithm(
+        self, score: stream.Stream, algorithm: str
+    ) -> Any:
         """Run a specific key detection algorithm asynchronously"""
+
         def _run_analysis():
             try:
                 if algorithm == "krumhansl":
@@ -180,7 +183,7 @@ class KeyAnalysisTool(BaseTool):
             key_votes.items(),
             key=lambda x: (
                 x[1]["votes"],
-                x[1]["total_confidence"] / x[1]["votes"] if x[1]["votes"] > 0 else 0
+                x[1]["total_confidence"] / x[1]["votes"] if x[1]["votes"] > 0 else 0,
             ),
             reverse=True,
         )
@@ -214,4 +217,3 @@ class KeyAnalysisTool(BaseTool):
             )
 
         return best_key, final_confidence, alternatives
-

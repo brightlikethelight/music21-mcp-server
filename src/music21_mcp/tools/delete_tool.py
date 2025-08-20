@@ -77,4 +77,3 @@ class DeleteScoreTool(BaseTool):
         # For single delete, no need to check existence here
         # We'll handle it in execute for better error message
         return None
-

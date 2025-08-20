@@ -15,7 +15,7 @@ import hashlib
 import logging
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, wraps
 from typing import Any
 
@@ -25,13 +25,17 @@ from music21 import chord, key, roman
 logger = logging.getLogger(__name__)
 
 # Timeout constants for performance operations
-CHORD_ANALYSIS_TIMEOUT = int(os.getenv("MUSIC21_CHORD_ANALYSIS_TIMEOUT", "60"))  # 60 seconds
-BATCH_PROCESSING_TIMEOUT = int(os.getenv("MUSIC21_BATCH_TIMEOUT", "30"))  # 30 seconds per batch
+CHORD_ANALYSIS_TIMEOUT = int(
+    os.getenv("MUSIC21_CHORD_ANALYSIS_TIMEOUT", "60")
+)  # 60 seconds
+BATCH_PROCESSING_TIMEOUT = int(
+    os.getenv("MUSIC21_BATCH_TIMEOUT", "30")
+)  # 30 seconds per batch
 
 
 class PerformanceMetrics:
     """Collects and tracks performance metrics for optimization monitoring"""
-    
+
     def __init__(self):
         self.metrics = {
             "roman_numeral_analysis": {
@@ -55,27 +59,31 @@ class PerformanceMetrics:
                 "chord_cache_size": 0,
                 "key_cache_size": 0,
                 "hit_rate": 0,
-            }
+            },
         }
-        
-    def record_roman_analysis(self, duration_ms: float, cache_hit: bool, fast_lookup: bool, fallback: bool):
+
+    def record_roman_analysis(
+        self, duration_ms: float, cache_hit: bool, fast_lookup: bool, fallback: bool
+    ):
         """Record Roman numeral analysis metrics"""
         stats = self.metrics["roman_numeral_analysis"]
         stats["total_calls"] += 1
         stats["total_time_ms"] += duration_ms
         stats["avg_time_ms"] = stats["total_time_ms"] / stats["total_calls"]
-        
+
         if cache_hit:
             stats["cache_hits"] += 1
         else:
             stats["cache_misses"] += 1
-            
+
         if fast_lookup:
             stats["fast_lookup_hits"] += 1
         elif fallback:
             stats["music21_fallbacks"] += 1
-            
-    def record_chord_analysis(self, num_chords: int, duration_ms: float, timeouts: int = 0):
+
+    def record_chord_analysis(
+        self, num_chords: int, duration_ms: float, timeouts: int = 0
+    ):
         """Record chord analysis batch metrics"""
         stats = self.metrics["chord_analysis"]
         stats["total_chords"] += num_chords
@@ -83,21 +91,23 @@ class PerformanceMetrics:
         stats["timeouts"] += timeouts
         stats["total_time_ms"] += duration_ms
         if stats["total_chords"] > 0:
-            stats["avg_time_per_chord_ms"] = stats["total_time_ms"] / stats["total_chords"]
-            
+            stats["avg_time_per_chord_ms"] = (
+                stats["total_time_ms"] / stats["total_chords"]
+            )
+
     def update_cache_stats(self, roman_size: int, chord_size: int, key_size: int):
         """Update cache size statistics"""
         cache_stats = self.metrics["cache_stats"]
         cache_stats["roman_cache_size"] = roman_size
         cache_stats["chord_cache_size"] = chord_size
         cache_stats["key_cache_size"] = key_size
-        
+
         # Calculate hit rate
         roman_stats = self.metrics["roman_numeral_analysis"]
         total_calls = roman_stats["total_calls"]
         if total_calls > 0:
             cache_stats["hit_rate"] = roman_stats["cache_hits"] / total_calls
-            
+
     def get_summary(self) -> dict[str, Any]:
         """Get performance summary"""
         return {
@@ -105,57 +115,68 @@ class PerformanceMetrics:
             "current_metrics": self.metrics,
             "recommendations": self._generate_recommendations(),
         }
-        
+
     def _calculate_performance_gains(self) -> dict[str, Any]:
         """Calculate estimated performance improvements"""
         roman_stats = self.metrics["roman_numeral_analysis"]
-        
+
         # Estimate time saved by caching and fast lookup
         fast_lookups = roman_stats["fast_lookup_hits"]
         cache_hits = roman_stats["cache_hits"]
         total_calls = roman_stats["total_calls"]
-        
+
         if total_calls == 0:
             return {"estimated_time_saved_ms": 0, "efficiency_improvement": 0}
-            
+
         # Assume music21 Roman numeral analysis takes ~100ms per chord
         estimated_music21_time = 100
         estimated_fast_lookup_time = 1
         estimated_cache_time = 0.5
-        
-        time_saved = (fast_lookups * (estimated_music21_time - estimated_fast_lookup_time) + 
-                     cache_hits * (estimated_music21_time - estimated_cache_time))
-        
-        efficiency_improvement = time_saved / (total_calls * estimated_music21_time) if total_calls > 0 else 0
-        
+
+        time_saved = fast_lookups * (
+            estimated_music21_time - estimated_fast_lookup_time
+        ) + cache_hits * (estimated_music21_time - estimated_cache_time)
+
+        efficiency_improvement = (
+            time_saved / (total_calls * estimated_music21_time)
+            if total_calls > 0
+            else 0
+        )
+
         return {
             "estimated_time_saved_ms": time_saved,
             "efficiency_improvement": efficiency_improvement,
             "cache_hit_rate": cache_hits / total_calls if total_calls > 0 else 0,
         }
-        
+
     def _generate_recommendations(self) -> list[str]:
         """Generate performance optimization recommendations"""
         recommendations = []
-        
+
         roman_stats = self.metrics["roman_numeral_analysis"]
         chord_stats = self.metrics["chord_analysis"]
-        
+
         # Check cache hit rate
         total_calls = roman_stats["total_calls"]
         if total_calls > 0:
             hit_rate = roman_stats["cache_hits"] / total_calls
             if hit_rate < 0.5:
-                recommendations.append("Consider warming cache with more common progressions")
-                
+                recommendations.append(
+                    "Consider warming cache with more common progressions"
+                )
+
         # Check for timeouts
         if chord_stats["timeouts"] > 0:
-            recommendations.append("Consider reducing batch size or increasing timeout limits")
-            
+            recommendations.append(
+                "Consider reducing batch size or increasing timeout limits"
+            )
+
         # Check average time per chord
         if chord_stats["avg_time_per_chord_ms"] > 50:
-            recommendations.append("Chord analysis is slower than expected - check for complex harmonies")
-            
+            recommendations.append(
+                "Chord analysis is slower than expected - check for complex harmonies"
+            )
+
         return recommendations
 
 
@@ -177,7 +198,9 @@ class PerformanceOptimizer:
         # Pre-computed lookup tables for common progressions
         self._init_lookup_tables()
 
-        logger.info(f"Performance optimizer initialized with {cache_ttl}s TTL, {max_cache_size} max cache size")
+        logger.info(
+            f"Performance optimizer initialized with {cache_ttl}s TTL, {max_cache_size} max cache size"
+        )
 
     def _init_lookup_tables(self):
         """Initialize lookup tables for common chord progressions"""
@@ -231,7 +254,9 @@ class PerformanceOptimizer:
     def chord_hash(self, chord_obj: chord.Chord) -> str:
         """Generate stable hash for chord based on pitch content"""
         pitches = sorted([p.nameWithOctave for p in chord_obj.pitches])
-        return hashlib.md5(str(pitches).encode(), usedforsecurity=False).hexdigest()[:16]
+        return hashlib.md5(str(pitches).encode(), usedforsecurity=False).hexdigest()[
+            :16
+        ]
 
     def get_cached_roman_numeral(
         self, chord_obj: chord.Chord, key_obj: key.Key
@@ -241,7 +266,7 @@ class PerformanceOptimizer:
         cache_hit = False
         fast_lookup = False
         fallback = False
-        
+
         # Generate cache key
         cache_key = f"{self.chord_hash(chord_obj)}:{key_obj.tonic.name}:{key_obj.mode}"
 
@@ -270,15 +295,15 @@ class PerformanceOptimizer:
 
         # Record performance metrics
         duration_ms = (time.time() - start_time) * 1000
-        self.metrics.record_roman_analysis(duration_ms, cache_hit, fast_lookup, fallback)
-        
+        self.metrics.record_roman_analysis(
+            duration_ms, cache_hit, fast_lookup, fallback
+        )
+
         # Update cache stats
         self.metrics.update_cache_stats(
-            len(self.roman_cache),
-            len(self.chord_analysis_cache),
-            len(self.key_cache)
+            len(self.roman_cache), len(self.chord_analysis_cache), len(self.key_cache)
         )
-        
+
         return result
 
     def _fast_roman_lookup(
@@ -322,9 +347,9 @@ class PerformanceOptimizer:
                             bass_scale_degree = degree_map[bass_degree]
                             if bass_scale_degree == 3:  # First inversion
                                 return f"{basic_result}6"
-                            elif bass_scale_degree == 5:  # Second inversion
+                            if bass_scale_degree == 5:  # Second inversion
                                 return f"{basic_result}64"
-                
+
                 return basic_result
 
             return None
@@ -334,21 +359,31 @@ class PerformanceOptimizer:
             return None
 
     async def analyze_chords_parallel(
-        self, chords: list[chord.Chord], key_obj: key.Key, batch_size: int = 10, timeout: float = CHORD_ANALYSIS_TIMEOUT
+        self,
+        chords: list[chord.Chord],
+        key_obj: key.Key,
+        batch_size: int = 10,
+        timeout: float = CHORD_ANALYSIS_TIMEOUT,
     ) -> list[dict[str, Any]]:
         """Analyze chords in parallel batches for better performance with timeout protection"""
         start_time = time.time()
         total_timeouts = 0
-        
+
         # Optimize batch size based on number of chords
         if len(chords) > 100:
             batch_size = min(20, max(5, len(chords) // 10))  # Adaptive batching
-        
-        # Split into batches
-        batches = [chords[i:i+batch_size] for i in range(0, len(chords), batch_size)]
-        logger.info(f"Processing {len(chords)} chords in {len(batches)} batches of ~{batch_size}")
 
-        async def process_batch(batch_idx: int, batch: list[chord.Chord]) -> list[dict[str, Any]]:
+        # Split into batches
+        batches = [
+            chords[i : i + batch_size] for i in range(0, len(chords), batch_size)
+        ]
+        logger.info(
+            f"Processing {len(chords)} chords in {len(batches)} batches of ~{batch_size}"
+        )
+
+        async def process_batch(
+            batch_idx: int, batch: list[chord.Chord]
+        ) -> list[dict[str, Any]]:
             """Process a batch of chords in parallel with timeout"""
             loop = asyncio.get_event_loop()
             batch_start = time.time()
@@ -357,22 +392,21 @@ class PerformanceOptimizer:
                 # Run batch processing in thread pool with timeout
                 result = await asyncio.wait_for(
                     loop.run_in_executor(
-                        self.executor,
-                        self._process_chord_batch,
-                        batch,
-                        key_obj
+                        self.executor, self._process_chord_batch, batch, key_obj
                     ),
-                    timeout=BATCH_PROCESSING_TIMEOUT
+                    timeout=BATCH_PROCESSING_TIMEOUT,
                 )
-                
+
                 batch_time = (time.time() - batch_start) * 1000
                 logger.debug(f"Batch {batch_idx} completed in {batch_time:.1f}ms")
                 return result
-                
+
             except asyncio.TimeoutError:
                 nonlocal total_timeouts
                 total_timeouts += 1
-                logger.warning(f"Batch {batch_idx} timed out after {BATCH_PROCESSING_TIMEOUT}s, returning partial results")
+                logger.warning(
+                    f"Batch {batch_idx} timed out after {BATCH_PROCESSING_TIMEOUT}s, returning partial results"
+                )
                 # Return basic chord info without Roman numerals for timed-out batch
                 return [
                     {
@@ -381,7 +415,9 @@ class PerformanceOptimizer:
                         "root": str(chord_obj.root()) if chord_obj.root() else None,
                         "quality": chord_obj.quality,
                         "roman_numeral": "TIMEOUT",
-                        "offset": float(chord_obj.offset) if hasattr(chord_obj, "offset") else 0.0,
+                        "offset": float(chord_obj.offset)
+                        if hasattr(chord_obj, "offset")
+                        else 0.0,
                     }
                     for chord_obj in batch
                 ]
@@ -390,31 +426,37 @@ class PerformanceOptimizer:
         try:
             # Use semaphore to limit concurrent batches and prevent overwhelming
             semaphore = asyncio.Semaphore(min(4, len(batches)))
-            
+
             async def process_with_semaphore(batch_idx: int, batch: list[chord.Chord]):
                 async with semaphore:
                     return await process_batch(batch_idx, batch)
-            
-            tasks = [process_with_semaphore(i, batch) for i, batch in enumerate(batches)]
+
+            tasks = [
+                process_with_semaphore(i, batch) for i, batch in enumerate(batches)
+            ]
             results = await asyncio.wait_for(asyncio.gather(*tasks), timeout=timeout)
-            
+
             # Record performance metrics
             total_time_ms = (time.time() - start_time) * 1000
-            self.metrics.record_chord_analysis(len(chords), total_time_ms, total_timeouts)
-            
+            self.metrics.record_chord_analysis(
+                len(chords), total_time_ms, total_timeouts
+            )
+
             # Flatten results
             final_results = [item for batch in results for item in batch]
-            
+
             if total_timeouts > 0:
-                logger.warning(f"Completed with {total_timeouts} batch timeouts out of {len(batches)} total batches")
-            
+                logger.warning(
+                    f"Completed with {total_timeouts} batch timeouts out of {len(batches)} total batches"
+                )
+
             return final_results
-            
+
         except asyncio.TimeoutError:
             # Record partial metrics even on timeout
             total_time_ms = (time.time() - start_time) * 1000
             self.metrics.record_chord_analysis(len(chords), total_time_ms, len(batches))
-            
+
             logger.error(f"Overall chord analysis timed out after {timeout}s")
             raise asyncio.TimeoutError(
                 f"Chord analysis operation timed out after {timeout} seconds. "
@@ -438,7 +480,9 @@ class PerformanceOptimizer:
                 "root": str(chord_obj.root()) if chord_obj.root() else None,
                 "quality": chord_obj.quality,
                 "roman_numeral": roman_num,
-                "offset": float(chord_obj.offset) if hasattr(chord_obj, "offset") else 0.0,
+                "offset": float(chord_obj.offset)
+                if hasattr(chord_obj, "offset")
+                else 0.0,
             }
 
             # Add to results
@@ -460,14 +504,14 @@ class PerformanceOptimizer:
 
         # Common keys to pre-compute for
         common_keys = ["C", "G", "D", "A", "E", "B", "F#", "F", "Bb", "Eb", "Ab", "Db"]
-        
+
         warmed = 0
-        
+
         # Pre-compute for each common key
         for key_str in common_keys:
             try:
                 k = key.Key(key_str)
-                
+
                 # Pre-compute all chord progressions for this key
                 for prog_name, progression in self.common_progressions.items():
                     for roman_symbol in progression:
@@ -475,14 +519,16 @@ class PerformanceOptimizer:
                             # Create Roman numeral object to get actual chord
                             rn = roman.RomanNumeral(roman_symbol, k)
                             ch = chord.Chord(rn.pitches)
-                            
+
                             # Cache the Roman numeral analysis
                             self.get_cached_roman_numeral(ch, k)
                             warmed += 1
-                            
+
                         except Exception as e:
-                            logger.debug(f"Failed to warm cache for {roman_symbol} in {key_str}: {e}")
-                
+                            logger.debug(
+                                f"Failed to warm cache for {roman_symbol} in {key_str}: {e}"
+                            )
+
                 # Also pre-compute basic triads
                 for degree in range(1, 8):
                     try:
@@ -490,25 +536,39 @@ class PerformanceOptimizer:
                         for quality in ["major", "minor", "diminished"]:
                             scale_pitch = k.pitchFromDegree(degree)
                             if quality == "major":
-                                pitches = [scale_pitch, 
-                                         k.pitchFromDegree((degree + 2) % 7 + 1),
-                                         k.pitchFromDegree((degree + 4) % 7 + 1)]
+                                pitches = [
+                                    scale_pitch,
+                                    k.pitchFromDegree((degree + 2) % 7 + 1),
+                                    k.pitchFromDegree((degree + 4) % 7 + 1),
+                                ]
                             elif quality == "minor":
-                                pitches = [scale_pitch,
-                                         k.pitchFromDegree((degree + 2) % 7 + 1).transpose(-1),
-                                         k.pitchFromDegree((degree + 4) % 7 + 1)]
+                                pitches = [
+                                    scale_pitch,
+                                    k.pitchFromDegree((degree + 2) % 7 + 1).transpose(
+                                        -1
+                                    ),
+                                    k.pitchFromDegree((degree + 4) % 7 + 1),
+                                ]
                             else:  # diminished
-                                pitches = [scale_pitch,
-                                         k.pitchFromDegree((degree + 2) % 7 + 1).transpose(-1),
-                                         k.pitchFromDegree((degree + 4) % 7 + 1).transpose(-1)]
-                                         
+                                pitches = [
+                                    scale_pitch,
+                                    k.pitchFromDegree((degree + 2) % 7 + 1).transpose(
+                                        -1
+                                    ),
+                                    k.pitchFromDegree((degree + 4) % 7 + 1).transpose(
+                                        -1
+                                    ),
+                                ]
+
                             ch = chord.Chord(pitches)
                             self.get_cached_roman_numeral(ch, k)
                             warmed += 1
-                            
+
                     except Exception as e:
-                        logger.debug(f"Failed to warm cache for degree {degree} in {key_str}: {e}")
-                        
+                        logger.debug(
+                            f"Failed to warm cache for degree {degree} in {key_str}: {e}"
+                        )
+
             except Exception as e:
                 logger.warning(f"Failed to process key {key_str}: {e}")
 
@@ -522,7 +582,7 @@ class PerformanceOptimizer:
         """Gracefully shutdown the performance optimizer and its thread pool"""
         logger.info("Shutting down PerformanceOptimizer")
         try:
-            if hasattr(self, 'executor') and self.executor:
+            if hasattr(self, "executor") and self.executor:
                 self.executor.shutdown(wait=True)
                 logger.info("ThreadPoolExecutor shutdown completed")
         except Exception as e:
@@ -545,7 +605,10 @@ class OptimizedChordAnalysisTool:
         self.optimizer = optimizer
 
     async def analyze_chords_optimized(
-        self, score_id: str, limit: int | None = None, timeout: float = CHORD_ANALYSIS_TIMEOUT
+        self,
+        score_id: str,
+        limit: int | None = None,
+        timeout: float = CHORD_ANALYSIS_TIMEOUT,
     ) -> dict[str, Any]:
         """Optimized chord analysis with caching, parallel processing, and timeout protection"""
 
@@ -556,7 +619,9 @@ class OptimizedChordAnalysisTool:
                 return {"error": f"Score '{score_id}' not found"}
 
             # Check if we have cached results
-            score_hash = hashlib.md5(str(score).encode(), usedforsecurity=False).hexdigest()[:16]
+            score_hash = hashlib.md5(
+                str(score).encode(), usedforsecurity=False
+            ).hexdigest()[:16]
             cache_key = f"chord_analysis:{score_hash}:{limit}"
 
             if cache_key in self.optimizer.chord_analysis_cache:
@@ -588,7 +653,8 @@ class OptimizedChordAnalysisTool:
                 "total_chords": len(analyzed_chords),
                 "chords": analyzed_chords,
                 "key": str(key_obj),
-                "analysis_time_ms": (asyncio.get_event_loop().time() - start_time) * 1000,
+                "analysis_time_ms": (asyncio.get_event_loop().time() - start_time)
+                * 1000,
                 "timeout_applied": timeout,
             }
 
@@ -602,13 +668,14 @@ class OptimizedChordAnalysisTool:
                 "error": str(e),
                 "score_id": score_id,
                 "timeout_seconds": timeout,
-                "status": "timeout"
+                "status": "timeout",
             }
 
 
 # Decorator for automatic caching
 def cached_analysis(cache_attr: str, key_func=None):
     """Decorator to automatically cache analysis results"""
+
     def decorator(func):
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
@@ -637,6 +704,7 @@ def cached_analysis(cache_attr: str, key_func=None):
             return result
 
         return wrapper
+
     return decorator
 
 
@@ -649,7 +717,12 @@ class OptimizedHarmonyAnalysisTool:
         self.optimizer = optimizer
         self.cache = TTLCache(maxsize=100, ttl=3600)
 
-    @cached_analysis("cache", key_func=lambda self, *args, **kwargs: f"harmony:{args[0] if args else 'unknown'}")
+    @cached_analysis(
+        "cache",
+        key_func=lambda self,
+        *args,
+        **kwargs: f"harmony:{args[0] if args else 'unknown'}",
+    )
     async def analyze_harmony_optimized(self, score_id: str) -> dict[str, Any]:
         """Optimized harmony analysis"""
         score = self.score_manager.get(score_id)

@@ -31,16 +31,14 @@ class ParallelProcessor:
             4, (asyncio.get_event_loop().is_running() and 4) or 4
         )
         self._executor = ThreadPoolExecutor(max_workers=self.max_workers)
-        logger.info(
-            f"Parallel processor initialized with {self.max_workers} workers"
-        )
+        logger.info(f"Parallel processor initialized with {self.max_workers} workers")
 
     async def process_batch(
         self,
         items: list[T],
         processor_func: Callable[[T], R],
         batch_size: int = 10,
-        progress_callback: Callable[[int, int], None] = None
+        progress_callback: Callable[[int, int], None] = None,
     ) -> list[R]:
         """
         Process a batch of items in parallel
@@ -73,9 +71,7 @@ class ParallelProcessor:
             ]
 
             # Wait for batch completion
-            batch_results = await asyncio.gather(
-                *futures, return_exceptions=True
-            )
+            batch_results = await asyncio.gather(*futures, return_exceptions=True)
 
             # Store results in correct positions
             for i, result in enumerate(batch_results):
@@ -104,6 +100,7 @@ class ParallelProcessor:
         Returns:
             List of chord analysis dictionaries
         """
+
         def safe_analysis(item):
             """Wrapper to handle exceptions in parallel processing"""
             try:
@@ -111,20 +108,15 @@ class ParallelProcessor:
             except Exception as e:
                 logger.warning(f"Parallel chord analysis failed: {e}")
                 pitches = (
-                    [str(p) for p in item.pitches]
-                    if hasattr(item, "pitches") else []
+                    [str(p) for p in item.pitches] if hasattr(item, "pitches") else []
                 )
-                return {
-                    "error": str(e),
-                    "pitches": pitches,
-                    "failed": True
-                }
+                return {"error": str(e), "pitches": pitches, "failed": True}
 
         # Use smaller batch size for chord analysis
         return await self.process_batch(
             chord_items,
             safe_analysis,
-            batch_size=8  # Optimized for chord analysis
+            batch_size=8,  # Optimized for chord analysis
         )
 
     def __del__(self):

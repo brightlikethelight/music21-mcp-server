@@ -52,7 +52,7 @@ class MusicAnalysisService:
         self.resource_manager = ResourceManager(
             max_memory_mb=max_memory_mb,
             max_scores=max_scores,
-            score_ttl_seconds=3600  # 1 hour TTL
+            score_ttl_seconds=3600,  # 1 hour TTL
         )
 
         # Use managed score storage instead of simple dictionary
@@ -65,7 +65,7 @@ class MusicAnalysisService:
             "Music analysis core service initialized with resource management",
             max_memory_mb=max_memory_mb,
             max_scores=max_scores,
-            available_tools=len(self.get_available_tools())
+            available_tools=len(self.get_available_tools()),
         )
 
     def _init_tools(self):
@@ -222,7 +222,9 @@ class MusicAnalysisService:
         stats = self.get_resource_stats()
         return {
             "storage_memory_mb": stats["storage"]["memory_usage_mb"],
-            "storage_utilization_percent": stats["storage"]["memory_utilization_percent"],
+            "storage_utilization_percent": stats["storage"][
+                "memory_utilization_percent"
+            ],
             "system_memory_mb": stats["system"]["process_memory_mb"],
             "system_memory_percent": stats["system"]["process_memory_percent"],
             "scores_loaded": stats["storage"]["total_scores"],
@@ -262,4 +264,3 @@ class MusicAnalysisService:
             },
             "timestamp": health["timestamp"],
         }
-

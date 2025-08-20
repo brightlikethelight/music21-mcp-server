@@ -1,9 +1,10 @@
 """Comprehensive unit tests for HarmonizationTool achieving >80% coverage"""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 import numpy as np
-from music21 import stream, note, chord, key, pitch, tempo
+import pytest
+from music21 import chord, key, note, pitch, stream, tempo
 
 from music21_mcp.tools.harmonization_tool import HarmonizationTool
 
@@ -31,7 +32,7 @@ def create_basic_analysis():
         "implied_harmonies": [["I"], ["ii"], ["iii"], ["IV"], ["V"]],
         "phrase_points": [0, 4],
         "climax": 4,
-        "range": 7
+        "range": 7,
     }
 
 
@@ -40,12 +41,12 @@ def create_simple_score_with_parts():
     score = stream.Score()
     soprano = stream.Part()
     bass = stream.Part()
-    
+
     soprano.append(note.Note("C5", quarterLength=1))
     soprano.append(note.Note("B4", quarterLength=1))
     bass.append(note.Note("C3", quarterLength=1))
     bass.append(note.Note("D3", quarterLength=1))
-    
+
     score.insert(0, soprano)
     score.insert(0, bass)
     return score
@@ -53,7 +54,7 @@ def create_simple_score_with_parts():
 
 class TestHarmonizationToolInitialization:
     """Test tool initialization and setup"""
-    
+
     def test_harmonization_tool_initialization(self, clean_score_storage):
         """Test tool initialization with style vocabularies"""
         tool = HarmonizationTool(clean_score_storage)
@@ -67,7 +68,7 @@ class TestHarmonizationToolInitialization:
 
 class TestInputValidation:
     """Test input validation methods"""
-    
+
     def test_validate_inputs_missing_score(self, clean_score_storage):
         """Test validation with non-existent score"""
         tool = HarmonizationTool(clean_score_storage)
@@ -96,7 +97,9 @@ class TestInputValidation:
         clean_score_storage["test"] = create_simple_melody()
         clean_score_storage["existing"] = create_simple_melody()
         tool = HarmonizationTool(clean_score_storage)
-        error = tool.validate_inputs(score_id="test", output_id="existing", style="classical")
+        error = tool.validate_inputs(
+            score_id="test", output_id="existing", style="classical"
+        )
         assert error is not None
         assert "already exists" in error
 
@@ -110,14 +113,14 @@ class TestInputValidation:
 
 class TestMelodyExtraction:
     """Test melody extraction and analysis"""
-    
+
     def test_extract_melody_from_single_part(self, clean_score_storage):
         """Test melody extraction from single-part score"""
         melody = create_simple_melody()
         tool = HarmonizationTool(clean_score_storage)
         extracted = tool._extract_melody(melody)
         assert len(extracted) > 0
-        assert all(hasattr(n, 'pitch') for n in extracted)
+        assert all(hasattr(n, "pitch") for n in extracted)
 
     def test_extract_melody_from_multipart_score(self, clean_score_storage):
         """Test melody extraction from multi-part score (gets top part)"""
@@ -128,7 +131,7 @@ class TestMelodyExtraction:
         part2.append(note.Note("C3", quarterLength=1))
         score.insert(0, part1)
         score.insert(0, part2)
-        
+
         tool = HarmonizationTool(clean_score_storage)
         extracted = tool._extract_melody(score)
         assert len(extracted) == 1
@@ -147,7 +150,7 @@ class TestMelodyExtraction:
         melody = [create_note("C4"), create_note("E4"), create_note("G4")]
         tool = HarmonizationTool(clean_score_storage)
         analysis = await tool._analyze_melody(melody)
-        
+
         assert "key" in analysis
         assert "contour" in analysis
         assert "implied_harmonies" in analysis
@@ -176,7 +179,7 @@ class TestMelodyExtraction:
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
         note_obj = note.Note("C4")
-        
+
         implied = tool._get_implied_harmony(note_obj, key_obj)
         assert isinstance(implied, list)
         assert len(implied) > 0
@@ -185,16 +188,16 @@ class TestMelodyExtraction:
 
 class TestClassicalHarmonization:
     """Test classical harmonization methods"""
-    
+
     @pytest.mark.asyncio
     async def test_harmonize_classical_success(self, clean_score_storage):
         """Test successful classical harmonization"""
         melody = [create_note("C4"), create_note("D4"), create_note("E4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         result = await tool._harmonize_classical(melody, analysis, None, 4)
-        
+
         assert "score" in result
         assert "progression" in result
         assert "roman_numerals" in result
@@ -208,7 +211,7 @@ class TestClassicalHarmonization:
         analysis = create_basic_analysis()
         constraints = ["diatonic_only"]
         tool = HarmonizationTool(clean_score_storage)
-        
+
         result = await tool._harmonize_classical(melody, analysis, constraints, 4)
         # All chords should be diatonic
         for chord_symbol in result["progression"]:
@@ -220,7 +223,7 @@ class TestClassicalHarmonization:
         melody = [create_note("C4"), create_note("D4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         result = await tool._harmonize_classical(melody, analysis, None, 3)
         assert len(result["score"].parts) == 3  # Soprano, Alto, Bass
 
@@ -230,7 +233,7 @@ class TestClassicalHarmonization:
         melody = [create_note("C4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         result = await tool._harmonize_classical(melody, analysis, None, 2)
         assert len(result["score"].parts) == 2  # Soprano, Bass
 
@@ -239,7 +242,7 @@ class TestClassicalHarmonization:
         melody = [create_note("C4"), create_note("D4"), create_note("E4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         progression = tool._generate_progression_classical(melody, analysis, None)
         assert len(progression) == len(melody)
         assert progression[-1] == "I"  # Should end on tonic
@@ -249,7 +252,7 @@ class TestClassicalHarmonization:
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
         note_obj = note.Note("E4")
-        
+
         # E is in C major chord, so should be compatible
         assert tool._is_chord_compatible("I", note_obj, key_obj) is True
 
@@ -258,7 +261,7 @@ class TestClassicalHarmonization:
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
         note_obj = note.Note("C4")
-        
+
         pitches = tool._realize_chord_classical("I", key_obj, note_obj)
         assert len(pitches) >= 3  # At least a triad
         assert note_obj.pitch in pitches
@@ -268,7 +271,7 @@ class TestClassicalHarmonization:
         tool = HarmonizationTool(clean_score_storage)
         chord_pitches = [pitch.Pitch("C4"), pitch.Pitch("E4"), pitch.Pitch("G4")]
         melody_note = note.Note("G4")
-        
+
         alto_pitch = tool._choose_alto_note(chord_pitches, melody_note)
         assert alto_pitch.midi != melody_note.pitch.midi  # Different from melody
 
@@ -278,23 +281,23 @@ class TestClassicalHarmonization:
         chord_pitches = [pitch.Pitch("C4"), pitch.Pitch("E4"), pitch.Pitch("G4")]
         melody_note = note.Note("G4")
         alto_pitch = pitch.Pitch("E4")
-        
+
         tenor_pitch = tool._choose_tenor_note(chord_pitches, melody_note, alto_pitch)
         assert tenor_pitch.midi not in {melody_note.pitch.midi, alto_pitch.midi}
 
 
 class TestJazzHarmonization:
     """Test jazz harmonization methods"""
-    
+
     @pytest.mark.asyncio
     async def test_harmonize_jazz_success(self, clean_score_storage):
         """Test successful jazz harmonization"""
         melody = [create_note("C4"), create_note("D4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         result = await tool._harmonize_jazz(melody, analysis, None)
-        
+
         assert "score" in result
         assert "progression" in result
         assert len(result["score"].parts) == 2  # Piano hands
@@ -304,7 +307,7 @@ class TestJazzHarmonization:
         melody = [create_note("C4"), create_note("D4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         progression = tool._generate_progression_jazz(melody, analysis, None)
         assert len(progression) == len(melody)
         # Should contain jazz chord symbols
@@ -316,7 +319,7 @@ class TestJazzHarmonization:
         analysis = create_basic_analysis()
         constraints = ["no_substitutions"]
         tool = HarmonizationTool(clean_score_storage)
-        
+
         progression = tool._generate_progression_jazz(melody, analysis, constraints)
         # Should not contain tritone substitutions
         assert "bII7" not in progression
@@ -326,7 +329,7 @@ class TestJazzHarmonization:
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
         note_obj = note.Note("C4")
-        
+
         voicing = tool._create_jazz_voicing("IMaj7", key_obj, note_obj)
         assert "upper" in voicing
         assert "lower" in voicing
@@ -338,7 +341,7 @@ class TestJazzHarmonization:
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
         note_obj = note.Note("G4")
-        
+
         voicing = tool._create_jazz_voicing("V7", key_obj, note_obj)
         assert "upper" in voicing
         assert "lower" in voicing
@@ -348,7 +351,7 @@ class TestJazzHarmonization:
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
         note_obj = note.Note("C4")
-        
+
         # Test with invalid chord symbol to trigger fallback
         voicing = tool._create_jazz_voicing("InvalidChord", key_obj, note_obj)
         assert "upper" in voicing
@@ -357,16 +360,16 @@ class TestJazzHarmonization:
 
 class TestPopHarmonization:
     """Test pop harmonization methods"""
-    
+
     @pytest.mark.asyncio
     async def test_harmonize_pop_success(self, clean_score_storage):
         """Test successful pop harmonization"""
         melody = [create_note("C4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         result = await tool._harmonize_pop(melody, analysis, None)
-        
+
         assert "score" in result
         assert len(result["score"].parts) == 3  # Melody, Guitar, Bass
 
@@ -375,20 +378,22 @@ class TestPopHarmonization:
         melody = [create_note("C4"), create_note("D4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         progression = tool._generate_progression_pop(melody, analysis, None)
         assert len(progression) == len(melody)
         # Should use common pop chords
-        assert all(chord_symbol in ["I", "V", "vi", "IV", "ii", "iii", "bVII", "bIII"] 
-                   for chord_symbol in progression)
+        assert all(
+            chord_symbol in ["I", "V", "vi", "IV", "ii", "iii", "bVII", "bIII"]
+            for chord_symbol in progression
+        )
 
     def test_create_pop_voicing_power_chord(self, clean_score_storage):
         """Test pop power chord voicing creation"""
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
-        
+
         # Mock random to always return true for power chord
-        with patch('random.random', return_value=0.1):
+        with patch("random.random", return_value=0.1):
             voicing = tool._create_pop_voicing("I", key_obj)
             # Power chord should have 2 notes (root + fifth)
             assert len(voicing) == 2
@@ -397,9 +402,9 @@ class TestPopHarmonization:
         """Test pop triad voicing creation"""
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
-        
+
         # Mock random to always return false for power chord
-        with patch('random.random', return_value=0.5):
+        with patch("random.random", return_value=0.5):
             voicing = tool._create_pop_voicing("I", key_obj)
             # Full triad should have 3 notes
             assert len(voicing) == 3
@@ -408,7 +413,7 @@ class TestPopHarmonization:
         """Test pop voicing creation fallback"""
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
-        
+
         # Test with invalid chord to trigger fallback
         voicing = tool._create_pop_voicing("InvalidChord", key_obj)
         assert len(voicing) == 2  # Fallback to root + fifth
@@ -416,16 +421,16 @@ class TestPopHarmonization:
 
 class TestModalHarmonization:
     """Test modal harmonization methods"""
-    
+
     @pytest.mark.asyncio
     async def test_harmonize_modal_success(self, clean_score_storage):
         """Test successful modal harmonization"""
         melody = [create_note("D4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         result = await tool._harmonize_modal(melody, analysis, None)
-        
+
         assert "score" in result
         assert "modal_center" in result
         assert len(result["score"].parts) == 2
@@ -435,16 +440,20 @@ class TestModalHarmonization:
         tool = HarmonizationTool(clean_score_storage)
         melody = [note.Note("C4"), note.Note("Bb4")]  # Contains b7, no 4
         analysis = {}
-        
+
         mode = tool._detect_mode(melody, analysis)
         assert mode == "mixolydian"
 
     def test_detect_mode_dorian(self, clean_score_storage):
         """Test detection of dorian mode"""
         tool = HarmonizationTool(clean_score_storage)
-        melody = [note.Note("D4"), note.Note("B4"), note.Note("E4")]  # Natural 6 and 2 in minor
+        melody = [
+            note.Note("D4"),
+            note.Note("B4"),
+            note.Note("E4"),
+        ]  # Natural 6 and 2 in minor
         analysis = {}
-        
+
         mode = tool._detect_mode(melody, analysis)
         assert mode == "dorian"
 
@@ -453,7 +462,7 @@ class TestModalHarmonization:
         tool = HarmonizationTool(clean_score_storage)
         melody = [note.Note("F4"), note.Note("F#4")]  # Contains #4
         analysis = {}
-        
+
         mode = tool._detect_mode(melody, analysis)
         assert mode == "lydian"
 
@@ -462,7 +471,7 @@ class TestModalHarmonization:
         tool = HarmonizationTool(clean_score_storage)
         melody = [note.Note("C4"), note.Note("D4"), note.Note("E4")]
         analysis = {}
-        
+
         mode = tool._detect_mode(melody, analysis)
         assert mode == "ionian"
 
@@ -471,7 +480,7 @@ class TestModalHarmonization:
         melody = [create_note("D4"), create_note("E4")]
         analysis = create_basic_analysis()
         tool = HarmonizationTool(clean_score_storage)
-        
+
         progression = tool._generate_progression_modal(melody, analysis, "dorian", None)
         assert len(progression) == len(melody)
         assert progression[0] in ["i"]  # Should start on tonic
@@ -481,7 +490,7 @@ class TestModalHarmonization:
         """Test modal chord voicing creation"""
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
-        
+
         voicing = tool._create_modal_voicing("i", key_obj, "dorian")
         assert len(voicing) >= 1
 
@@ -489,7 +498,7 @@ class TestModalHarmonization:
         """Test modal voicing creation fallback"""
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
-        
+
         # Test with invalid chord to trigger fallback
         voicing = tool._create_modal_voicing("InvalidChord", key_obj, "dorian")
         assert len(voicing) == 1  # Fallback to tonic
@@ -497,25 +506,25 @@ class TestModalHarmonization:
 
 class TestVoiceLeadingAnalysis:
     """Test voice leading analysis methods"""
-    
+
     def test_check_voice_leading_success(self, clean_score_storage):
         """Test voice leading quality checking"""
         score = stream.Score()
         soprano = stream.Part()
         bass = stream.Part()
-        
+
         # Create simple progression
         soprano.append(note.Note("C5", quarterLength=1))
         soprano.append(note.Note("D5", quarterLength=1))
         bass.append(note.Note("C3", quarterLength=1))
         bass.append(note.Note("D3", quarterLength=1))
-        
+
         score.insert(0, soprano)
         score.insert(0, bass)
-        
+
         tool = HarmonizationTool(clean_score_storage)
         quality = tool._check_voice_leading(score, "classical")
-        
+
         assert "smoothness" in quality
         assert "errors" in quality
         assert "parallel_fifths" in quality
@@ -526,19 +535,19 @@ class TestVoiceLeadingAnalysis:
         score = stream.Score()
         soprano = stream.Part()
         bass = stream.Part()
-        
+
         # Create parallel fifths
         soprano.append(note.Note("G4", quarterLength=1))
         soprano.append(note.Note("A4", quarterLength=1))
         bass.append(note.Note("C3", quarterLength=1))
         bass.append(note.Note("D3", quarterLength=1))
-        
+
         score.insert(0, soprano)
         score.insert(0, bass)
-        
+
         tool = HarmonizationTool(clean_score_storage)
         quality = tool._check_voice_leading(score, "classical")
-        
+
         assert quality["parallel_fifths"] > 0
 
     def test_check_voice_leading_parallel_octaves(self, clean_score_storage):
@@ -546,19 +555,19 @@ class TestVoiceLeadingAnalysis:
         score = stream.Score()
         soprano = stream.Part()
         bass = stream.Part()
-        
+
         # Create parallel octaves
         soprano.append(note.Note("C5", quarterLength=1))
         soprano.append(note.Note("D5", quarterLength=1))
         bass.append(note.Note("C4", quarterLength=1))
         bass.append(note.Note("D4", quarterLength=1))
-        
+
         score.insert(0, soprano)
         score.insert(0, bass)
-        
+
         tool = HarmonizationTool(clean_score_storage)
         quality = tool._check_voice_leading(score, "classical")
-        
+
         assert quality["parallel_octaves"] > 0
 
     def test_check_voice_leading_single_part(self, clean_score_storage):
@@ -567,10 +576,10 @@ class TestVoiceLeadingAnalysis:
         soprano = stream.Part()
         soprano.append(note.Note("C5", quarterLength=1))
         score.insert(0, soprano)
-        
+
         tool = HarmonizationTool(clean_score_storage)
         quality = tool._check_voice_leading(score, "classical")
-        
+
         assert quality["smoothness"] == 0.0
         assert quality["parallel_fifths"] == 0
         assert quality["parallel_octaves"] == 0
@@ -578,25 +587,25 @@ class TestVoiceLeadingAnalysis:
     def test_check_voice_leading_pop_style_leniency(self, clean_score_storage):
         """Test that pop/jazz styles are more lenient"""
         score = create_simple_score_with_parts()
-        
+
         tool = HarmonizationTool(clean_score_storage)
         classical_quality = tool._check_voice_leading(score, "classical")
         pop_quality = tool._check_voice_leading(score, "pop")
-        
+
         # Pop should be more lenient
         assert pop_quality["smoothness"] >= classical_quality["smoothness"]
 
 
 class TestUtilityMethods:
     """Test utility methods"""
-    
+
     def test_analyze_harmonic_rhythm(self, clean_score_storage):
         """Test harmonic rhythm analysis"""
         tool = HarmonizationTool(clean_score_storage)
         progression = ["I", "I", "V", "V", "vi", "vi", "IV", "I"]
-        
+
         rhythm = tool._analyze_harmonic_rhythm(progression)
-        
+
         assert "changes_per_measure" in rhythm
         assert "static_percentage" in rhythm
         assert "most_common_chord" in rhythm
@@ -613,19 +622,19 @@ class TestUtilityMethods:
         tool = HarmonizationTool(clean_score_storage)
         harmonization = {
             "progression": ["I", "IV", "V", "I"],
-            "voice_leading_quality": {"smoothness": 0.8}
+            "voice_leading_quality": {"smoothness": 0.8},
         }
         analysis = {"key": "C major"}
-        
+
         explanations = tool._generate_explanations(harmonization, analysis, "classical")
-        
+
         assert len(explanations) > 0
         assert all("aspect" in exp and "explanation" in exp for exp in explanations)
 
     def test_get_style_characteristics(self, clean_score_storage):
         """Test style characteristic descriptions"""
         tool = HarmonizationTool(clean_score_storage)
-        
+
         for style in ["classical", "jazz", "pop", "modal"]:
             desc = tool._get_style_characteristics(style)
             assert isinstance(desc, str)
@@ -636,29 +645,29 @@ class TestUtilityMethods:
         tool = HarmonizationTool(clean_score_storage)
         full_progression = ["I", "vi", "IV", "V", "I"]
         pattern = ["vi", "IV", "V"]
-        
+
         assert tool._contains_progression(full_progression, pattern) is True
         assert tool._contains_progression(full_progression, ["ii", "V"]) is False
 
 
 class TestIntegrationAndEndToEnd:
     """Test integration and end-to-end scenarios"""
-    
+
     @pytest.mark.asyncio
     async def test_execute_complete_flow_classical(self, clean_score_storage):
         """Test complete execution flow for classical style"""
         melody = create_simple_melody()
         clean_score_storage["test_melody"] = melody
-        
+
         tool = HarmonizationTool(clean_score_storage)
         result = await tool.execute(
             score_id="test_melody",
             output_id="harmonized_classical",
             style="classical",
             voice_parts=4,
-            include_explanations=True
+            include_explanations=True,
         )
-        
+
         assert result["status"] == "success"
         assert "harmonized_classical" in clean_score_storage
         assert "harmonization" in result
@@ -669,16 +678,14 @@ class TestIntegrationAndEndToEnd:
         """Test complete execution flow for all styles"""
         melody = create_simple_melody()
         clean_score_storage["test_melody"] = melody
-        
+
         tool = HarmonizationTool(clean_score_storage)
-        
+
         for style in ["classical", "jazz", "pop", "modal"]:
             result = await tool.execute(
-                score_id="test_melody",
-                output_id=f"harmonized_{style}",
-                style=style
+                score_id="test_melody", output_id=f"harmonized_{style}", style=style
             )
-            
+
             assert result["status"] == "success"
             assert f"harmonized_{style}" in clean_score_storage
 
@@ -687,14 +694,12 @@ class TestIntegrationAndEndToEnd:
         """Test execution with various constraints"""
         melody = create_simple_melody()
         clean_score_storage["test_melody"] = melody
-        
+
         tool = HarmonizationTool(clean_score_storage)
         result = await tool.execute(
-            score_id="test_melody",
-            style="classical",
-            constraints=["diatonic_only"]
+            score_id="test_melody", style="classical", constraints=["diatonic_only"]
         )
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -702,10 +707,10 @@ class TestIntegrationAndEndToEnd:
         """Test execution with empty melody"""
         empty_melody = stream.Stream()
         clean_score_storage["empty"] = empty_melody
-        
+
         tool = HarmonizationTool(clean_score_storage)
         result = await tool.execute(score_id="empty", style="classical")
-        
+
         assert result["status"] == "error"
         assert "No melody found" in result["message"]
 
@@ -714,26 +719,26 @@ class TestIntegrationAndEndToEnd:
         """Test execution with invalid style"""
         melody = create_simple_melody()
         clean_score_storage["test_melody"] = melody
-        
+
         tool = HarmonizationTool(clean_score_storage)
         result = await tool.execute(score_id="test_melody", style="invalid_style")
-        
+
         assert result["status"] == "error"
         assert "Invalid style" in result["message"]
 
 
 class TestErrorHandlingAndEdgeCases:
     """Test error handling and edge cases"""
-    
+
     @pytest.mark.asyncio
     async def test_melody_analysis_error_handling(self, clean_score_storage):
         """Test melody analysis handles errors gracefully"""
         # Create problematic melody that might cause analysis errors
         problematic_melody = [note.Note("C4")]  # Very short melody
-        
+
         tool = HarmonizationTool(clean_score_storage)
         analysis = await tool._analyze_melody(problematic_melody)
-        
+
         # Should complete without throwing exceptions
         assert "key" in analysis
         assert "contour" in analysis
@@ -743,7 +748,7 @@ class TestErrorHandlingAndEdgeCases:
         tool = HarmonizationTool(clean_score_storage)
         key_obj = key.Key("C")
         note_obj = note.Note("C4")
-        
+
         # Test with invalid chord symbol
         pitches = tool._realize_chord_classical("InvalidChord", key_obj, note_obj)
         assert len(pitches) >= 3  # Should return fallback triad
@@ -751,25 +756,25 @@ class TestErrorHandlingAndEdgeCases:
     def test_voice_leading_check_error_handling(self, clean_score_storage):
         """Test voice leading check handles malformed scores"""
         malformed_score = stream.Stream()
-        
+
         tool = HarmonizationTool(clean_score_storage)
         quality = tool._check_voice_leading(malformed_score, "classical")
-        
+
         # Should return default quality structure
         assert "smoothness" in quality
         assert "errors" in quality
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_harmonization_with_no_compatible_chords(self, clean_score_storage):
         """Test harmonization when no chords are compatible with melody"""
         # Create melody that might be hard to harmonize
         melody = stream.Stream()
         melody.append(note.Note("C#4", quarterLength=1))  # Chromatic note
         clean_score_storage["chromatic"] = melody
-        
+
         tool = HarmonizationTool(clean_score_storage)
         result = await tool.execute(score_id="chromatic", style="classical")
-        
+
         # Should complete successfully with fallback harmonies
         assert result["status"] == "success"
 

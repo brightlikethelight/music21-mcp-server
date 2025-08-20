@@ -61,7 +61,7 @@ class ChordAnalysisTool(BaseTool):
                 _chordify_score,
                 progress_start=0.1,
                 progress_end=0.3,
-                message="Chordifying score"
+                message="Chordifying score",
             )
 
             self.report_progress(0.3, "Extracting chord progression")
@@ -98,12 +98,11 @@ class ChordAnalysisTool(BaseTool):
             def progress_callback(completed, total):
                 self.report_progress(
                     0.3 + (0.6 * completed / total),
-                    f"Processed {completed}/{total} chords (parallel + cached)"
+                    f"Processed {completed}/{total} chords (parallel + cached)",
                 )
 
             chord_progression = await self._parallel.process_chord_batch(
-                chord_list,
-                create_chord_analyzer
+                chord_list, create_chord_analyzer
             )
 
             self.report_progress(0.9, "Analyzing harmonic rhythm")
@@ -143,7 +142,7 @@ class ChordAnalysisTool(BaseTool):
                 "cache_entries": cache_stats["total_cache_entries"],
                 "processing_optimized": True,
                 "parallel_processing": True,
-                "max_workers": self._parallel.max_workers
+                "max_workers": self._parallel.max_workers,
             }
 
             logger.info(

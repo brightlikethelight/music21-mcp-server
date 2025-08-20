@@ -26,6 +26,7 @@ OPERATION: ContextVar[str] = ContextVar("operation", default="")
 
 class LogLevel(Enum):
     """Structured log levels"""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -35,6 +36,7 @@ class LogLevel(Enum):
 
 class MetricType(Enum):
     """Types of metrics we collect"""
+
     COUNTER = "counter"
     HISTOGRAM = "histogram"
     GAUGE = "gauge"
@@ -69,10 +71,7 @@ class StructuredLogger:
         self.logger.addHandler(handler)
 
     def _build_log_entry(
-        self,
-        level: LogLevel,
-        message: str,
-        **kwargs
+        self, level: LogLevel, message: str, **kwargs
     ) -> dict[str, Any]:
         """Build structured log entry with context"""
         entry = {
@@ -120,11 +119,13 @@ class StructuredLogger:
         entry = self._build_log_entry(LogLevel.ERROR, message, **kwargs)
 
         if error:
-            entry.update({
-                "error_type": type(error).__name__,
-                "error_message": str(error),
-                "error_module": getattr(error, "__module__", "unknown"),
-            })
+            entry.update(
+                {
+                    "error_type": type(error).__name__,
+                    "error_message": str(error),
+                    "error_module": getattr(error, "__module__", "unknown"),
+                }
+            )
 
         self.logger.error(json.dumps(entry))
 
@@ -133,11 +134,13 @@ class StructuredLogger:
         entry = self._build_log_entry(LogLevel.CRITICAL, message, **kwargs)
 
         if error:
-            entry.update({
-                "error_type": type(error).__name__,
-                "error_message": str(error),
-                "error_module": getattr(error, "__module__", "unknown"),
-            })
+            entry.update(
+                {
+                    "error_type": type(error).__name__,
+                    "error_message": str(error),
+                    "error_module": getattr(error, "__module__", "unknown"),
+                }
+            )
 
         self.logger.critical(json.dumps(entry))
 
@@ -152,15 +155,17 @@ class StructuredFormatter(logging.Formatter):
             return record.getMessage()
         except (json.JSONDecodeError, ValueError):
             # Fall back to basic structured format
-            return json.dumps({
-                "timestamp": record.created,
-                "level": record.levelname.lower(),
-                "message": record.getMessage(),
-                "logger": record.name,
-                "module": record.module,
-                "function": record.funcName,
-                "line": record.lineno,
-            })
+            return json.dumps(
+                {
+                    "timestamp": record.created,
+                    "level": record.levelname.lower(),
+                    "message": record.getMessage(),
+                    "logger": record.name,
+                    "module": record.module,
+                    "function": record.funcName,
+                    "line": record.lineno,
+                }
+            )
 
 
 class MetricsCollector:
@@ -177,7 +182,9 @@ class MetricsCollector:
 
         # Metric storage
         self._counters: dict[str, int] = defaultdict(int)
-        self._histograms: dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
+        self._histograms: dict[str, deque] = defaultdict(
+            lambda: deque(maxlen=max_history)
+        )
         self._gauges: dict[str, float] = {}
         self._timers: dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
 
@@ -232,11 +239,17 @@ class MetricsCollector:
                 "timers": {
                     key: {
                         "count": len(durations),
-                        "mean_ms": (sum(durations) / len(durations)) * 1000 if durations else 0,
+                        "mean_ms": (sum(durations) / len(durations)) * 1000
+                        if durations
+                        else 0,
                         "min_ms": min(durations) * 1000 if durations else 0,
                         "max_ms": max(durations) * 1000 if durations else 0,
-                        "p95_ms": self._percentile(durations, 0.95) * 1000 if durations else 0,
-                        "recent": [(d * 1000) for d in list(durations)[-10:]],  # Last 10 in ms
+                        "p95_ms": self._percentile(durations, 0.95) * 1000
+                        if durations
+                        else 0,
+                        "recent": [
+                            (d * 1000) for d in list(durations)[-10:]
+                        ],  # Last 10 in ms
                     }
                     for key, durations in self._timers.items()
                 },
@@ -244,7 +257,7 @@ class MetricsCollector:
                     "start_time": self._start_time,
                     "uptime_seconds": time.time() - self._start_time,
                     "metric_definitions": self._metric_metadata,
-                }
+                },
             }
             return metrics
 
@@ -265,7 +278,9 @@ class MetricsCollector:
         label_str = ",".join(f"{k}={v}" for k, v in sorted(labels.items()))
         return f"{name}{{{label_str}}}"
 
-    def _record_metadata(self, key: str, metric_type: MetricType, labels: dict[str, Any]):
+    def _record_metadata(
+        self, key: str, metric_type: MetricType, labels: dict[str, Any]
+    ):
         """Record metadata about a metric"""
         if key not in self._metric_metadata:
             self._metric_metadata[key] = {
@@ -303,6 +318,7 @@ def get_logger(name: str = "music21_mcp") -> StructuredLogger:
 
 def with_context(request_id: str = None, user_id: str = None, operation: str = None):
     """Context manager for request correlation"""
+
     class ContextManager:
         def __init__(self, req_id, usr_id, op):
             self.request_id = req_id or str(uuid.uuid4())
@@ -345,6 +361,7 @@ def with_context(request_id: str = None, user_id: str = None, operation: str = N
 
 def monitor_performance(operation_name: str = None, track_errors: bool = True):
     """Decorator for monitoring function performance"""
+
     def decorator(func: Callable) -> Callable:
         op_name = operation_name or f"{func.__module__}.{func.__name__}"
 
@@ -361,21 +378,17 @@ def monitor_performance(operation_name: str = None, track_errors: bool = True):
 
                 # Record successful operation metrics
                 _metrics_collector.increment_counter(
-                    "operations_total",
-                    operation=op_name,
-                    status="success"
+                    "operations_total", operation=op_name, status="success"
                 )
                 _metrics_collector.record_timer(
-                    "operation_duration",
-                    duration,
-                    operation=op_name
+                    "operation_duration", duration, operation=op_name
                 )
 
                 logger.info(
                     f"Completed {op_name}",
                     operation=op_name,
                     duration_ms=duration * 1000,
-                    status="success"
+                    status="success",
                 )
 
                 return result
@@ -388,13 +401,10 @@ def monitor_performance(operation_name: str = None, track_errors: bool = True):
                     "operations_total",
                     operation=op_name,
                     status="error",
-                    error_type=type(error).__name__
+                    error_type=type(error).__name__,
                 )
                 _metrics_collector.record_timer(
-                    "operation_duration",
-                    duration,
-                    operation=op_name,
-                    status="error"
+                    "operation_duration", duration, operation=op_name, status="error"
                 )
 
                 if track_errors:
@@ -403,7 +413,7 @@ def monitor_performance(operation_name: str = None, track_errors: bool = True):
                         error=error,
                         operation=op_name,
                         duration_ms=duration * 1000,
-                        status="error"
+                        status="error",
                     )
 
                 raise
@@ -421,21 +431,17 @@ def monitor_performance(operation_name: str = None, track_errors: bool = True):
 
                 # Record successful operation metrics
                 _metrics_collector.increment_counter(
-                    "operations_total",
-                    operation=op_name,
-                    status="success"
+                    "operations_total", operation=op_name, status="success"
                 )
                 _metrics_collector.record_timer(
-                    "operation_duration",
-                    duration,
-                    operation=op_name
+                    "operation_duration", duration, operation=op_name
                 )
 
                 logger.info(
                     f"Completed {op_name}",
                     operation=op_name,
                     duration_ms=duration * 1000,
-                    status="success"
+                    status="success",
                 )
 
                 return result
@@ -448,13 +454,10 @@ def monitor_performance(operation_name: str = None, track_errors: bool = True):
                     "operations_total",
                     operation=op_name,
                     status="error",
-                    error_type=type(error).__name__
+                    error_type=type(error).__name__,
                 )
                 _metrics_collector.record_timer(
-                    "operation_duration",
-                    duration,
-                    operation=op_name,
-                    status="error"
+                    "operation_duration", duration, operation=op_name, status="error"
                 )
 
                 if track_errors:
@@ -463,13 +466,14 @@ def monitor_performance(operation_name: str = None, track_errors: bool = True):
                         error=error,
                         operation=op_name,
                         duration_ms=duration * 1000,
-                        status="error"
+                        status="error",
                     )
 
                 raise
 
         # Return appropriate wrapper based on function type
         import asyncio
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper

@@ -160,16 +160,16 @@ class ExportScoreTool(BaseTool):
             if "lily" in method and "LilyPond" in str(e):
                 logger.info("LilyPond not installed. Install from: http://lilypond.org")
             return False
-    
+
     def _validate_safe_path(self, file_path: str) -> str:
         """Validate path for security (prevent directory traversal)"""
         # Convert to Path object and resolve
         path = Path(file_path).resolve()
-        
+
         # Get allowed directories (current working directory and temp)
         cwd = Path.cwd().resolve()
         temp_dir = Path(tempfile.gettempdir()).resolve()
-        
+
         # Check if path is within allowed directories
         try:
             # Check if path is under current directory
@@ -177,17 +177,16 @@ class ExportScoreTool(BaseTool):
             return str(path)
         except ValueError:
             pass
-        
+
         try:
             # Check if path is under temp directory
             path.relative_to(temp_dir)
             return str(path)
         except ValueError:
             pass
-        
+
         # Path is outside allowed directories
         raise ValueError(
             f"Path '{file_path}' is outside allowed directories. "
             "Files can only be saved in the current directory or temp directory."
         )
-

@@ -157,7 +157,7 @@ class MCPAdapter:
             # Convert species number to string for the tool
             species_map = {1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth"}
             species_str = species_map.get(species, "first")
-            
+
             # Call the tool directly since service method signature mismatch
             result = await self.core_service.counterpoint_tool.execute(
                 score_id=score_id, species=species_str, voice_position=voice_position
@@ -169,25 +169,31 @@ class MCPAdapter:
             )
 
     async def imitate_style(
-        self, score_id: str = None, composer: str = None, generation_length: int = 16, complexity: str = "medium"
+        self,
+        score_id: str = None,
+        composer: str = None,
+        generation_length: int = 16,
+        complexity: str = "medium",
     ) -> dict[str, Any]:
         """MCP tool: Generate music imitating a specific style"""
         try:
             if score_id:
                 # Use score as style source
-                result = await self.core_service.imitate_style(score_id, composer or "custom")
+                result = await self.core_service.imitate_style(
+                    score_id, composer or "custom"
+                )
             elif composer:
                 # Use predefined composer style
                 result = await self.core_service.style_tool.execute(
                     composer=composer,
                     generation_length=generation_length,
-                    complexity=complexity
+                    complexity=complexity,
                 )
             else:
                 return self._format_mcp_error(
                     "Must provide either score_id or composer", "imitate_style"
                 )
-            
+
             return self._format_mcp_response(result, "imitate_style")
         except Exception as e:
             return self._format_mcp_error(

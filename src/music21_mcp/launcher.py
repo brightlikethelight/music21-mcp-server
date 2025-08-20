@@ -76,6 +76,7 @@ def start_http_server():
         print("🎵 Music21 HTTP API Server")
         # Get host and port from environment variables with defaults
         import os
+
         # SECURITY: Default to localhost only. Set MUSIC21_MCP_HOST=0.0.0.0 to bind to all interfaces
         # WARNING: Binding to 0.0.0.0 exposes the service to external network access
         host = os.getenv("MUSIC21_MCP_HOST", "127.0.0.1")

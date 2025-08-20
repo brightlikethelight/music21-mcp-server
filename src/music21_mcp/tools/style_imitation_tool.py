@@ -654,22 +654,26 @@ class StyleImitationTool(BaseTool):
                 # Snap pitch to nearest scale degree in the key
                 scale_pitches = key_constraint.pitches
                 pitch_classes = [p.pitchClass for p in scale_pitches]
-                
+
                 # Find nearest pitch in key
                 current_pc = current_pitch.pitchClass
                 if current_pc not in pitch_classes:
                     # Find closest pitch class in key
                     distances = [(abs(current_pc - pc), pc) for pc in pitch_classes]
-                    distances.extend([(abs(current_pc - pc - 12), pc) for pc in pitch_classes])
-                    distances.extend([(abs(current_pc - pc + 12), pc) for pc in pitch_classes])
+                    distances.extend(
+                        [(abs(current_pc - pc - 12), pc) for pc in pitch_classes]
+                    )
+                    distances.extend(
+                        [(abs(current_pc - pc + 12), pc) for pc in pitch_classes]
+                    )
                     closest_pc = min(distances)[1]
-                    
+
                     # Adjust to nearest octave
                     octave = current_pitch.octave
                     current_pitch = pitch.Pitch()
                     current_pitch.pitchClass = closest_pc
                     current_pitch.octave = octave
-            
+
             # Apply range constraint
             if range_constraint:
                 min_pitch, max_pitch = range_constraint.split("-")
@@ -727,26 +731,24 @@ class StyleImitationTool(BaseTool):
 
         # Use style-based generation with average duration from style data
         avg_dur = style_data.get("rhythmic", {}).get("avg_duration", 1.0)
-        
+
         # Adjust duration choices based on average duration from style
         if complexity == "simple":
             # Use durations close to average
             if avg_dur < 0.5:
                 return random.choice([0.25, 0.5])
-            elif avg_dur > 1.5:
+            if avg_dur > 1.5:
                 return random.choice([1.0, 2.0])
-            else:
-                return random.choice([0.5, 1.0])
-        
+            return random.choice([0.5, 1.0])
+
         if complexity == "medium":
             # More variety around average
             if avg_dur < 0.5:
                 return random.choice([0.125, 0.25, 0.5, 0.75])
-            elif avg_dur > 1.5:
+            if avg_dur > 1.5:
                 return random.choice([0.5, 1.0, 1.5, 2.0])
-            else:
-                return random.choice([0.25, 0.5, 1.0, 1.5])
-        
+            return random.choice([0.25, 0.5, 1.0, 1.5])
+
         # Complex - wide variety centered on average
         if avg_dur < 0.5:
             base_durs = [0.0625, 0.125, 0.25, 0.375, 0.5, 0.75, 1.0]
@@ -757,7 +759,7 @@ class StyleImitationTool(BaseTool):
         else:
             base_durs = [0.125, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
             weights = [0.1, 0.2, 0.3, 0.1, 0.2, 0.05, 0.05]
-        
+
         return float(np.random.choice(base_durs, p=weights))
 
     def _generate_bass_line(

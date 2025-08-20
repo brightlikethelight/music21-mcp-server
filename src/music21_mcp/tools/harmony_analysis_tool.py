@@ -86,10 +86,12 @@ class HarmonyAnalysisTool(BaseTool):
             result["performance_stats"] = {
                 "cache_hit_rate": cache_stats["hit_rate_percent"],
                 "cache_entries": cache_stats["total_cache_entries"],
-                "processing_optimized": True
+                "processing_optimized": True,
             }
 
-            logger.info(f"Harmony analysis completed with {cache_stats['hit_rate_percent']:.1f}% cache hit rate")
+            logger.info(
+                f"Harmony analysis completed with {cache_stats['hit_rate_percent']:.1f}% cache hit rate"
+            )
 
             return result
 
@@ -299,4 +301,3 @@ class HarmonyAnalysisTool(BaseTool):
             )
 
         return rhythm
-

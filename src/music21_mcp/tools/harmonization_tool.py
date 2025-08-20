@@ -9,8 +9,8 @@ from typing import Any
 
 from music21 import chord, note, pitch, roman, stream
 
-from .base_tool import BaseTool
 from ..performance_optimizations import PerformanceOptimizer
+from .base_tool import BaseTool
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +27,12 @@ class HarmonizationTool(BaseTool):
 
     def __init__(self, score_manager: dict[str, Any]):
         super().__init__(score_manager)
-        
+
         # Initialize performance optimizer for fast Roman numeral analysis
-        self.performance_optimizer = PerformanceOptimizer(cache_ttl=7200, max_cache_size=2000)
-        
+        self.performance_optimizer = PerformanceOptimizer(
+            cache_ttl=7200, max_cache_size=2000
+        )
+
         # Warm the cache on initialization for common progressions
         self.performance_optimizer.warm_cache()
 
@@ -462,7 +464,7 @@ class HarmonizationTool(BaseTool):
             # Get chord tones using cached Roman numeral analysis
             rn = roman.RomanNumeral(chord_symbol, key_obj)
             chord_obj = chord.Chord(rn.pitches)
-            
+
             # Use performance optimizer to check compatibility faster
             chord_pitches = [p.name for p in chord_obj.pitches]
 
@@ -480,12 +482,16 @@ class HarmonizationTool(BaseTool):
             # Use cached Roman numeral analysis for better performance
             rn = roman.RomanNumeral(chord_symbol, key_obj)
             chord_obj = chord.Chord(rn.pitches)
-            
+
             # Get cached Roman numeral analysis to validate the chord
-            cached_analysis = self.performance_optimizer.get_cached_roman_numeral(chord_obj, key_obj)
+            cached_analysis = self.performance_optimizer.get_cached_roman_numeral(
+                chord_obj, key_obj
+            )
             if cached_analysis:
-                logger.debug(f"Using cached analysis for {chord_symbol}: {cached_analysis}")
-            
+                logger.debug(
+                    f"Using cached analysis for {chord_symbol}: {cached_analysis}"
+                )
+
             chord_pitches = list(rn.pitches)
 
             # Ensure melodic note is in the chord
@@ -864,8 +870,8 @@ class HarmonizationTool(BaseTool):
         # Mixolydian: has flat 7 (Bb in C = pitch class 10)
         if 10 in pitch_classes and 5 not in pitch_classes:  # Flat 7, no 4
             return "mixolydian"
-        # Dorian: has natural 6 and 2 in minor context  
-        if 11 in pitch_classes and 2 in pitch_classes:  # Natural 6 (B) and 2 (D) 
+        # Dorian: has natural 6 and 2 in minor context
+        if 11 in pitch_classes and 2 in pitch_classes:  # Natural 6 (B) and 2 (D)
             return "dorian"
         # Lydian: has raised 4 (F# in C = pitch class 6)
         if 6 in pitch_classes:  # Raised 4

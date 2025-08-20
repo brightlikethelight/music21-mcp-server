@@ -17,8 +17,8 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from music21 import chord, corpus, key, note, stream
 
-from music21_mcp.tools.import_tool import ImportScoreTool
 from music21_mcp.resource_manager import ResourceManager, ScoreStorage
+from music21_mcp.tools.import_tool import ImportScoreTool
 
 
 class TestResourceManagerComprehensive:
@@ -46,7 +46,7 @@ class TestResourceManagerComprehensive:
         """Test adding scores to storage"""
         score = stream.Score()
         score_storage["test_score"] = score  # Use dictionary-style syntax
-        
+
         assert "test_score" in score_storage
         assert score_storage["test_score"] == score
         assert "test_score" in score_storage._memory_usage
@@ -56,11 +56,11 @@ class TestResourceManagerComprehensive:
         """Test deleting scores from storage"""
         score = stream.Score()
         score_storage["test_score"] = score  # Use dictionary-style syntax
-        
+
         del score_storage["test_score"]  # Use dictionary-style deletion
         assert "test_score" not in score_storage
         assert "test_score" not in score_storage._memory_usage
-        
+
         # Try to delete non-existent score - should raise KeyError
         with pytest.raises(KeyError):
             del score_storage["non_existent"]
@@ -69,16 +69,16 @@ class TestResourceManagerComprehensive:
         """Test listing scores in storage"""
         score1 = stream.Score()
         score2 = stream.Score()
-        
+
         score_storage["score1"] = score1
         score_storage["score2"] = score2
-        
+
         # Test iteration over scores
         score_ids = list(score_storage)
         assert len(score_ids) == 2
         assert "score1" in score_ids
         assert "score2" in score_ids
-        
+
         # Test length
         assert len(score_storage) == 2
 
@@ -86,10 +86,10 @@ class TestResourceManagerComprehensive:
         """Test cleanup of expired scores"""
         score = stream.Score()
         score_storage["test_score"] = score
-        
+
         # Manually set access time to past
         score_storage._access_times["test_score"] = time.time() - 120
-        
+
         # Call cleanup method
         stats = score_storage.cleanup()
         assert "removed_scores" in stats
@@ -102,16 +102,16 @@ class TestResourceManagerComprehensive:
             score = stream.Score()
             score_storage[f"score{i}"] = score
             time.sleep(0.01)  # Ensure different access times
-        
+
         # Access middle scores to update access time
         # Access scores to update access times
         _ = score_storage["score2"]
         _ = score_storage["score3"]
-        
+
         # Add one more score (should evict least recently used)
         new_score = stream.Score()
         score_storage["new_score"] = new_score
-        
+
         assert "new_score" in score_storage
         assert len(score_storage) <= 5
 
@@ -124,27 +124,28 @@ class TestResourceManagerComprehensive:
             for _ in range(100):
                 part.append(note.Note())
             large_score.append(part)
-        
+
         # Try to add score that exceeds memory limit
         score_storage.max_memory_mb = 0.001  # Very small limit
-        
+
         # Should raise ResourceExhaustedError
         from music21_mcp.resource_manager import ResourceExhaustedError
+
         with pytest.raises(ResourceExhaustedError):
             score_storage["large_score"] = large_score
 
     def test_score_storage_health_check(self, score_storage):
         """Test get_stats functionality"""
         stats = score_storage.get_stats()
-        
+
         assert stats["total_scores"] == 0
         assert stats["memory_usage_mb"] >= 0
         assert stats["memory_utilization_percent"] >= 0
-        
+
         # Add scores and check again
         for i in range(3):
             score_storage[f"score{i}"] = stream.Score()
-        
+
         stats = score_storage.get_stats()
         assert stats["total_scores"] == 3
         assert stats["memory_usage_mb"] > 0
@@ -152,19 +153,19 @@ class TestResourceManagerComprehensive:
     def test_score_storage_get_stats(self, score_storage):
         """Test statistics gathering"""
         stats = score_storage.get_stats()
-        
+
         assert stats["total_scores"] == 0
         assert stats["memory_usage_mb"] >= 0
         assert stats["max_scores"] == 5
         assert stats["max_memory_mb"] == 64
         assert stats["cache_hits"] == 0
         assert stats["cache_misses"] == 0
-        
+
         # Add scores
         score_storage["score1"] = stream.Score()
         time.sleep(0.01)
         score_storage["score2"] = stream.Score()
-        
+
         stats = score_storage.get_stats()
         assert stats["total_scores"] == 2
         assert stats["memory_usage_mb"] > 0
@@ -175,7 +176,7 @@ class TestResourceManagerComprehensive:
         """Test ResourceManager initialization"""
         assert resource_manager.max_memory_mb == 128
         assert resource_manager.scores.max_scores == 10
-        assert hasattr(resource_manager, 'scores')
+        assert hasattr(resource_manager, "scores")
 
     def test_resource_manager_check_memory(self, resource_manager):
         """Test system stats functionality"""
@@ -188,7 +189,7 @@ class TestResourceManagerComprehensive:
     def test_resource_manager_get_memory_usage(self, resource_manager):
         """Test health check functionality"""
         health = resource_manager.check_health()
-        
+
         assert "status" in health
         assert "stats" in health
         assert health["status"] in ["healthy", "degraded", "unhealthy"]
@@ -199,10 +200,10 @@ class TestResourceManagerComprehensive:
         """Test resource manager shutdown"""
         # Create a new resource manager to test shutdown
         rm = ResourceManager(max_memory_mb=64, max_scores=5)
-        
+
         # Add a score
         rm.scores["test"] = stream.Score()
-        
+
         # Shutdown should work without errors
         rm.shutdown()
         # After shutdown, the cleanup thread should be stopped
@@ -212,10 +213,10 @@ class TestResourceManagerComprehensive:
         # Add a score
         score = stream.Score()
         resource_manager.scores["test_score"] = score
-        
+
         # Force cleanup
         cleanup_stats = resource_manager.scores.cleanup()
-        
+
         # Check cleanup stats
         assert "removed_scores" in cleanup_stats
         assert "freed_memory_mb" in cleanup_stats
@@ -223,7 +224,7 @@ class TestResourceManagerComprehensive:
     def test_resource_manager_monitor_resources(self, resource_manager):
         """Test resource monitoring via health check"""
         status = resource_manager.check_health()
-        
+
         assert "timestamp" in status
         assert "status" in status
         assert "stats" in status
@@ -253,10 +254,10 @@ class TestImportToolComprehensive:
         """Test validation of valid file source"""
         is_valid = import_tool._validate_source("/path/to/score.xml", "file")
         assert is_valid is True
-        
+
         is_valid = import_tool._validate_source("/path/to/score.mid", "file")
         assert is_valid is True
-        
+
         is_valid = import_tool._validate_source("/path/to/score.mxl", "file")
         assert is_valid is True
 
@@ -264,7 +265,7 @@ class TestImportToolComprehensive:
         """Test validation of invalid file source"""
         is_valid = import_tool._validate_source("/path/to/file.txt", "file")
         assert is_valid is False
-        
+
         is_valid = import_tool._validate_source("not/absolute/path.xml", "file")
         assert is_valid is False
 
@@ -272,7 +273,7 @@ class TestImportToolComprehensive:
         """Test validation of valid text source"""
         is_valid = import_tool._validate_source("tinyNotation: 4/4 c4 d4 e4 f4", "text")
         assert is_valid is True
-        
+
         is_valid = import_tool._validate_source("C D E F G", "text")
         assert is_valid is True
 
@@ -308,11 +309,9 @@ class TestImportToolComprehensive:
     async def test_handle_import_validation_error(self, import_tool):
         """Test handling of validation errors"""
         result = await import_tool.handle_import(
-            score_id="test",
-            source="../../etc/passwd",
-            source_type="corpus"
+            score_id="test", source="../../etc/passwd", source_type="corpus"
         )
-        
+
         assert result["status"] == "error"
         assert "Invalid source" in result["message"]
 
@@ -320,24 +319,20 @@ class TestImportToolComprehensive:
     async def test_handle_import_unknown_type(self, import_tool):
         """Test handling of unknown source type"""
         result = await import_tool.handle_import(
-            score_id="test",
-            source="something",
-            source_type="unknown"
+            score_id="test", source="something", source_type="unknown"
         )
-        
+
         assert result["status"] == "error"
         assert "Unknown source type" in result["message"]
 
     @pytest.mark.asyncio
     async def test_handle_import_none_score(self, import_tool):
         """Test handling when import returns None"""
-        with patch.object(import_tool, '_import_from_corpus', return_value=None):
+        with patch.object(import_tool, "_import_from_corpus", return_value=None):
             result = await import_tool.handle_import(
-                score_id="test",
-                source="bach/test",
-                source_type="corpus"
+                score_id="test", source="bach/test", source_type="corpus"
             )
-            
+
             assert result["status"] == "error"
             assert "Could not find or import" in result["message"]
 
@@ -358,8 +353,9 @@ class TestServerMinimalCoverage:
         """Test that server_minimal can be imported"""
         try:
             import music21_mcp.server_minimal
-            assert hasattr(music21_mcp.server_minimal, 'MusicAnalysisService')
-            assert hasattr(music21_mcp.server_minimal, 'create_mcp_server')
+
+            assert hasattr(music21_mcp.server_minimal, "MusicAnalysisService")
+            assert hasattr(music21_mcp.server_minimal, "create_mcp_server")
         except ImportError:
             # Module import issues, skip
             pytest.skip("server_minimal import failed")
@@ -369,14 +365,14 @@ class TestServerMinimalCoverage:
         """Test server_minimal constants and configuration"""
         try:
             from music21_mcp import server_minimal
-            
+
             # Test that required tools are defined
-            assert hasattr(server_minimal, 'ImportScoreTool')
-            assert hasattr(server_minimal, 'ListScoresTool')
-            assert hasattr(server_minimal, 'DeleteScoreTool')
-            
+            assert hasattr(server_minimal, "ImportScoreTool")
+            assert hasattr(server_minimal, "ListScoresTool")
+            assert hasattr(server_minimal, "DeleteScoreTool")
+
             # Test service creation function exists
-            assert callable(getattr(server_minimal, 'create_mcp_server', None))
+            assert callable(getattr(server_minimal, "create_mcp_server", None))
         except ImportError:
             pytest.skip("server_minimal import failed")
 
@@ -388,7 +384,7 @@ class TestPerformanceOptimizationsCoverage:
     async def test_performance_optimizer_parallel_empty(self):
         """Test parallel processing with empty list"""
         from music21_mcp.performance_optimizations import PerformanceOptimizer
-        
+
         optimizer = PerformanceOptimizer()
         results = await optimizer.analyze_chords_parallel([], key.Key("C"))
         assert results == []
@@ -397,48 +393,48 @@ class TestPerformanceOptimizationsCoverage:
     async def test_performance_optimizer_parallel_single(self):
         """Test parallel processing with single chord"""
         from music21_mcp.performance_optimizations import PerformanceOptimizer
-        
+
         optimizer = PerformanceOptimizer()
         chords = [chord.Chord(["C4", "E4", "G4"])]
         results = await optimizer.analyze_chords_parallel(chords, key.Key("C"))
-        
+
         assert len(results) == 1
         assert results[0]["roman_numeral"] == "I"
 
     def test_performance_optimizer_cache_stats(self):
         """Test cache statistics"""
         from music21_mcp.performance_optimizations import PerformanceOptimizer
-        
+
         optimizer = PerformanceOptimizer()
-        
+
         # Initial stats
         assert optimizer.roman_cache._hits == 0
         assert optimizer.roman_cache._misses == 0
-        
+
         # Generate some cache activity
         c_chord = chord.Chord(["C4", "E4", "G4"])
         c_key = key.Key("C")
-        
+
         # First call - miss
         optimizer.get_cached_roman_numeral(c_chord, c_key)
-        
+
         # Second call - hit
         optimizer.get_cached_roman_numeral(c_chord, c_key)
-        
+
         # Check stats updated
         assert optimizer.roman_cache._hits > 0
 
     def test_performance_optimizer_clear_cache(self):
         """Test cache clearing"""
         from music21_mcp.performance_optimizations import PerformanceOptimizer
-        
+
         optimizer = PerformanceOptimizer()
-        
+
         # Add to cache
         c_chord = chord.Chord(["C4", "E4", "G4"])
         c_key = key.Key("C")
         optimizer.get_cached_roman_numeral(c_chord, c_key)
-        
+
         # Clear cache
         optimizer.roman_cache.clear()
         assert len(optimizer.roman_cache) == 0
@@ -450,10 +446,10 @@ class TestPerformanceOptimizationsCoverage:
             OptimizedChordAnalysisTool,
             OptimizedHarmonyAnalysisTool,
         )
-        
+
         score_manager = {}
         optimizer = None  # Invalid optimizer
-        
+
         # Should handle None optimizer gracefully
         try:
             chord_tool = OptimizedChordAnalysisTool(score_manager, optimizer)
@@ -470,7 +466,7 @@ class TestAdditionalErrorPaths:
         """Test ResourceManager singleton behavior"""
         rm1 = ResourceManager(max_memory_mb=128)
         rm2 = ResourceManager(max_memory_mb=256)
-        
+
         # Should be different instances (not enforced singleton)
         assert rm1 is not rm2
         assert rm1.max_memory_mb == 128
@@ -479,7 +475,7 @@ class TestAdditionalErrorPaths:
     def test_score_storage_concurrent_access(self):
         """Test concurrent access to ScoreStorage"""
         storage = ScoreStorage(max_scores=10)
-        
+
         # Simulate concurrent adds
         scores = []
         for i in range(5):
@@ -487,7 +483,7 @@ class TestAdditionalErrorPaths:
             score_id = f"score_{i}"
             storage.add(score_id, score)
             scores.append(score_id)
-        
+
         # Verify all added
         for score_id in scores:
             assert score_id in storage.scores
@@ -495,7 +491,7 @@ class TestAdditionalErrorPaths:
     def test_import_tool_source_sanitization(self):
         """Test source path sanitization"""
         tool = ImportScoreTool({})
-        
+
         # Test path traversal attempts
         dangerous_paths = [
             "../../../etc/passwd",
@@ -504,7 +500,7 @@ class TestAdditionalErrorPaths:
             "//etc/passwd",
             "\\\\server\\share",
         ]
-        
+
         for path in dangerous_paths:
             assert tool._validate_source(path, "corpus") is False
 
@@ -512,9 +508,9 @@ class TestAdditionalErrorPaths:
     async def test_async_error_propagation(self):
         """Test error propagation in async operations"""
         tool = ImportScoreTool({})
-        
+
         # Test with mock that raises
-        with patch('music21.corpus.parse', side_effect=Exception("Test error")):
+        with patch("music21.corpus.parse", side_effect=Exception("Test error")):
             score = await tool._import_from_corpus("bach/test")
             assert score is None  # Should handle exception
 
@@ -533,7 +529,7 @@ def test_import_all_modules():
         "music21_mcp.performance_optimizations",
         "music21_mcp.tools.import_tool",
     ]
-    
+
     for module_name in modules:
         try:
             __import__(module_name)

@@ -333,9 +333,7 @@ class Music21Analysis:
         """Recognize musical patterns (synchronous)"""
         return self._run_async(self.adapter.recognize_patterns(score_id, pattern_type))
 
-    def export_score(
-        self, score_id: str, format: str = "musicxml"
-    ) -> dict[str, Any]:
+    def export_score(self, score_id: str, format: str = "musicxml") -> dict[str, Any]:
         """Export a score to various formats (synchronous)"""
         return self._run_async(self.adapter.export_score(score_id, format))
 

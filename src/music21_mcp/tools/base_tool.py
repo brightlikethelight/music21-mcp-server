@@ -10,7 +10,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from typing import Any, Optional
+from typing import Any
 
 from ..async_executor import AsyncProgressReporter, run_in_thread
 
@@ -29,10 +29,10 @@ class BaseTool(ABC):
     - Memory-efficient processing
     """
 
-    def __init__(self, score_manager: dict[str, Any], timeout: Optional[float] = None):
+    def __init__(self, score_manager: dict[str, Any], timeout: float | None = None):
         """
         Initialize with reference to score manager
-        
+
         Args:
             score_manager: Dictionary containing music scores
             timeout: Default timeout for this tool's operations (defaults to DEFAULT_TOOL_TIMEOUT)
@@ -60,21 +60,25 @@ class BaseTool(ABC):
         """
         pass
 
-    async def execute_with_timeout(self, timeout: Optional[float] = None, **kwargs: Any) -> dict[str, Any]:
+    async def execute_with_timeout(
+        self, timeout: float | None = None, **kwargs: Any
+    ) -> dict[str, Any]:
         """
         Execute the tool operation with specified timeout
-        
+
         Args:
             timeout: Timeout in seconds (uses tool's default if not specified)
             **kwargs: Arguments passed to execute method
-            
+
         Returns:
             Dict with execution results or timeout error
         """
         operation_timeout = timeout or self.timeout
-        
+
         try:
-            return await asyncio.wait_for(self.execute(**kwargs), timeout=operation_timeout)
+            return await asyncio.wait_for(
+                self.execute(**kwargs), timeout=operation_timeout
+            )
         except asyncio.TimeoutError:
             error_msg = (
                 f"Tool operation timed out after {operation_timeout} seconds. "
@@ -84,7 +88,10 @@ class BaseTool(ABC):
             logger.error(f"Tool {self.__class__.__name__} timed out: {error_msg}")
             return self.create_error_response(
                 message=error_msg,
-                details={"timeout_seconds": operation_timeout, "tool": self.__class__.__name__}
+                details={
+                    "timeout_seconds": operation_timeout,
+                    "tool": self.__class__.__name__,
+                },
             )
 
     @abstractmethod
@@ -110,7 +117,9 @@ class BaseTool(ABC):
 
     # === Async Execution Helpers ===
 
-    async def run_music21_operation(self, func: Callable, *args, timeout: Optional[float] = None, **kwargs) -> Any:
+    async def run_music21_operation(
+        self, func: Callable, *args, timeout: float | None = None, **kwargs
+    ) -> Any:
         """
         Run a music21 operation asynchronously in a background thread with timeout
 
@@ -124,20 +133,23 @@ class BaseTool(ABC):
 
         Returns:
             The result of the function
-            
+
         Raises:
             asyncio.TimeoutError: If operation exceeds timeout
         """
         operation_timeout = timeout or self.timeout
         return await run_in_thread(func, *args, timeout=operation_timeout, **kwargs)
 
-    async def run_with_progress(self,
-                              func: Callable,
-                              progress_start: float = 0.0,
-                              progress_end: float = 1.0,
-                              message: str = "Processing...",
-                              timeout: Optional[float] = None,
-                              *args, **kwargs) -> Any:
+    async def run_with_progress(
+        self,
+        func: Callable,
+        progress_start: float = 0.0,
+        progress_end: float = 1.0,
+        message: str = "Processing...",
+        timeout: float | None = None,
+        *args,
+        **kwargs,
+    ) -> Any:
         """
         Run a function with progress reporting and timeout
 
@@ -152,13 +164,19 @@ class BaseTool(ABC):
 
         Returns:
             Function result
-            
+
         Raises:
             asyncio.TimeoutError: If operation exceeds timeout
         """
         operation_timeout = timeout or self.timeout
         return await self._progress_reporter.run_with_progress(
-            func, progress_start, progress_end, message, operation_timeout, *args, **kwargs
+            func,
+            progress_start,
+            progress_end,
+            message,
+            operation_timeout,
+            *args,
+            **kwargs,
         )
 
     @contextmanager
@@ -200,4 +218,3 @@ class BaseTool(ABC):
     def get_score(self, score_id: str) -> Any:
         """Get score from manager"""
         return self.score_manager.get(score_id)
-

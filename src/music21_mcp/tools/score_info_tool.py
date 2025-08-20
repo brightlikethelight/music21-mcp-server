@@ -185,7 +185,9 @@ class ScoreInfoTool(BaseTool):
 
             # Estimate duration in seconds (assuming 120 BPM if no tempo marking)
             tempo_marking = self._get_first_tempo(score)
-            bpm = tempo_marking.number if tempo_marking and tempo_marking.number else 120
+            bpm = (
+                tempo_marking.number if tempo_marking and tempo_marking.number else 120
+            )
             duration_seconds = (duration_quarters / 4) * (60 / bpm) * 4
 
             return {

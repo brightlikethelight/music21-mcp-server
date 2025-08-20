@@ -63,9 +63,7 @@ class PerformanceCache:
         key_str = str(key_obj) if key_obj else "no_key"
 
         # Include chord metadata that affects roman numeral analysis
-        inversion = (
-            chord_obj.inversion() if hasattr(chord_obj, "inversion") else 0
-        )
+        inversion = chord_obj.inversion() if hasattr(chord_obj, "inversion") else 0
 
         # Create composite key
         cache_key_data = f"{pitches_str}|{key_str}|{inversion}"
@@ -129,8 +127,7 @@ class PerformanceCache:
         return None
 
     def get_chord_analysis(
-        self, chord_obj: chord.Chord, key_obj: key.Key | None,
-        include_inversions: bool
+        self, chord_obj: chord.Chord, key_obj: key.Key | None, include_inversions: bool
     ) -> dict[str, Any]:
         """
         Get comprehensive chord analysis with caching
@@ -218,9 +215,8 @@ class PerformanceCache:
             "roman_numeral_cache_size": len(self._roman_numeral_cache),
             "chord_analysis_cache_size": len(self._chord_analysis_cache),
             "total_cache_entries": (
-                len(self._roman_numeral_cache) +
-                len(self._chord_analysis_cache)
-            )
+                len(self._roman_numeral_cache) + len(self._chord_analysis_cache)
+            ),
         }
 
     def clear_cache(self):

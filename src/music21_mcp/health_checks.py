@@ -13,13 +13,13 @@ import asyncio
 import logging
 import os
 import platform
-import psutil
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
+import psutil
 from music21 import chord, converter, key, stream
 
 logger = logging.getLogger(__name__)
@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class HealthStatus(Enum):
     """Health check status levels"""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -34,14 +35,14 @@ class HealthStatus(Enum):
 
 class HealthCheckResult:
     """Result of a health check"""
-    
+
     def __init__(
         self,
         name: str,
         status: HealthStatus,
         message: str = "",
-        details: Optional[dict[str, Any]] = None,
-        duration_ms: Optional[float] = None,
+        details: dict[str, Any] | None = None,
+        duration_ms: float | None = None,
     ):
         self.name = name
         self.status = status
@@ -49,7 +50,7 @@ class HealthCheckResult:
         self.details = details or {}
         self.duration_ms = duration_ms
         self.timestamp = datetime.utcnow().isoformat()
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         return {
@@ -64,7 +65,7 @@ class HealthCheckResult:
 
 class HealthChecker:
     """Comprehensive health checking system"""
-    
+
     def __init__(
         self,
         memory_threshold_percent: float = 80.0,
@@ -74,20 +75,20 @@ class HealthChecker:
         self.memory_threshold = memory_threshold_percent
         self.cpu_threshold = cpu_threshold_percent
         self.response_time_threshold = response_time_threshold_ms
-        
+
         # Track health history
         self.check_history: list[HealthCheckResult] = []
-        self.last_check_time: Optional[datetime] = None
-        
+        self.last_check_time: datetime | None = None
+
         # Performance metrics
         self.request_count = 0
         self.error_count = 0
         self.total_response_time_ms = 0.0
-    
+
     async def check_all(self) -> dict[str, Any]:
         """Run all health checks"""
         start_time = time.time()
-        
+
         # Run all checks in parallel
         checks = await asyncio.gather(
             self.check_system_resources(),
@@ -95,13 +96,13 @@ class HealthChecker:
             self.check_cache_systems(),
             self.check_dependencies(),
             self.check_performance_metrics(),
-            return_exceptions=True
+            return_exceptions=True,
         )
-        
+
         # Process results
         results = []
         overall_status = HealthStatus.HEALTHY
-        
+
         for check in checks:
             if isinstance(check, Exception):
                 # Health check itself failed
@@ -117,19 +118,22 @@ class HealthChecker:
                 # Downgrade overall status if needed
                 if check.status == HealthStatus.UNHEALTHY:
                     overall_status = HealthStatus.UNHEALTHY
-                elif check.status == HealthStatus.DEGRADED and overall_status != HealthStatus.UNHEALTHY:
+                elif (
+                    check.status == HealthStatus.DEGRADED
+                    and overall_status != HealthStatus.UNHEALTHY
+                ):
                     overall_status = HealthStatus.DEGRADED
-        
+
         # Store in history
         self.check_history.extend(results)
         self.last_check_time = datetime.utcnow()
-        
+
         # Trim history to last 100 checks
         if len(self.check_history) > 100:
             self.check_history = self.check_history[-100:]
-        
+
         total_duration = (time.time() - start_time) * 1000
-        
+
         return {
             "status": overall_status.value,
             "timestamp": datetime.utcnow().isoformat(),
@@ -141,37 +145,43 @@ class HealthChecker:
                 "process_uptime_seconds": time.time() - psutil.Process().create_time(),
             },
         }
-    
+
     async def check_system_resources(self) -> HealthCheckResult:
         """Check system resource usage"""
         start_time = time.time()
-        
+
         try:
             # Memory check
             memory = psutil.virtual_memory()
             memory_percent = memory.percent
-            
+
             # CPU check
             cpu_percent = psutil.cpu_percent(interval=0.1)
-            
+
             # Disk check (for temp directory)
             temp_dir = os.path.dirname(os.path.realpath(__file__))
             disk = psutil.disk_usage(temp_dir)
             disk_percent = disk.percent
-            
+
             # Determine status
-            if memory_percent > self.memory_threshold or cpu_percent > self.cpu_threshold:
+            if (
+                memory_percent > self.memory_threshold
+                or cpu_percent > self.cpu_threshold
+            ):
                 status = HealthStatus.UNHEALTHY
                 message = f"High resource usage - Memory: {memory_percent:.1f}%, CPU: {cpu_percent:.1f}%"
-            elif memory_percent > self.memory_threshold * 0.8 or cpu_percent > self.cpu_threshold * 0.8:
+            elif (
+                memory_percent > self.memory_threshold * 0.8
+                or cpu_percent > self.cpu_threshold * 0.8
+            ):
                 status = HealthStatus.DEGRADED
                 message = f"Moderate resource usage - Memory: {memory_percent:.1f}%, CPU: {cpu_percent:.1f}%"
             else:
                 status = HealthStatus.HEALTHY
                 message = "System resources within normal limits"
-            
+
             duration = (time.time() - start_time) * 1000
-            
+
             return HealthCheckResult(
                 name="system_resources",
                 status=status,
@@ -186,7 +196,7 @@ class HealthChecker:
                 },
                 duration_ms=duration,
             )
-            
+
         except Exception as e:
             logger.error(f"System resource check failed: {e}")
             return HealthCheckResult(
@@ -194,36 +204,36 @@ class HealthChecker:
                 status=HealthStatus.UNHEALTHY,
                 message=f"Failed to check system resources: {str(e)}",
             )
-    
+
     async def check_music21_functionality(self) -> HealthCheckResult:
         """Verify core music21 operations work"""
         start_time = time.time()
-        
+
         try:
             # Test 1: Create a simple score
             test_score = stream.Score()
             test_part = stream.Part()
             test_part.append(chord.Chord(["C4", "E4", "G4"]))
             test_score.append(test_part)
-            
+
             # Test 2: Key analysis
-            test_key = test_score.analyze('key')
-            
+            test_key = test_score.analyze("key")
+
             # Test 3: Conversion
-            midi_data = test_score.write('midi')
-            
+            midi_data = test_score.write("midi")
+
             # Test 4: Parse musicxml
             xml_test = converter.parse("tinyNotation: 4/4 c4 d4 e4 f4")
-            
+
             duration = (time.time() - start_time) * 1000
-            
+
             if duration > self.response_time_threshold:
                 status = HealthStatus.DEGRADED
                 message = f"Music21 operations slow: {duration:.1f}ms"
             else:
                 status = HealthStatus.HEALTHY
                 message = "Music21 functionality operational"
-            
+
             return HealthCheckResult(
                 name="music21_functionality",
                 status=status,
@@ -239,7 +249,7 @@ class HealthChecker:
                 },
                 duration_ms=duration,
             )
-            
+
         except Exception as e:
             logger.error(f"Music21 functionality check failed: {e}")
             return HealthCheckResult(
@@ -247,44 +257,52 @@ class HealthChecker:
                 status=HealthStatus.UNHEALTHY,
                 message=f"Music21 operations failed: {str(e)}",
             )
-    
+
     async def check_cache_systems(self) -> HealthCheckResult:
         """Check cache system health"""
         start_time = time.time()
-        
+
         try:
             # Import cache-related modules
             from .performance_optimizations import PerformanceOptimizer
-            
+
             # Create test optimizer
             test_optimizer = PerformanceOptimizer(cache_ttl=60, max_cache_size=10)
-            
+
             # Test cache operations
             test_chord = chord.Chord(["C4", "E4", "G4"])
             test_key = key.Key("C")
-            
+
             # Test caching
             result1 = test_optimizer.get_cached_roman_numeral(test_chord, test_key)
-            result2 = test_optimizer.get_cached_roman_numeral(test_chord, test_key)  # Should hit cache
-            
+            result2 = test_optimizer.get_cached_roman_numeral(
+                test_chord, test_key
+            )  # Should hit cache
+
             # Get cache stats
             metrics = test_optimizer.get_performance_metrics()
-            
+
             duration = (time.time() - start_time) * 1000
-            
+
             # Check cache hit rate
-            cache_hit_rate = metrics.get("current_metrics", {}).get("cache_stats", {}).get("hit_rate", 0)
-            
+            cache_hit_rate = (
+                metrics.get("current_metrics", {})
+                .get("cache_stats", {})
+                .get("hit_rate", 0)
+            )
+
             if cache_hit_rate > 0:
                 status = HealthStatus.HEALTHY
-                message = f"Cache systems operational with {cache_hit_rate:.1%} hit rate"
+                message = (
+                    f"Cache systems operational with {cache_hit_rate:.1%} hit rate"
+                )
             else:
                 status = HealthStatus.DEGRADED
                 message = "Cache systems operational but no hits recorded"
-            
+
             # Cleanup
             test_optimizer.shutdown()
-            
+
             return HealthCheckResult(
                 name="cache_systems",
                 status=status,
@@ -299,7 +317,7 @@ class HealthChecker:
                 },
                 duration_ms=duration,
             )
-            
+
         except Exception as e:
             logger.error(f"Cache system check failed: {e}")
             return HealthCheckResult(
@@ -307,11 +325,11 @@ class HealthChecker:
                 status=HealthStatus.DEGRADED,
                 message=f"Cache system check partial failure: {str(e)}",
             )
-    
+
     async def check_dependencies(self) -> HealthCheckResult:
         """Check required dependencies are available"""
         start_time = time.time()
-        
+
         try:
             dependencies = {
                 "music21": None,
@@ -320,9 +338,9 @@ class HealthChecker:
                 "cachetools": None,
                 "psutil": None,
             }
-            
+
             # Check each dependency
-            for dep_name in dependencies.keys():
+            for dep_name in dependencies:
                 try:
                     module = __import__(dep_name)
                     if hasattr(module, "__version__"):
@@ -331,19 +349,19 @@ class HealthChecker:
                         dependencies[dep_name] = "installed"
                 except ImportError:
                     dependencies[dep_name] = "missing"
-            
+
             # Check for missing dependencies
             missing = [k for k, v in dependencies.items() if v == "missing"]
-            
+
             duration = (time.time() - start_time) * 1000
-            
+
             if missing:
                 status = HealthStatus.UNHEALTHY
                 message = f"Missing dependencies: {', '.join(missing)}"
             else:
                 status = HealthStatus.HEALTHY
                 message = "All dependencies available"
-            
+
             return HealthCheckResult(
                 name="dependencies",
                 status=status,
@@ -351,7 +369,7 @@ class HealthChecker:
                 details={"dependencies": dependencies},
                 duration_ms=duration,
             )
-            
+
         except Exception as e:
             logger.error(f"Dependency check failed: {e}")
             return HealthCheckResult(
@@ -359,25 +377,25 @@ class HealthChecker:
                 status=HealthStatus.UNHEALTHY,
                 message=f"Failed to check dependencies: {str(e)}",
             )
-    
+
     async def check_performance_metrics(self) -> HealthCheckResult:
         """Check performance metrics"""
         start_time = time.time()
-        
+
         try:
             # Calculate metrics
             avg_response_time = (
                 self.total_response_time_ms / self.request_count
-                if self.request_count > 0 else 0
+                if self.request_count > 0
+                else 0
             )
-            
+
             error_rate = (
-                self.error_count / self.request_count
-                if self.request_count > 0 else 0
+                self.error_count / self.request_count if self.request_count > 0 else 0
             )
-            
+
             duration = (time.time() - start_time) * 1000
-            
+
             # Determine status based on metrics
             if error_rate > 0.1:  # >10% error rate
                 status = HealthStatus.UNHEALTHY
@@ -391,7 +409,7 @@ class HealthChecker:
             else:
                 status = HealthStatus.HEALTHY
                 message = "Performance metrics within normal range"
-            
+
             return HealthCheckResult(
                 name="performance_metrics",
                 status=status,
@@ -404,7 +422,7 @@ class HealthChecker:
                 },
                 duration_ms=duration,
             )
-            
+
         except Exception as e:
             logger.error(f"Performance metrics check failed: {e}")
             return HealthCheckResult(
@@ -412,44 +430,42 @@ class HealthChecker:
                 status=HealthStatus.DEGRADED,
                 message=f"Failed to check performance metrics: {str(e)}",
             )
-    
+
     def record_request(self, response_time_ms: float, success: bool = True):
         """Record a request for metrics tracking"""
         self.request_count += 1
         self.total_response_time_ms += response_time_ms
-        
+
         if not success:
             self.error_count += 1
-    
+
     async def get_readiness(self) -> dict[str, Any]:
         """Check if service is ready to handle requests"""
         checks = await asyncio.gather(
             self.check_music21_functionality(),
             self.check_dependencies(),
-            return_exceptions=True
+            return_exceptions=True,
         )
-        
+
         ready = all(
-            not isinstance(check, Exception) and 
-            check.status != HealthStatus.UNHEALTHY
+            not isinstance(check, Exception) and check.status != HealthStatus.UNHEALTHY
             for check in checks
         )
-        
+
         return {
             "ready": ready,
             "checks": [
-                c.to_dict() if not isinstance(c, Exception) 
-                else {"error": str(c)}
+                c.to_dict() if not isinstance(c, Exception) else {"error": str(c)}
                 for c in checks
             ],
         }
-    
+
     async def get_liveness(self) -> dict[str, Any]:
         """Check if service is alive (basic health)"""
         try:
             # Simple check - can we create a basic music21 object?
             test_chord = chord.Chord(["C4"])
-            
+
             return {
                 "alive": True,
                 "timestamp": datetime.utcnow().isoformat(),
@@ -463,7 +479,7 @@ class HealthChecker:
 
 
 # Singleton health checker instance
-_health_checker: Optional[HealthChecker] = None
+_health_checker: HealthChecker | None = None
 
 
 def get_health_checker() -> HealthChecker:

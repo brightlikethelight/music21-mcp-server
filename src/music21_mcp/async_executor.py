@@ -11,7 +11,7 @@ import logging
 import os
 import time
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ T = TypeVar("T")
 
 # Default timeout for music21 operations (configurable via environment)
 DEFAULT_TIMEOUT_SECONDS = int(os.getenv("MUSIC21_MCP_TIMEOUT", "30"))
+
 
 class Music21AsyncExecutor:
     """
@@ -42,8 +43,7 @@ class Music21AsyncExecutor:
         """
         self.max_workers = max_workers
         self.executor = ThreadPoolExecutor(
-            max_workers=max_workers,
-            thread_name_prefix="music21-worker"
+            max_workers=max_workers, thread_name_prefix="music21-worker"
         )
         self._total_operations = 0
         self._total_time = 0.0
@@ -58,7 +58,9 @@ class Music21AsyncExecutor:
                     cls._instance = cls(max_workers)
         return cls._instance
 
-    async def run(self, func: Callable[..., T], *args, timeout: Optional[float] = None, **kwargs) -> T:
+    async def run(
+        self, func: Callable[..., T], *args, timeout: float | None = None, **kwargs
+    ) -> T:
         """
         Run a synchronous function in the background thread pool with timeout
 
@@ -95,7 +97,9 @@ class Music21AsyncExecutor:
             self._total_time += duration
 
             if duration > 1.0:  # Log slow operations
-                logger.info(f"Music21 operation {func.__name__} completed in {duration:.2f}s")
+                logger.info(
+                    f"Music21 operation {func.__name__} completed in {duration:.2f}s"
+                )
 
             return result
 
@@ -110,7 +114,9 @@ class Music21AsyncExecutor:
             duration = time.time() - start_time
             self._total_operations += 1
             self._total_time += duration
-            logger.error(f"Music21 operation {func.__name__} failed after {duration:.2f}s: {e}")
+            logger.error(
+                f"Music21 operation {func.__name__} failed after {duration:.2f}s: {e}"
+            )
             raise
 
     def get_stats(self) -> dict[str, Any]:
@@ -121,7 +127,9 @@ class Music21AsyncExecutor:
             "total_time_seconds": self._total_time,
             "average_time_seconds": avg_time,
             "max_workers": self.max_workers,
-            "active_threads": self.executor._threads and len(self.executor._threads) or 0
+            "active_threads": self.executor._threads
+            and len(self.executor._threads)
+            or 0,
         }
 
     def shutdown(self, wait: bool = True):
@@ -133,7 +141,10 @@ class Music21AsyncExecutor:
 
 # Global convenience functions
 
-async def run_in_thread(func: Callable[..., T], *args, timeout: Optional[float] = None, **kwargs) -> T:
+
+async def run_in_thread(
+    func: Callable[..., T], *args, timeout: float | None = None, **kwargs
+) -> T:
     """
     Convenience function to run a synchronous function in a background thread with timeout
 
@@ -173,8 +184,9 @@ def async_music21(func: Callable[..., T]) -> Callable[..., Any]:
     Returns:
         An async function that runs the original in a background thread
     """
+
     @functools.wraps(func)
-    async def wrapper(*args, timeout: Optional[float] = None, **kwargs):
+    async def wrapper(*args, timeout: float | None = None, **kwargs):
         return await run_in_thread(func, *args, timeout=timeout, **kwargs)
 
     return wrapper
@@ -182,29 +194,34 @@ def async_music21(func: Callable[..., T]) -> Callable[..., Any]:
 
 # Common music21 operations wrapped for async use
 
-async def parse_file_async(file_path: str, timeout: Optional[float] = None) -> Any:
+
+async def parse_file_async(file_path: str, timeout: float | None = None) -> Any:
     """Parse a music file asynchronously with timeout"""
     from music21 import converter
+
     return await run_in_thread(converter.parse, file_path, timeout=timeout)
 
 
-async def parse_corpus_async(corpus_path: str, timeout: Optional[float] = None) -> Any:
+async def parse_corpus_async(corpus_path: str, timeout: float | None = None) -> Any:
     """Parse a corpus file asynchronously with timeout"""
     from music21 import corpus
+
     return await run_in_thread(corpus.parse, corpus_path, timeout=timeout)
 
 
-async def analyze_key_async(score: Any, algorithm: str = "key", timeout: Optional[float] = None) -> Any:
+async def analyze_key_async(
+    score: Any, algorithm: str = "key", timeout: float | None = None
+) -> Any:
     """Analyze key signature asynchronously with timeout"""
     return await run_in_thread(score.analyze, algorithm, timeout=timeout)
 
 
-async def chordify_async(score: Any, timeout: Optional[float] = None, **kwargs) -> Any:
+async def chordify_async(score: Any, timeout: float | None = None, **kwargs) -> Any:
     """Chordify a score asynchronously with timeout"""
     return await run_in_thread(score.chordify, timeout=timeout, **kwargs)
 
 
-async def flatten_score_async(score: Any, timeout: Optional[float] = None) -> Any:
+async def flatten_score_async(score: Any, timeout: float | None = None) -> Any:
     """Flatten a score asynchronously with timeout"""
     return await run_in_thread(score.flatten, timeout=timeout)
 
@@ -230,13 +247,16 @@ class AsyncProgressReporter:
         if self.callback:
             self.callback(progress, message)
 
-    async def run_with_progress(self,
-                              func: Callable[..., T],
-                              progress_start: float = 0.0,
-                              progress_end: float = 1.0,
-                              message: str = "Processing...",
-                              timeout: Optional[float] = None,
-                              *args, **kwargs) -> T:
+    async def run_with_progress(
+        self,
+        func: Callable[..., T],
+        progress_start: float = 0.0,
+        progress_end: float = 1.0,
+        message: str = "Processing...",
+        timeout: float | None = None,
+        *args,
+        **kwargs,
+    ) -> T:
         """
         Run a function with progress reporting and timeout
 
@@ -283,5 +303,5 @@ async def get_executor_stats() -> dict[str, Any]:
         "total_time_seconds": 0.0,
         "average_time_seconds": 0.0,
         "max_workers": 0,
-        "active_threads": 0
+        "active_threads": 0,
     }

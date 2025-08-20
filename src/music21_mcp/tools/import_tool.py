@@ -70,7 +70,9 @@ class ImportScoreTool(BaseTool):
                     )
 
                 if score is None:
-                    return self.create_error_response(f"Could not find or import score: {source}")
+                    return self.create_error_response(
+                        f"Could not find or import score: {source}"
+                    )
             except Exception as e:
                 # Return the specific error message from music21
                 error_msg = str(e)
@@ -157,7 +159,7 @@ class ImportScoreTool(BaseTool):
         """Import from a file using async execution"""
         # Validate path for security (prevent directory traversal)
         validated_path = self._validate_safe_path(file_path)
-        
+
         if not os.path.exists(validated_path):
             return None
 
@@ -170,7 +172,7 @@ class ImportScoreTool(BaseTool):
                 _parse_file,
                 progress_start=0.3,
                 progress_end=0.7,
-                message="Parsing file"
+                message="Parsing file",
             )
 
             # Ensure we return a Score object
@@ -200,7 +202,7 @@ class ImportScoreTool(BaseTool):
                 _parse_corpus,
                 progress_start=0.3,
                 progress_end=0.7,
-                message="Loading from corpus"
+                message="Loading from corpus",
             )
 
             # Ensure we return a Score object
@@ -230,6 +232,7 @@ class ImportScoreTool(BaseTool):
 
                 def _parse_tiny_notation():
                     from music21 import converter
+
                     return converter.parse(f"tinyNotation: {tiny_text}")
 
                 # Parse in background thread
@@ -272,7 +275,7 @@ class ImportScoreTool(BaseTool):
                 _parse_note_sequence,
                 progress_start=0.3,
                 progress_end=0.7,
-                message="Parsing text notation"
+                message="Parsing text notation",
             )
             return result
 
@@ -282,6 +285,7 @@ class ImportScoreTool(BaseTool):
 
     async def _extract_metadata(self, score: stream.Score) -> dict[str, Any]:
         """Extract metadata from score using async execution"""
+
         def _extract_sync():
             try:
                 num_notes = len(list(score.flatten().notes))
@@ -305,22 +309,27 @@ class ImportScoreTool(BaseTool):
                 }
             except Exception as e:
                 logger.warning(f"Error extracting metadata: {e}")
-                return {"num_notes": 0, "num_measures": 0, "num_parts": 0, "pitch_range": 0}
+                return {
+                    "num_notes": 0,
+                    "num_measures": 0,
+                    "num_parts": 0,
+                    "pitch_range": 0,
+                }
 
         return await self.run_music21_operation(_extract_sync)
 
     def _validate_safe_path(self, file_path: str) -> str:
         """Validate path for security (prevent directory traversal)"""
-        from pathlib import Path
         import tempfile
-        
+        from pathlib import Path
+
         # Convert to Path object and resolve
         path = Path(file_path).resolve()
-        
+
         # Get allowed directories (current working directory and temp)
         cwd = Path.cwd().resolve()
         temp_dir = Path(tempfile.gettempdir()).resolve()
-        
+
         # Check if path is within allowed directories
         try:
             # Check if path is under current directory
@@ -328,17 +337,16 @@ class ImportScoreTool(BaseTool):
             return str(path)
         except ValueError:
             pass
-        
+
         try:
             # Check if path is under temp directory
             path.relative_to(temp_dir)
             return str(path)
         except ValueError:
             pass
-        
+
         # Path is outside allowed directories
         raise ValueError(
             f"Path '{file_path}' is outside allowed directories. "
             "Files can only be imported from the current directory or temp directory."
         )
-
