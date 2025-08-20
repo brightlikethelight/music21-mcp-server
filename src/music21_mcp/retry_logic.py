@@ -12,7 +12,7 @@ import random
 import time
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ class CircuitBreaker:
         self.expected_exception = expected_exception
 
         self.failure_count = 0
-        self.last_failure_time: Optional[float] = None
+        self.last_failure_time: float | None = None
         self.state = CircuitState.CLOSED
 
     def call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
@@ -178,8 +178,8 @@ class CircuitBreakerOpenError(Exception):
 
 
 def retry(
-    policy: Optional[RetryPolicy] = None,
-    circuit_breaker: Optional[CircuitBreaker] = None,
+    policy: RetryPolicy | None = None,
+    circuit_breaker: CircuitBreaker | None = None,
 ) -> Callable[..., Any]:
     """Decorator for adding retry logic to functions"""
     if policy is None:
@@ -217,6 +217,7 @@ def retry(
             )
             if last_exception:
                 raise last_exception
+            return None
 
         @functools.wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -249,6 +250,7 @@ def retry(
             )
             if last_exception:
                 raise last_exception
+            return None
 
         # Return appropriate wrapper based on function type
         if asyncio.iscoroutinefunction(func):
@@ -314,7 +316,7 @@ DATABASE_POLICY = RetryPolicy(
 class RetryableMusic21Operation:
     """Wrapper for music21 operations with built-in retry logic"""
 
-    def __init__(self, policy: Optional[RetryPolicy] = None):
+    def __init__(self, policy: RetryPolicy | None = None):
         self.policy = policy or MUSIC21_POLICY
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=10,
@@ -322,7 +324,7 @@ class RetryableMusic21Operation:
         )
 
     @retry(policy=MUSIC21_POLICY)
-    async def parse_score(self, data: Union[str, bytes]) -> Any:
+    async def parse_score(self, data: str | bytes) -> Any:
         """Parse score with retry logic"""
         from music21 import converter
 
@@ -335,7 +337,7 @@ class RetryableMusic21Operation:
             raise
 
     @retry(policy=FILE_IO_POLICY)
-    async def write_file(self, path: str, content: Union[str, bytes]) -> None:
+    async def write_file(self, path: str, content: str | bytes) -> None:
         """Write file with retry logic"""
         try:
             import aiofiles  # type: ignore
@@ -364,7 +366,7 @@ class BulkRetryExecutor:
 
     def __init__(
         self,
-        policy: Optional[RetryPolicy] = None,
+        policy: RetryPolicy | None = None,
         max_concurrent: int = 10,
     ):
         self.policy = policy or RetryPolicy()

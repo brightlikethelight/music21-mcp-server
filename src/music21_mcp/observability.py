@@ -16,7 +16,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable
 from contextvars import ContextVar
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 # Context variables for request correlation
 REQUEST_ID: ContextVar[str] = ContextVar("request_id", default="")
@@ -114,7 +114,7 @@ class StructuredLogger:
         entry = self._build_log_entry(LogLevel.WARNING, message, **kwargs)
         self.logger.warning(json.dumps(entry))
 
-    def error(self, message: str, error: Optional[Exception] = None, **kwargs: Any) -> None:
+    def error(self, message: str, error: Exception | None = None, **kwargs: Any) -> None:
         """Log error message with optional exception details"""
         entry = self._build_log_entry(LogLevel.ERROR, message, **kwargs)
 
@@ -129,7 +129,7 @@ class StructuredLogger:
 
         self.logger.error(json.dumps(entry))
 
-    def critical(self, message: str, error: Optional[Exception] = None, **kwargs: Any) -> None:
+    def critical(self, message: str, error: Exception | None = None, **kwargs: Any) -> None:
         """Log critical message"""
         entry = self._build_log_entry(LogLevel.CRITICAL, message, **kwargs)
 
@@ -316,11 +316,11 @@ def get_logger(name: str = "music21_mcp") -> StructuredLogger:
     return StructuredLogger(name)
 
 
-def with_context(request_id: Optional[str] = None, user_id: Optional[str] = None, operation: Optional[str] = None) -> Any:
+def with_context(request_id: str | None = None, user_id: str | None = None, operation: str | None = None) -> Any:
     """Context manager for request correlation"""
 
     class ContextManager:
-        def __init__(self, req_id: Optional[str], usr_id: Optional[str], op: Optional[str]) -> None:
+        def __init__(self, req_id: str | None, usr_id: str | None, op: str | None) -> None:
             self.request_id = req_id or str(uuid.uuid4())
             self.user_id = usr_id
             self.operation = op
@@ -359,7 +359,7 @@ def with_context(request_id: Optional[str] = None, user_id: Optional[str] = None
     return ContextManager(request_id, user_id, operation)
 
 
-def monitor_performance(operation_name: Optional[str] = None, track_errors: bool = True) -> Any:
+def monitor_performance(operation_name: str | None = None, track_errors: bool = True) -> Any:
     """Decorator for monitoring function performance"""
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:

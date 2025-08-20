@@ -9,7 +9,7 @@ import asyncio
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ R = TypeVar("R")
 class ParallelProcessor:
     """High-performance parallel processor for music analysis operations"""
 
-    def __init__(self, max_workers: Optional[int] = None):
+    def __init__(self, max_workers: int | None = None):
         """
         Initialize parallel processor
 
@@ -38,7 +38,7 @@ class ParallelProcessor:
         items: list[T],
         processor_func: Callable[[T], R],
         batch_size: int = 10,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> list[R]:
         """
         Process a batch of items in parallel
@@ -128,7 +128,7 @@ class ParallelProcessor:
 
 
 # Global processor instance
-_global_processor: Optional[ParallelProcessor] = None
+_global_processor: ParallelProcessor | None = None
 
 
 def get_parallel_processor() -> ParallelProcessor:

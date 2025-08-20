@@ -11,7 +11,7 @@ import logging
 import threading
 import time
 from collections.abc import MutableMapping
-from typing import Any, Optional
+from typing import Any
 
 import psutil
 from cachetools import TTLCache  # type: ignore
@@ -64,7 +64,7 @@ class ScoreStorage(MutableMapping[str, Any]):
         self._memory_warnings = 0
 
         # Background thread management
-        self._cleanup_thread: Optional[threading.Thread] = None
+        self._cleanup_thread: threading.Thread | None = None
         self._shutdown_event = threading.Event()
         self._start_cleanup_thread()
 
