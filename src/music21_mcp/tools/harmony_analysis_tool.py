@@ -4,6 +4,7 @@ PERFORMANCE OPTIMIZED: Includes aggressive caching to reduce 12.7s analysis to <
 """
 
 import logging
+from collections.abc import MutableMapping
 from typing import Any
 
 from music21 import chord, key, stream
@@ -22,7 +23,7 @@ class HarmonyAnalysisTool(BaseTool):
     3. Basic functional harmony detection
     """
 
-    def __init__(self, score_manager: dict[str, Any]):
+    def __init__(self, score_manager: MutableMapping[str, Any]):
         super().__init__(score_manager)
         self._cache = get_performance_cache()
 

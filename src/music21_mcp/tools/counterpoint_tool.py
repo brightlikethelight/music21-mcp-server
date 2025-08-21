@@ -7,6 +7,7 @@ import builtins
 import contextlib
 import logging
 import random
+from collections.abc import MutableMapping
 from enum import Enum
 from typing import Any
 
@@ -55,7 +56,7 @@ class CounterpointGeneratorTool(BaseTool):
     5. Rule violation checking with explanations
     """
 
-    def __init__(self, score_manager: dict[str, Any]):
+    def __init__(self, score_manager: MutableMapping[str, Any]):
         super().__init__(score_manager)
 
         # Define consonant and dissonant intervals

@@ -138,8 +138,8 @@ async def generate_counterpoint(
 
 @mcp.tool()
 async def imitate_style(
-    score_id: str = None,
-    composer: str = None,
+    score_id: str | None = None,
+    composer: str | None = None,
     generation_length: int = 16,
     complexity: str = "medium",
 ):

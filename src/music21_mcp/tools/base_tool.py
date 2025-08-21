@@ -8,7 +8,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, MutableMapping
 from contextlib import contextmanager
 from typing import Any
 
@@ -29,7 +29,9 @@ class BaseTool(ABC):
     - Memory-efficient processing
     """
 
-    def __init__(self, score_manager: dict[str, Any], timeout: float | None = None):
+    def __init__(
+        self, score_manager: MutableMapping[str, Any], timeout: float | None = None
+    ):
         """
         Initialize with reference to score manager
 

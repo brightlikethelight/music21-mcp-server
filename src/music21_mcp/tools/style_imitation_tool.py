@@ -6,6 +6,7 @@ Uses machine learning-inspired techniques for style analysis and generation
 import logging
 import random
 from collections import Counter, defaultdict
+from collections.abc import MutableMapping
 from typing import Any
 
 import numpy as np
@@ -26,7 +27,7 @@ class StyleImitationTool(BaseTool):
     5. Hybrid generation with constraints
     """
 
-    def __init__(self, score_manager: dict[str, Any]):
+    def __init__(self, score_manager: MutableMapping[str, Any]):
         super().__init__(score_manager)
 
         # Pre-defined style characteristics

@@ -4,6 +4,7 @@ Uses music21 directly for basic voice leading analysis
 """
 
 import logging
+from collections.abc import MutableMapping
 from typing import Any
 
 from music21 import interval, note, stream
@@ -21,7 +22,7 @@ class VoiceLeadingAnalysisTool(BaseTool):
     3. Basic voice leading smoothness analysis
     """
 
-    def __init__(self, score_manager: dict[str, Any]):
+    def __init__(self, score_manager: MutableMapping[str, Any]):
         super().__init__(score_manager)
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:

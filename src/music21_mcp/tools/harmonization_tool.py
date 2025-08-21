@@ -5,6 +5,7 @@ Analyzes melodic contour and generates appropriate harmony with explanations
 
 import logging
 import random
+from collections.abc import MutableMapping
 from typing import Any
 
 from music21 import chord, note, pitch, roman, stream
@@ -25,7 +26,7 @@ class HarmonizationTool(BaseTool):
     5. Explanations for harmonic choices
     """
 
-    def __init__(self, score_manager: dict[str, Any]):
+    def __init__(self, score_manager: MutableMapping[str, Any]):
         super().__init__(score_manager)
 
         # Initialize performance optimizer for fast Roman numeral analysis

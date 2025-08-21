@@ -170,8 +170,8 @@ class MCPAdapter:
 
     async def imitate_style(
         self,
-        score_id: str = None,
-        composer: str = None,
+        score_id: str | None = None,
+        composer: str | None = None,
         generation_length: int = 16,
         complexity: str = "medium",
     ) -> dict[str, Any]:

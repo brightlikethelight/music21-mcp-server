@@ -114,7 +114,9 @@ class StructuredLogger:
         entry = self._build_log_entry(LogLevel.WARNING, message, **kwargs)
         self.logger.warning(json.dumps(entry))
 
-    def error(self, message: str, error: Exception | None = None, **kwargs: Any) -> None:
+    def error(
+        self, message: str, error: Exception | None = None, **kwargs: Any
+    ) -> None:
         """Log error message with optional exception details"""
         entry = self._build_log_entry(LogLevel.ERROR, message, **kwargs)
 
@@ -129,7 +131,9 @@ class StructuredLogger:
 
         self.logger.error(json.dumps(entry))
 
-    def critical(self, message: str, error: Exception | None = None, **kwargs: Any) -> None:
+    def critical(
+        self, message: str, error: Exception | None = None, **kwargs: Any
+    ) -> None:
         """Log critical message"""
         entry = self._build_log_entry(LogLevel.CRITICAL, message, **kwargs)
 
@@ -186,7 +190,9 @@ class MetricsCollector:
             lambda: deque(maxlen=max_history)
         )
         self._gauges: dict[str, float] = {}
-        self._timers: dict[str, deque[float]] = defaultdict(lambda: deque(maxlen=max_history))
+        self._timers: dict[str, deque[float]] = defaultdict(
+            lambda: deque(maxlen=max_history)
+        )
 
         # Metadata
         self._start_time = time.time()
@@ -316,11 +322,17 @@ def get_logger(name: str = "music21_mcp") -> StructuredLogger:
     return StructuredLogger(name)
 
 
-def with_context(request_id: str | None = None, user_id: str | None = None, operation: str | None = None) -> Any:
+def with_context(
+    request_id: str | None = None,
+    user_id: str | None = None,
+    operation: str | None = None,
+) -> Any:
     """Context manager for request correlation"""
 
     class ContextManager:
-        def __init__(self, req_id: str | None, usr_id: str | None, op: str | None) -> None:
+        def __init__(
+            self, req_id: str | None, usr_id: str | None, op: str | None
+        ) -> None:
             self.request_id = req_id or str(uuid.uuid4())
             self.user_id = usr_id
             self.operation = op
@@ -359,7 +371,9 @@ def with_context(request_id: str | None = None, user_id: str | None = None, oper
     return ContextManager(request_id, user_id, operation)
 
 
-def monitor_performance(operation_name: str | None = None, track_errors: bool = True) -> Any:
+def monitor_performance(
+    operation_name: str | None = None, track_errors: bool = True
+) -> Any:
     """Decorator for monitoring function performance"""
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:

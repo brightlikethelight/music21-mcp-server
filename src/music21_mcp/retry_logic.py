@@ -128,7 +128,9 @@ class CircuitBreaker:
             self._on_failure()
             raise e
 
-    async def async_call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    async def async_call(
+        self, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
         """Execute async function with circuit breaker protection"""
         if self.state == CircuitState.OPEN:
             if self._should_attempt_reset():
