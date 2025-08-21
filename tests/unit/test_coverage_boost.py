@@ -416,8 +416,8 @@ class TestPerformanceOptimizationsCoverage:
 
         # Initial stats
         # Check that roman_cache exists (it's a TTLCache)
-        assert hasattr(optimizer, 'roman_cache')
-        assert hasattr(optimizer.roman_cache, 'maxsize')
+        assert hasattr(optimizer, "roman_cache")
+        assert hasattr(optimizer.roman_cache, "maxsize")
 
         # Generate some cache activity
         c_chord = chord.Chord(["C4", "E4", "G4"])

@@ -162,8 +162,9 @@ class TestServices:
     @pytest.mark.asyncio
     async def test_import_score_basic(self):
         """Test basic score import functionality"""
-        from music21_mcp.services import MusicAnalysisService
         from music21 import stream
+
+        from music21_mcp.services import MusicAnalysisService
 
         service = MusicAnalysisService()
 
@@ -349,11 +350,11 @@ class TestPerformanceCache:
         cache = PerformanceCache(max_size=100, ttl_seconds=300)
 
         # Check that the cache has the internal cache structures
-        assert hasattr(cache, '_roman_numeral_cache')
-        assert hasattr(cache, '_key_analysis_cache')
-        assert hasattr(cache, '_chord_analysis_cache')
-        assert hasattr(cache, '_hits')
-        assert hasattr(cache, '_misses')
+        assert hasattr(cache, "_roman_numeral_cache")
+        assert hasattr(cache, "_key_analysis_cache")
+        assert hasattr(cache, "_chord_analysis_cache")
+        assert hasattr(cache, "_hits")
+        assert hasattr(cache, "_misses")
 
     def test_cache_manager_initialization(self):
         """Test PerformanceCache initialization"""
