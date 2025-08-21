@@ -17,26 +17,27 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Set up UV
+      uses: astral-sh/setup-uv@v3
       with:
-        python-version: '3.11'
+        enable-cache: true
+        cache-dependency-glob: "**/pyproject.toml"
     
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: latest
-        virtualenvs-create: true
-        virtualenvs-in-project: true
+    - name: Set up Python
+      run: uv python install '3.11'
+    
+    - name: Install dependencies
+      run: |
+        uv sync --dev
     
     - name: Build package
       run: |
-        poetry build
+        uv build
     
     - name: Check distribution
       run: |
-        pip install twine
-        twine check dist/*
+        uv add --dev twine
+        uv run twine check dist/*
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -54,10 +55,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Set up UV
+      uses: astral-sh/setup-uv@v3
+    
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
     
     - name: Download artifacts
       uses: actions/download-artifact@v4
@@ -67,17 +69,17 @@ jobs:
     
     - name: Install from wheel
       run: |
-        pip install dist/*.whl
+        uv pip install dist/*.whl
         
     - name: Test import
       run: |
-        python -c "import music21_mcp; print(music21_mcp.__version__)"
-        python -c "from music21_mcp.services import MusicAnalysisService"
+        uv run python -c "import music21_mcp; print(music21_mcp.__version__)"
+        uv run python -c "from music21_mcp.services import MusicAnalysisService"
         
     - name: Test CLI
       run: |
-        music21-analysis --help || true
-        music21-mcp --help || true
+        uv run music21-analysis --help || true
+        uv run music21-mcp --help || true
 
   publish:
     needs: [build, test]

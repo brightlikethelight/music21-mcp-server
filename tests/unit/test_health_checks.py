@@ -865,4 +865,6 @@ class TestIntegration:
         import music21_mcp.health_checks
 
         music21_mcp.health_checks._health_checker = None
+
+
 # ruff: noqa: SIM117
