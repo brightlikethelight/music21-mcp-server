@@ -88,7 +88,11 @@ class RateLimiter:
             bucket = self.buckets[identifier]
 
             # Check endpoint-specific limits
-            if endpoint and self.config.endpoint_limits and endpoint in self.config.endpoint_limits:
+            if (
+                endpoint
+                and self.config.endpoint_limits
+                and endpoint in self.config.endpoint_limits
+            ):
                 endpoint_limit = self.config.endpoint_limits[endpoint]
                 endpoint_bucket_key = f"{identifier}:{endpoint}"
 

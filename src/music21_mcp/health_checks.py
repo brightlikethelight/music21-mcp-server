@@ -450,7 +450,8 @@ class HealthChecker:
         )
 
         ready = all(
-            isinstance(check, HealthCheckResult) and check.status != HealthStatus.UNHEALTHY
+            isinstance(check, HealthCheckResult)
+            and check.status != HealthStatus.UNHEALTHY
             for check in checks
             if not isinstance(check, Exception)
         )
