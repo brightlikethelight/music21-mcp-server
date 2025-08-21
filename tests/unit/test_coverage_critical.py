@@ -91,21 +91,39 @@ class TestHealthAndMonitoring:
 
         # Test HealthChecker methods
         checker = HealthChecker(
-            memory_threshold_percent=80, cpu_threshold_percent=90, response_time_threshold_ms=5000
+            memory_threshold_percent=80,
+            cpu_threshold_percent=90,
+            response_time_threshold_ms=5000,
         )
 
         # Test individual health checks
         system_check = await checker.check_system_resources()
-        assert system_check.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY]
+        assert system_check.status in [
+            HealthStatus.HEALTHY,
+            HealthStatus.DEGRADED,
+            HealthStatus.UNHEALTHY,
+        ]
 
         music21_check = await checker.check_music21_functionality()
-        assert music21_check.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY]
+        assert music21_check.status in [
+            HealthStatus.HEALTHY,
+            HealthStatus.DEGRADED,
+            HealthStatus.UNHEALTHY,
+        ]
 
         deps_check = await checker.check_dependencies()
-        assert deps_check.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY]
+        assert deps_check.status in [
+            HealthStatus.HEALTHY,
+            HealthStatus.DEGRADED,
+            HealthStatus.UNHEALTHY,
+        ]
 
         perf_check = await checker.check_performance_metrics()
-        assert perf_check.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY]
+        assert perf_check.status in [
+            HealthStatus.HEALTHY,
+            HealthStatus.DEGRADED,
+            HealthStatus.UNHEALTHY,
+        ]
 
         # Test metrics recording
         checker.record_request(100.0, success=True)
@@ -117,8 +135,8 @@ class TestHealthAndMonitoring:
         """Test rate limiting functionality"""
         from music21_mcp.rate_limiter import (
             RateLimitConfig,
-            RateLimitMiddleware,
             RateLimiter,
+            RateLimitMiddleware,
             RateLimitStrategy,
             TokenBucket,
             create_rate_limiter,
@@ -169,14 +187,14 @@ class TestRetryAndResilience:
     def test_retry_logic_comprehensive(self):
         """Test retry logic components"""
         from music21_mcp.retry_logic import (
-            BulkRetryExecutor,
-            CircuitBreaker,
-            CircuitBreakerOpenError,
-            CircuitState,
             DATABASE_POLICY,
             FILE_IO_POLICY,
             MUSIC21_POLICY,
             NETWORK_POLICY,
+            BulkRetryExecutor,
+            CircuitBreaker,
+            CircuitBreakerOpenError,
+            CircuitState,
             NonRetryableError,
             RetryableError,
             RetryableMusic21Operation,
@@ -452,7 +470,10 @@ class TestAsyncAndParallel:
 
     def test_parallel_processor(self):
         """Test parallel processing"""
-        from music21_mcp.parallel_processor import ParallelProcessor, get_parallel_processor
+        from music21_mcp.parallel_processor import (
+            ParallelProcessor,
+            get_parallel_processor,
+        )
 
         # Test singleton
         processor1 = get_parallel_processor()
@@ -467,7 +488,9 @@ class TestAsyncAndParallel:
 
         # Test batch processing
         async def test_batch():
-            results = await processor.process_batch([1, 2, 3], process_func, batch_size=2)
+            results = await processor.process_batch(
+                [1, 2, 3], process_func, batch_size=2
+            )
             assert results == [2, 4, 6]
 
         asyncio.run(test_batch())
@@ -527,7 +550,9 @@ class TestObservability:
         assert global_metrics is not None
 
         # Test context manager
-        with with_context(request_id="test-123", user_id="user-456", operation="test_op"):
+        with with_context(
+            request_id="test-123", user_id="user-456", operation="test_op"
+        ):
             # Context is set
             pass
 
@@ -572,8 +597,8 @@ class TestPerformanceCache:
         # Cache chord analysis
         analysis = {"root": "C", "quality": "major"}
         cache.cache_chord_analysis(test_chord, analysis)
-        cached_analysis = cache.get_cached_chord_analysis(test_chord)
-        assert cached_analysis == analysis
+        cached_chord_result = cache.get_cached_chord_analysis(test_chord)
+        assert cached_chord_result == analysis
 
         # Test cache stats
         stats = cache.get_cache_stats()

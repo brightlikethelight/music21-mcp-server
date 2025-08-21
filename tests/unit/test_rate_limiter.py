@@ -20,9 +20,9 @@ from fastapi.responses import JSONResponse
 
 from music21_mcp.rate_limiter import (
     RateLimitConfig,
+    RateLimiter,
     RateLimitMiddleware,
     RateLimitStrategy,
-    RateLimiter,
     TokenBucket,
     create_rate_limiter,
     rate_limit,
@@ -188,7 +188,7 @@ class TestTokenBucket:
 class TestRateLimiter:
     """Test RateLimiter class"""
 
-    @pytest.fixture
+    @pytest.fixture()
     def rate_limiter(self):
         """Create a RateLimiter instance"""
         config = RateLimitConfig(
@@ -205,7 +205,7 @@ class TestRateLimiter:
         assert rate_limiter._cleanup_task is None
         assert rate_limiter._lock is not None
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_check_rate_limit_first_request(self, rate_limiter):
         """Test first request creates bucket and succeeds"""
         allowed, metadata = await rate_limiter.check_rate_limit("user1")
@@ -215,7 +215,7 @@ class TestRateLimiter:
         assert metadata["limit"] == 10  # burst_size
         assert metadata["remaining"] == 9  # 10 - 1 consumed
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_check_rate_limit_multiple_requests(self, rate_limiter):
         """Test multiple requests from same identifier"""
         identifier = "user1"
@@ -226,7 +226,7 @@ class TestRateLimiter:
             assert allowed is True
             assert metadata["remaining"] == 10 - i - 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_check_rate_limit_exceed_burst(self, rate_limiter):
         """Test exceeding burst limit"""
         identifier = "user1"
@@ -241,7 +241,7 @@ class TestRateLimiter:
         assert allowed is False
         assert metadata["remaining"] == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_check_rate_limit_with_cost(self, rate_limiter):
         """Test rate limiting with custom cost"""
         identifier = "user1"
@@ -255,7 +255,7 @@ class TestRateLimiter:
         allowed, _ = await rate_limiter.check_rate_limit(identifier, cost=8)
         assert allowed is False
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_check_rate_limit_endpoint_specific(self, rate_limiter):
         """Test endpoint-specific rate limiting"""
         identifier = "user1"
@@ -266,7 +266,7 @@ class TestRateLimiter:
         assert allowed is True
         assert metadata["endpoint"] == endpoint
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_check_rate_limit_endpoint_exceeded(self, rate_limiter):
         """Test endpoint rate limit exceeded"""
         identifier = "user1"
@@ -287,7 +287,7 @@ class TestRateLimiter:
         assert not allowed
         assert metadata["endpoint"] == endpoint
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_check_rate_limit_sliding_window(self, rate_limiter):
         """Test sliding window rate limiting"""
         rate_limiter.config.strategy = RateLimitStrategy.SLIDING_WINDOW
@@ -303,7 +303,7 @@ class TestRateLimiter:
         assert identifier in rate_limiter.request_history
         assert len(rate_limiter.request_history[identifier]) == 3
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_check_rate_limit_sliding_window_exceeded(self, rate_limiter):
         """Test sliding window limit exceeded"""
         rate_limiter.config.strategy = RateLimitStrategy.SLIDING_WINDOW
@@ -324,7 +324,7 @@ class TestRateLimiter:
         allowed, _ = await rate_limiter.check_rate_limit(identifier)
         assert allowed is False
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_cleanup_expired(self, rate_limiter):
         """Test cleanup of expired data"""
         # Add some test data
@@ -346,7 +346,7 @@ class TestRateLimiter:
         assert old_time not in rate_limiter.request_history[identifier]
         assert "old_user" not in rate_limiter.buckets
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_cleanup_empty_histories(self, rate_limiter):
         """Test cleanup removes empty history entries"""
         # Add empty history
@@ -357,7 +357,7 @@ class TestRateLimiter:
         # Empty history should be removed
         assert "empty_user" not in rate_limiter.request_history
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_start_cleanup_task(self, rate_limiter):
         """Test starting cleanup task"""
         assert rate_limiter._cleanup_task is None
@@ -370,7 +370,7 @@ class TestRateLimiter:
         # Cleanup
         rate_limiter.stop_cleanup_task()
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_start_cleanup_task_idempotent(self, rate_limiter):
         """Test starting cleanup task multiple times"""
         rate_limiter.start_cleanup_task()
@@ -385,7 +385,7 @@ class TestRateLimiter:
         # Cleanup
         rate_limiter.stop_cleanup_task()
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_stop_cleanup_task(self, rate_limiter):
         """Test stopping cleanup task"""
         rate_limiter.start_cleanup_task()
@@ -404,7 +404,7 @@ class TestRateLimiter:
         
         assert rate_limiter._cleanup_task is None
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_get_metadata(self, rate_limiter):
         """Test _get_metadata method"""
         bucket = TokenBucket(10.0, 2.0)
@@ -418,7 +418,7 @@ class TestRateLimiter:
         assert "reset" in metadata
         assert isinstance(metadata["reset"], int)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_get_metadata_with_retry_after(self, rate_limiter):
         """Test _get_metadata with retry_after calculation"""
         bucket = TokenBucket(10.0, 2.0)
@@ -431,7 +431,7 @@ class TestRateLimiter:
         assert isinstance(metadata["retry_after"], int)
         assert metadata["retry_after"] > 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_cleanup_loop_exception_handling(self, rate_limiter):
         """Test cleanup loop handles exceptions"""
         # Start cleanup task
@@ -452,13 +452,13 @@ class TestRateLimiter:
 class TestRateLimitMiddleware:
     """Test RateLimitMiddleware class"""
 
-    @pytest.fixture
+    @pytest.fixture()
     def middleware(self):
         """Create middleware instance"""
         config = RateLimitConfig(requests_per_minute=60, burst_size=5)
         return RateLimitMiddleware(config)
 
-    @pytest.fixture
+    @pytest.fixture()
     def mock_request(self):
         """Create mock request"""
         request = Mock(spec=Request)
@@ -469,7 +469,7 @@ class TestRateLimitMiddleware:
         request.headers = {}
         return request
 
-    @pytest.fixture
+    @pytest.fixture()
     def mock_call_next(self):
         """Create mock call_next function"""
         async def call_next(request):
@@ -478,14 +478,14 @@ class TestRateLimitMiddleware:
             return response
         return call_next
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_initialization(self, middleware):
         """Test middleware initialization"""
         assert isinstance(middleware.config, RateLimitConfig)
         assert isinstance(middleware.limiter, RateLimiter)
         assert middleware.limiter._cleanup_task is not None
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_initialization_default_config(self):
         """Test middleware with default config"""
         middleware = RateLimitMiddleware()
@@ -493,7 +493,7 @@ class TestRateLimitMiddleware:
         assert isinstance(middleware.config, RateLimitConfig)
         assert middleware.config.requests_per_minute == 60  # Default value
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_allowed_request(self, middleware, mock_request, mock_call_next):
         """Test middleware allows request within limits"""
         response = await middleware(mock_request, mock_call_next)
@@ -504,7 +504,7 @@ class TestRateLimitMiddleware:
         assert "X-RateLimit-Remaining" in response.headers
         assert "X-RateLimit-Reset" in response.headers
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_rate_limited(self, middleware, mock_request, mock_call_next):
         """Test middleware blocks request when rate limited"""
         # Exhaust rate limit
@@ -517,7 +517,7 @@ class TestRateLimitMiddleware:
         assert isinstance(response, JSONResponse)
         assert response.status_code == 429
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_uses_api_key(self, middleware, mock_request, mock_call_next):
         """Test middleware uses API key as identifier"""
         mock_request.headers = {"X-API-Key": "test-key-123"}
@@ -527,7 +527,7 @@ class TestRateLimitMiddleware:
         # Should use API key as identifier (check by making sure bucket exists)
         assert "test-key-123" in middleware.limiter.buckets
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_uses_ip_fallback(self, middleware, mock_request, mock_call_next):
         """Test middleware falls back to IP when no API key"""
         mock_request.headers = {}
@@ -538,7 +538,7 @@ class TestRateLimitMiddleware:
         # Should use IP as identifier
         assert "192.168.1.1" in middleware.limiter.buckets
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_no_client(self, middleware, mock_call_next):
         """Test middleware handles missing client info"""
         mock_request = Mock(spec=Request)
@@ -552,7 +552,7 @@ class TestRateLimitMiddleware:
         # Should use "unknown" as identifier
         assert "unknown" in middleware.limiter.buckets
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_rate_limit_headers(self, middleware, mock_request, mock_call_next):
         """Test middleware sets correct rate limit headers"""
         # Make request that gets rate limited
@@ -567,7 +567,7 @@ class TestRateLimitMiddleware:
         assert response.headers["X-RateLimit-Remaining"] == "0"
         assert "Retry-After" in response.headers
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_endpoint_specific_limit(self, middleware, mock_request, mock_call_next):
         """Test middleware applies endpoint-specific limits"""
         mock_request.url.path = "/scores/import"  # Has specific limit in config
@@ -582,7 +582,7 @@ class TestRateLimitMiddleware:
 class TestUtilityFunctions:
     """Test utility functions"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_create_rate_limiter_default(self):
         """Test create_rate_limiter with defaults"""
         limiter = create_rate_limiter()
@@ -592,7 +592,7 @@ class TestUtilityFunctions:
         assert limiter.config.requests_per_hour == 1000
         assert limiter.config.strategy == RateLimitStrategy.SLIDING_WINDOW
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_create_rate_limiter_custom(self):
         """Test create_rate_limiter with custom values"""
         limiter = create_rate_limiter(
@@ -618,7 +618,7 @@ class TestRateLimitDecorator:
         # Should have rate limit data attribute
         assert hasattr(test_endpoint, "__wrapped__")
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_decorator_allows_request(self):
         """Test decorator allows request within limits"""
         @rate_limit(requests_per_minute=10)
@@ -632,7 +632,7 @@ class TestRateLimitDecorator:
         result = await test_endpoint(mock_request)
         assert result == "success"
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_decorator_blocks_excess_requests(self):
         """Test decorator blocks excess requests"""
         @rate_limit(requests_per_minute=2)  # Very low limit
@@ -654,7 +654,7 @@ class TestRateLimitDecorator:
         assert exc_info.value.status_code == 429
         assert "Rate limit exceeded" in str(exc_info.value.detail)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_decorator_with_cost(self):
         """Test decorator with custom cost"""
         @rate_limit(requests_per_minute=10, cost=5)
@@ -673,7 +673,7 @@ class TestRateLimitDecorator:
         with pytest.raises(HTTPException):
             await expensive_endpoint(mock_request)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_decorator_with_key_func(self):
         """Test decorator with custom key function"""
         def custom_key_func(request):
@@ -703,7 +703,7 @@ class TestRateLimitDecorator:
         with pytest.raises(HTTPException):
             await test_endpoint(mock_request1)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_decorator_no_client(self):
         """Test decorator handles missing client"""
         @rate_limit(requests_per_minute=10)
@@ -716,7 +716,7 @@ class TestRateLimitDecorator:
         result = await test_endpoint(mock_request)
         assert result == "success"
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_decorator_time_reset(self):
         """Test decorator resets after time window"""
         @rate_limit(requests_per_minute=1)
@@ -739,7 +739,7 @@ class TestRateLimitDecorator:
             result = await test_endpoint(mock_request)
             assert result == "success"
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_decorator_cleanup_large_data(self):
         """Test decorator cleans up when data gets large"""
         @rate_limit(requests_per_minute=10)
@@ -768,7 +768,7 @@ class TestRateLimitDecorator:
 class TestIntegration:
     """Integration tests"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_full_rate_limiting_flow(self):
         """Test complete rate limiting flow"""
         # Create limiter with low limits for testing
@@ -792,7 +792,7 @@ class TestIntegration:
         assert allowed is False
         assert metadata["remaining"] == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_middleware_integration(self):
         """Test middleware integration"""
         middleware = RateLimitMiddleware(
@@ -828,3 +828,4 @@ class TestIntegration:
         for task in tasks:
             if "cleanup" in str(task):
                 task.cancel()
+

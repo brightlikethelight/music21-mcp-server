@@ -49,7 +49,7 @@ class TestHealthCheckResult:
     def test_result_initialization_minimal(self):
         """Test minimal initialization"""
         result = HealthCheckResult("test", HealthStatus.HEALTHY)
-        
+
         assert result.name == "test"
         assert result.status == HealthStatus.HEALTHY
         assert result.message == ""
@@ -67,7 +67,7 @@ class TestHealthCheckResult:
             details=details,
             duration_ms=123.45,
         )
-        
+
         assert result.name == "full_test"
         assert result.status == HealthStatus.DEGRADED
         assert result.message == "Test message"
@@ -83,9 +83,9 @@ class TestHealthCheckResult:
             details={"error_code": 500},
             duration_ms=500.0,
         )
-        
+
         result_dict = result.to_dict()
-        
+
         assert result_dict["name"] == "dict_test"
         assert result_dict["status"] == "unhealthy"
         assert result_dict["message"] == "Error occurred"
@@ -96,7 +96,7 @@ class TestHealthCheckResult:
     def test_timestamp_format(self):
         """Test timestamp is in ISO format"""
         result = HealthCheckResult("timestamp_test", HealthStatus.HEALTHY)
-        
+
         # Should be parseable as ISO datetime
         parsed_time = datetime.fromisoformat(result.timestamp.replace("Z", "+00:00"))
         assert isinstance(parsed_time, datetime)
@@ -132,17 +132,24 @@ class TestHealthChecker:
     @patch("psutil.disk_usage")
     @patch("psutil.cpu_count")
     async def test_check_system_resources_healthy(
-        self, mock_cpu_count, mock_disk_usage, mock_cpu_percent, mock_virtual_memory, health_checker
+        self,
+        mock_cpu_count,
+        mock_disk_usage,
+        mock_cpu_percent,
+        mock_virtual_memory,
+        health_checker,
     ):
         """Test system resources check - healthy state"""
         # Mock healthy system
         mock_virtual_memory.return_value = MagicMock(
-            percent=50.0, available=2**30  # 50% memory, 1GB available
+            percent=50.0,
+            available=2**30,  # 50% memory, 1GB available
         )
         mock_cpu_percent.return_value = 30.0  # 30% CPU
         mock_cpu_count.return_value = 8
         mock_disk_usage.return_value = MagicMock(
-            percent=40.0, free=10 * (2**30)  # 40% disk, 10GB free
+            percent=40.0,
+            free=10 * (2**30),  # 40% disk, 10GB free
         )
 
         result = await health_checker.check_system_resources()
@@ -162,11 +169,18 @@ class TestHealthChecker:
     @patch("psutil.disk_usage")
     @patch("psutil.cpu_count")
     async def test_check_system_resources_degraded(
-        self, mock_cpu_count, mock_disk_usage, mock_cpu_percent, mock_virtual_memory, health_checker
+        self,
+        mock_cpu_count,
+        mock_disk_usage,
+        mock_cpu_percent,
+        mock_virtual_memory,
+        health_checker,
     ):
         """Test system resources check - degraded state"""
         # Mock degraded system (high but not critical)
-        mock_virtual_memory.return_value = MagicMock(percent=65.0, available=512*1024*1024)  # 65% memory
+        mock_virtual_memory.return_value = MagicMock(
+            percent=65.0, available=512 * 1024 * 1024
+        )  # 65% memory
         mock_cpu_percent.return_value = 75.0  # 75% CPU (80% of 90% threshold)
         mock_cpu_count.return_value = 4
         mock_disk_usage.return_value = MagicMock(percent=60.0, free=5 * (2**30))
@@ -183,11 +197,18 @@ class TestHealthChecker:
     @patch("psutil.disk_usage")
     @patch("psutil.cpu_count")
     async def test_check_system_resources_unhealthy(
-        self, mock_cpu_count, mock_disk_usage, mock_cpu_percent, mock_virtual_memory, health_checker
+        self,
+        mock_cpu_count,
+        mock_disk_usage,
+        mock_cpu_percent,
+        mock_virtual_memory,
+        health_checker,
     ):
         """Test system resources check - unhealthy state"""
         # Mock unhealthy system (over thresholds)
-        mock_virtual_memory.return_value = MagicMock(percent=85.0, available=100*1024*1024)  # 85% memory
+        mock_virtual_memory.return_value = MagicMock(
+            percent=85.0, available=100 * 1024 * 1024
+        )  # 85% memory
         mock_cpu_percent.return_value = 95.0  # 95% CPU (over 90% threshold)
         mock_cpu_count.return_value = 2
         mock_disk_usage.return_value = MagicMock(percent=95.0, free=1 * (2**30))
@@ -200,7 +221,9 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     @patch("psutil.virtual_memory")
-    async def test_check_system_resources_exception(self, mock_virtual_memory, health_checker):
+    async def test_check_system_resources_exception(
+        self, mock_virtual_memory, health_checker
+    ):
         """Test system resources check with exception"""
         mock_virtual_memory.side_effect = Exception("psutil error")
 
@@ -223,12 +246,12 @@ class TestHealthChecker:
         mock_part = MagicMock()
         mock_key = MagicMock()
         mock_key.__str__ = MagicMock(return_value="C major")
-        
+
         mock_score.return_value = mock_score_instance
         mock_score_instance.append = MagicMock()
         mock_score_instance.analyze.return_value = mock_key
         mock_score_instance.write.return_value = b"midi_data"
-        
+
         mock_chord.return_value = MagicMock()
         mock_parse.return_value = MagicMock()
 
@@ -246,7 +269,7 @@ class TestHealthChecker:
         """Test music21 functionality check - slow response"""
         # Set a very low threshold to trigger slow response
         health_checker.response_time_threshold = 0.001  # 1ms threshold
-        
+
         with patch("time.time", side_effect=[0, 0.1]):  # 100ms duration
             with patch("music21.stream.Score"):
                 with patch("music21.chord.Chord"):
@@ -273,16 +296,17 @@ class TestHealthChecker:
         mock_optimizer = MagicMock()
         mock_optimizer.get_cached_roman_numeral.return_value = "I"
         mock_optimizer.get_performance_metrics.return_value = {
-            "current_metrics": {
-                "cache_stats": {"hit_rate": 0.8}
-            }
+            "current_metrics": {"cache_stats": {"hit_rate": 0.8}}
         }
         mock_optimizer.roman_cache = {"test": "value"}
         mock_optimizer.key_cache = {}
         mock_optimizer.chord_analysis_cache = {}
         mock_optimizer.shutdown = MagicMock()
 
-        with patch("music21_mcp.health_checks.PerformanceOptimizer", return_value=mock_optimizer):
+        with patch(
+            "music21_mcp.health_checks.PerformanceOptimizer",
+            return_value=mock_optimizer,
+        ):
             with patch("music21.chord.Chord"):
                 with patch("music21.key.Key"):
                     result = await health_checker.check_cache_systems()
@@ -299,16 +323,17 @@ class TestHealthChecker:
         mock_optimizer = MagicMock()
         mock_optimizer.get_cached_roman_numeral.return_value = "I"
         mock_optimizer.get_performance_metrics.return_value = {
-            "current_metrics": {
-                "cache_stats": {"hit_rate": 0}
-            }
+            "current_metrics": {"cache_stats": {"hit_rate": 0}}
         }
         mock_optimizer.roman_cache = {}
         mock_optimizer.key_cache = {}
         mock_optimizer.chord_analysis_cache = {}
         mock_optimizer.shutdown = MagicMock()
 
-        with patch("music21_mcp.health_checks.PerformanceOptimizer", return_value=mock_optimizer):
+        with patch(
+            "music21_mcp.health_checks.PerformanceOptimizer",
+            return_value=mock_optimizer,
+        ):
             with patch("music21.chord.Chord"):
                 with patch("music21.key.Key"):
                     result = await health_checker.check_cache_systems()
@@ -320,7 +345,10 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_check_cache_systems_exception(self, health_checker):
         """Test cache systems check with exception"""
-        with patch("music21_mcp.health_checks.PerformanceOptimizer", side_effect=ImportError("module not found")):
+        with patch(
+            "music21_mcp.health_checks.PerformanceOptimizer",
+            side_effect=ImportError("module not found"),
+        ):
             result = await health_checker.check_cache_systems()
 
         assert result.name == "cache_systems"
@@ -346,6 +374,7 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_check_dependencies_missing(self, health_checker):
         """Test dependencies check - some missing"""
+
         def mock_import(name):
             if name == "music21":
                 raise ImportError("Module not found")
@@ -433,7 +462,9 @@ class TestHealthChecker:
         # Record requests with slow response times
         health_checker.request_count = 10
         health_checker.error_count = 0
-        health_checker.total_response_time_ms = 70000  # 7000ms average (over 5000ms threshold)
+        health_checker.total_response_time_ms = (
+            70000  # 7000ms average (over 5000ms threshold)
+        )
 
         result = await health_checker.check_performance_metrics()
 
@@ -482,16 +513,32 @@ class TestHealthChecker:
     async def test_check_all_success(self, health_checker):
         """Test check_all method with all checks passing"""
         with patch.object(health_checker, "check_system_resources") as mock_system:
-            with patch.object(health_checker, "check_music21_functionality") as mock_music21:
+            with patch.object(
+                health_checker, "check_music21_functionality"
+            ) as mock_music21:
                 with patch.object(health_checker, "check_cache_systems") as mock_cache:
-                    with patch.object(health_checker, "check_dependencies") as mock_deps:
-                        with patch.object(health_checker, "check_performance_metrics") as mock_perf:
+                    with patch.object(
+                        health_checker, "check_dependencies"
+                    ) as mock_deps:
+                        with patch.object(
+                            health_checker, "check_performance_metrics"
+                        ) as mock_perf:
                             # Mock all checks as healthy
-                            mock_system.return_value = HealthCheckResult("system", HealthStatus.HEALTHY)
-                            mock_music21.return_value = HealthCheckResult("music21", HealthStatus.HEALTHY)
-                            mock_cache.return_value = HealthCheckResult("cache", HealthStatus.HEALTHY)
-                            mock_deps.return_value = HealthCheckResult("deps", HealthStatus.HEALTHY)
-                            mock_perf.return_value = HealthCheckResult("perf", HealthStatus.HEALTHY)
+                            mock_system.return_value = HealthCheckResult(
+                                "system", HealthStatus.HEALTHY
+                            )
+                            mock_music21.return_value = HealthCheckResult(
+                                "music21", HealthStatus.HEALTHY
+                            )
+                            mock_cache.return_value = HealthCheckResult(
+                                "cache", HealthStatus.HEALTHY
+                            )
+                            mock_deps.return_value = HealthCheckResult(
+                                "deps", HealthStatus.HEALTHY
+                            )
+                            mock_perf.return_value = HealthCheckResult(
+                                "perf", HealthStatus.HEALTHY
+                            )
 
                             result = await health_checker.check_all()
 
@@ -506,16 +553,32 @@ class TestHealthChecker:
     async def test_check_all_with_degraded(self, health_checker):
         """Test check_all method with degraded checks"""
         with patch.object(health_checker, "check_system_resources") as mock_system:
-            with patch.object(health_checker, "check_music21_functionality") as mock_music21:
+            with patch.object(
+                health_checker, "check_music21_functionality"
+            ) as mock_music21:
                 with patch.object(health_checker, "check_cache_systems") as mock_cache:
-                    with patch.object(health_checker, "check_dependencies") as mock_deps:
-                        with patch.object(health_checker, "check_performance_metrics") as mock_perf:
+                    with patch.object(
+                        health_checker, "check_dependencies"
+                    ) as mock_deps:
+                        with patch.object(
+                            health_checker, "check_performance_metrics"
+                        ) as mock_perf:
                             # Some checks degraded
-                            mock_system.return_value = HealthCheckResult("system", HealthStatus.DEGRADED)
-                            mock_music21.return_value = HealthCheckResult("music21", HealthStatus.HEALTHY)
-                            mock_cache.return_value = HealthCheckResult("cache", HealthStatus.HEALTHY)
-                            mock_deps.return_value = HealthCheckResult("deps", HealthStatus.HEALTHY)
-                            mock_perf.return_value = HealthCheckResult("perf", HealthStatus.HEALTHY)
+                            mock_system.return_value = HealthCheckResult(
+                                "system", HealthStatus.DEGRADED
+                            )
+                            mock_music21.return_value = HealthCheckResult(
+                                "music21", HealthStatus.HEALTHY
+                            )
+                            mock_cache.return_value = HealthCheckResult(
+                                "cache", HealthStatus.HEALTHY
+                            )
+                            mock_deps.return_value = HealthCheckResult(
+                                "deps", HealthStatus.HEALTHY
+                            )
+                            mock_perf.return_value = HealthCheckResult(
+                                "perf", HealthStatus.HEALTHY
+                            )
 
                             result = await health_checker.check_all()
 
@@ -525,16 +588,32 @@ class TestHealthChecker:
     async def test_check_all_with_unhealthy(self, health_checker):
         """Test check_all method with unhealthy checks"""
         with patch.object(health_checker, "check_system_resources") as mock_system:
-            with patch.object(health_checker, "check_music21_functionality") as mock_music21:
+            with patch.object(
+                health_checker, "check_music21_functionality"
+            ) as mock_music21:
                 with patch.object(health_checker, "check_cache_systems") as mock_cache:
-                    with patch.object(health_checker, "check_dependencies") as mock_deps:
-                        with patch.object(health_checker, "check_performance_metrics") as mock_perf:
+                    with patch.object(
+                        health_checker, "check_dependencies"
+                    ) as mock_deps:
+                        with patch.object(
+                            health_checker, "check_performance_metrics"
+                        ) as mock_perf:
                             # Some checks unhealthy
-                            mock_system.return_value = HealthCheckResult("system", HealthStatus.HEALTHY)
-                            mock_music21.return_value = HealthCheckResult("music21", HealthStatus.UNHEALTHY)
-                            mock_cache.return_value = HealthCheckResult("cache", HealthStatus.DEGRADED)
-                            mock_deps.return_value = HealthCheckResult("deps", HealthStatus.HEALTHY)
-                            mock_perf.return_value = HealthCheckResult("perf", HealthStatus.HEALTHY)
+                            mock_system.return_value = HealthCheckResult(
+                                "system", HealthStatus.HEALTHY
+                            )
+                            mock_music21.return_value = HealthCheckResult(
+                                "music21", HealthStatus.UNHEALTHY
+                            )
+                            mock_cache.return_value = HealthCheckResult(
+                                "cache", HealthStatus.DEGRADED
+                            )
+                            mock_deps.return_value = HealthCheckResult(
+                                "deps", HealthStatus.HEALTHY
+                            )
+                            mock_perf.return_value = HealthCheckResult(
+                                "perf", HealthStatus.HEALTHY
+                            )
 
                             result = await health_checker.check_all()
 
@@ -543,15 +622,33 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_check_all_with_exception(self, health_checker):
         """Test check_all method with check exception"""
-        with patch.object(health_checker, "check_system_resources", side_effect=Exception("check failed")):
-            with patch.object(health_checker, "check_music21_functionality") as mock_music21:
+        with patch.object(
+            health_checker,
+            "check_system_resources",
+            side_effect=Exception("check failed"),
+        ):
+            with patch.object(
+                health_checker, "check_music21_functionality"
+            ) as mock_music21:
                 with patch.object(health_checker, "check_cache_systems") as mock_cache:
-                    with patch.object(health_checker, "check_dependencies") as mock_deps:
-                        with patch.object(health_checker, "check_performance_metrics") as mock_perf:
-                            mock_music21.return_value = HealthCheckResult("music21", HealthStatus.HEALTHY)
-                            mock_cache.return_value = HealthCheckResult("cache", HealthStatus.HEALTHY)
-                            mock_deps.return_value = HealthCheckResult("deps", HealthStatus.HEALTHY)
-                            mock_perf.return_value = HealthCheckResult("perf", HealthStatus.HEALTHY)
+                    with patch.object(
+                        health_checker, "check_dependencies"
+                    ) as mock_deps:
+                        with patch.object(
+                            health_checker, "check_performance_metrics"
+                        ) as mock_perf:
+                            mock_music21.return_value = HealthCheckResult(
+                                "music21", HealthStatus.HEALTHY
+                            )
+                            mock_cache.return_value = HealthCheckResult(
+                                "cache", HealthStatus.HEALTHY
+                            )
+                            mock_deps.return_value = HealthCheckResult(
+                                "deps", HealthStatus.HEALTHY
+                            )
+                            mock_perf.return_value = HealthCheckResult(
+                                "perf", HealthStatus.HEALTHY
+                            )
 
                             result = await health_checker.check_all()
 
@@ -573,16 +670,32 @@ class TestHealthChecker:
             )
 
         with patch.object(health_checker, "check_system_resources") as mock_system:
-            with patch.object(health_checker, "check_music21_functionality") as mock_music21:
+            with patch.object(
+                health_checker, "check_music21_functionality"
+            ) as mock_music21:
                 with patch.object(health_checker, "check_cache_systems") as mock_cache:
-                    with patch.object(health_checker, "check_dependencies") as mock_deps:
-                        with patch.object(health_checker, "check_performance_metrics") as mock_perf:
+                    with patch.object(
+                        health_checker, "check_dependencies"
+                    ) as mock_deps:
+                        with patch.object(
+                            health_checker, "check_performance_metrics"
+                        ) as mock_perf:
                             # Mock all checks
-                            mock_system.return_value = HealthCheckResult("system", HealthStatus.HEALTHY)
-                            mock_music21.return_value = HealthCheckResult("music21", HealthStatus.HEALTHY)
-                            mock_cache.return_value = HealthCheckResult("cache", HealthStatus.HEALTHY)
-                            mock_deps.return_value = HealthCheckResult("deps", HealthStatus.HEALTHY)
-                            mock_perf.return_value = HealthCheckResult("perf", HealthStatus.HEALTHY)
+                            mock_system.return_value = HealthCheckResult(
+                                "system", HealthStatus.HEALTHY
+                            )
+                            mock_music21.return_value = HealthCheckResult(
+                                "music21", HealthStatus.HEALTHY
+                            )
+                            mock_cache.return_value = HealthCheckResult(
+                                "cache", HealthStatus.HEALTHY
+                            )
+                            mock_deps.return_value = HealthCheckResult(
+                                "deps", HealthStatus.HEALTHY
+                            )
+                            mock_perf.return_value = HealthCheckResult(
+                                "perf", HealthStatus.HEALTHY
+                            )
 
                             await health_checker.check_all()
 
@@ -594,10 +707,16 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_get_readiness_success(self, health_checker):
         """Test readiness check - ready"""
-        with patch.object(health_checker, "check_music21_functionality") as mock_music21:
+        with patch.object(
+            health_checker, "check_music21_functionality"
+        ) as mock_music21:
             with patch.object(health_checker, "check_dependencies") as mock_deps:
-                mock_music21.return_value = HealthCheckResult("music21", HealthStatus.HEALTHY)
-                mock_deps.return_value = HealthCheckResult("deps", HealthStatus.DEGRADED)  # Degraded is OK
+                mock_music21.return_value = HealthCheckResult(
+                    "music21", HealthStatus.HEALTHY
+                )
+                mock_deps.return_value = HealthCheckResult(
+                    "deps", HealthStatus.DEGRADED
+                )  # Degraded is OK
 
                 result = await health_checker.get_readiness()
 
@@ -607,9 +726,13 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_get_readiness_not_ready(self, health_checker):
         """Test readiness check - not ready"""
-        with patch.object(health_checker, "check_music21_functionality") as mock_music21:
+        with patch.object(
+            health_checker, "check_music21_functionality"
+        ) as mock_music21:
             with patch.object(health_checker, "check_dependencies") as mock_deps:
-                mock_music21.return_value = HealthCheckResult("music21", HealthStatus.UNHEALTHY)
+                mock_music21.return_value = HealthCheckResult(
+                    "music21", HealthStatus.UNHEALTHY
+                )
                 mock_deps.return_value = HealthCheckResult("deps", HealthStatus.HEALTHY)
 
                 result = await health_checker.get_readiness()
@@ -619,7 +742,11 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_get_readiness_with_exception(self, health_checker):
         """Test readiness check with exception"""
-        with patch.object(health_checker, "check_music21_functionality", side_effect=Exception("check failed")):
+        with patch.object(
+            health_checker,
+            "check_music21_functionality",
+            side_effect=Exception("check failed"),
+        ):
             with patch.object(health_checker, "check_dependencies") as mock_deps:
                 mock_deps.return_value = HealthCheckResult("deps", HealthStatus.HEALTHY)
 
@@ -644,7 +771,9 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_get_liveness_failure(self, health_checker):
         """Test liveness check - not alive"""
-        with patch("music21.chord.Chord", side_effect=Exception("music21 not available")):
+        with patch(
+            "music21.chord.Chord", side_effect=Exception("music21 not available")
+        ):
             result = await health_checker.get_liveness()
 
         assert result["alive"] is False
@@ -660,7 +789,7 @@ class TestSingletonAndConvenience:
         """Test singleton pattern"""
         checker1 = get_health_checker()
         checker2 = get_health_checker()
-        
+
         assert checker1 is checker2  # Should be same instance
         assert isinstance(checker1, HealthChecker)
 
@@ -669,9 +798,9 @@ class TestSingletonAndConvenience:
         """Test convenience health_check function"""
         with patch.object(HealthChecker, "check_all") as mock_check_all:
             mock_check_all.return_value = {"status": "healthy"}
-            
+
             result = await health_check()
-            
+
             assert result == {"status": "healthy"}
             mock_check_all.assert_called_once()
 
@@ -680,9 +809,9 @@ class TestSingletonAndConvenience:
         """Test convenience readiness_check function"""
         with patch.object(HealthChecker, "get_readiness") as mock_readiness:
             mock_readiness.return_value = {"ready": True}
-            
+
             result = await readiness_check()
-            
+
             assert result == {"ready": True}
             mock_readiness.assert_called_once()
 
@@ -691,15 +820,16 @@ class TestSingletonAndConvenience:
         """Test convenience liveness_check function"""
         with patch.object(HealthChecker, "get_liveness") as mock_liveness:
             mock_liveness.return_value = {"alive": True}
-            
+
             result = await liveness_check()
-            
+
             assert result == {"alive": True}
             mock_liveness.assert_called_once()
 
     def teardown_method(self):
         """Clean up singleton between tests"""
         import music21_mcp.health_checks
+
         music21_mcp.health_checks._health_checker = None
 
 
@@ -710,10 +840,10 @@ class TestIntegration:
     async def test_real_music21_functionality_check(self):
         """Test with real music21 (if available)"""
         health_checker = HealthChecker()
-        
+
         # This should work with real music21
         result = await health_checker.check_music21_functionality()
-        
+
         assert result.name == "music21_functionality"
         assert result.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED]
         # Should complete without exception
@@ -722,9 +852,9 @@ class TestIntegration:
     async def test_real_dependencies_check(self):
         """Test with real dependencies"""
         health_checker = HealthChecker()
-        
+
         result = await health_checker.check_dependencies()
-        
+
         assert result.name == "dependencies"
         # Should find at least some dependencies
         assert "dependencies" in result.details
@@ -733,4 +863,5 @@ class TestIntegration:
     def teardown_method(self):
         """Clean up singleton between tests"""
         import music21_mcp.health_checks
+
         music21_mcp.health_checks._health_checker = None

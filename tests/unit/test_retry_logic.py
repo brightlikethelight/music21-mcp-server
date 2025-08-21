@@ -21,19 +21,19 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 from music21_mcp.retry_logic import (
-    BulkRetryExecutor,
-    CircuitBreaker,
-    CircuitBreakerOpenError,
-    CircuitState,
     DATABASE_POLICY,
     FILE_IO_POLICY,
     MUSIC21_POLICY,
     NETWORK_POLICY,
+    BulkRetryExecutor,
+    CircuitBreaker,
+    CircuitBreakerOpenError,
+    CircuitState,
     NonRetryableError,
     ResilientTool,
-    RetryPolicy,
     RetryableError,
     RetryableMusic21Operation,
+    RetryPolicy,
     retry,
 )
 
@@ -325,7 +325,7 @@ class TestCircuitBreaker:
         assert breaker.failure_count == 0
         assert breaker.state == CircuitState.CLOSED
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_async_call_success(self):
         """Test successful async call"""
         breaker = CircuitBreaker()
@@ -337,7 +337,7 @@ class TestCircuitBreaker:
         assert result == 10
         assert breaker.state == CircuitState.CLOSED
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_async_call_failure(self):
         """Test failed async call"""
         breaker = CircuitBreaker(failure_threshold=1)
@@ -351,7 +351,7 @@ class TestCircuitBreaker:
         assert breaker.failure_count == 1
         assert breaker.state == CircuitState.OPEN
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_async_call_open_circuit(self):
         """Test async call with open circuit"""
         breaker = CircuitBreaker(failure_threshold=1)
@@ -422,7 +422,7 @@ class TestCircuitBreaker:
 class TestRetryDecorator:
     """Test retry decorator"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_retry_decorator_async_success(self):
         """Test retry decorator with successful async function"""
         @retry()
@@ -432,7 +432,7 @@ class TestRetryDecorator:
         result = await async_func(5)
         assert result == 10
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_retry_decorator_async_retry_success(self):
         """Test retry decorator retries async function and succeeds"""
         call_count = 0
@@ -449,7 +449,7 @@ class TestRetryDecorator:
         assert result == "success"
         assert call_count == 2
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_retry_decorator_async_all_attempts_fail(self):
         """Test retry decorator when all async attempts fail"""
         @retry(RetryPolicy(max_attempts=2))
@@ -459,7 +459,7 @@ class TestRetryDecorator:
         with pytest.raises(RetryableError):
             await always_failing_async()
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_retry_decorator_async_non_retryable(self):
         """Test retry decorator with non-retryable async exception"""
         @retry()
@@ -512,7 +512,7 @@ class TestRetryDecorator:
         with pytest.raises(KeyError):
             non_retryable_sync()
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_retry_decorator_with_circuit_breaker(self):
         """Test retry decorator with circuit breaker"""
         circuit_breaker = CircuitBreaker(failure_threshold=2)
@@ -532,7 +532,7 @@ class TestRetryDecorator:
         with pytest.raises(CircuitBreakerOpenError):
             await failing_func()
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_retry_decorator_custom_policy(self):
         """Test retry decorator with custom policy"""
         policy = RetryPolicy(
@@ -618,7 +618,7 @@ class TestPreConfiguredPolicies:
 class TestRetryableMusic21Operation:
     """Test RetryableMusic21Operation class"""
 
-    @pytest.fixture
+    @pytest.fixture()
     def music21_op(self):
         """Create RetryableMusic21Operation instance"""
         return RetryableMusic21Operation()
@@ -637,7 +637,7 @@ class TestRetryableMusic21Operation:
         
         assert music21_op.policy == custom_policy
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_parse_score_success(self, music21_op):
         """Test successful score parsing"""
         with patch("music21.converter.parse") as mock_parse:
@@ -649,7 +649,7 @@ class TestRetryableMusic21Operation:
             assert result == mock_score
             mock_parse.assert_called_once_with("test data")
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_parse_score_retryable_error(self, music21_op):
         """Test parse_score with retryable error"""
         with patch("music21.converter.parse") as mock_parse:
@@ -660,7 +660,7 @@ class TestRetryableMusic21Operation:
             
             assert "Transient error parsing score" in str(exc_info.value)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_parse_score_timeout_error(self, music21_op):
         """Test parse_score with timeout error"""
         with patch("music21.converter.parse") as mock_parse:
@@ -671,7 +671,7 @@ class TestRetryableMusic21Operation:
             
             assert "Transient error parsing score" in str(exc_info.value)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_parse_score_non_retryable_error(self, music21_op):
         """Test parse_score with non-retryable error"""
         with patch("music21.converter.parse") as mock_parse:
@@ -680,7 +680,7 @@ class TestRetryableMusic21Operation:
             with pytest.raises(ValueError):
                 await music21_op.parse_score("test data")
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_write_file_success(self, music21_op):
         """Test successful file writing"""
         mock_file = AsyncMock()
@@ -692,7 +692,7 @@ class TestRetryableMusic21Operation:
             mock_file.__aenter__.assert_called_once()
             mock_file.__aenter__.return_value.write.assert_called_once_with("content")
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_write_file_binary_content(self, music21_op):
         """Test writing binary file content"""
         mock_file = AsyncMock()
@@ -702,7 +702,7 @@ class TestRetryableMusic21Operation:
             
             mock_open.assert_called_once_with("/test/path.bin", "wb")
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_write_file_missing_aiofiles(self, music21_op):
         """Test write_file without aiofiles installed"""
         with patch("builtins.__import__", side_effect=ImportError("No module named 'aiofiles'")):
@@ -711,7 +711,7 @@ class TestRetryableMusic21Operation:
             
             assert "aiofiles is required" in str(exc_info.value)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_fetch_corpus_success(self, music21_op):
         """Test successful corpus fetching"""
         with patch("music21.corpus.parse") as mock_parse:
@@ -723,7 +723,7 @@ class TestRetryableMusic21Operation:
             assert result == mock_score
             mock_parse.assert_called_once_with("bach/bwv1.1")
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_fetch_corpus_network_error(self, music21_op):
         """Test fetch_corpus with network error"""
         with patch("music21.corpus.parse") as mock_parse:
@@ -734,7 +734,7 @@ class TestRetryableMusic21Operation:
             
             assert "Network error fetching corpus" in str(exc_info.value)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_fetch_corpus_connection_error(self, music21_op):
         """Test fetch_corpus with connection error"""
         with patch("music21.corpus.parse") as mock_parse:
@@ -745,7 +745,7 @@ class TestRetryableMusic21Operation:
             
             assert "Network error fetching corpus" in str(exc_info.value)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_fetch_corpus_non_retryable_error(self, music21_op):
         """Test fetch_corpus with non-retryable error"""
         with patch("music21.corpus.parse") as mock_parse:
@@ -758,7 +758,7 @@ class TestRetryableMusic21Operation:
 class TestBulkRetryExecutor:
     """Test BulkRetryExecutor class"""
 
-    @pytest.fixture
+    @pytest.fixture()
     def executor(self):
         """Create BulkRetryExecutor instance"""
         return BulkRetryExecutor(max_concurrent=3)
@@ -777,7 +777,7 @@ class TestBulkRetryExecutor:
         assert executor.policy == custom_policy
         assert executor.max_concurrent == 5
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_execute_all_success(self, executor):
         """Test execute_all with all successful operations"""
         async def op1():
@@ -803,7 +803,7 @@ class TestBulkRetryExecutor:
         assert successful_results[1] == "result2"
         assert successful_results[2] == "result3"
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_execute_all_mixed_results(self, executor):
         """Test execute_all with mixed success/failure"""
         async def success_op():
@@ -828,7 +828,7 @@ class TestBulkRetryExecutor:
         assert failed_result["id"] == 1
         assert "Permanent failure" in failed_result["error"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_execute_all_stop_on_error(self, executor):
         """Test execute_all stops on error when continue_on_error=False"""
         def failing_op():
@@ -846,7 +846,7 @@ class TestBulkRetryExecutor:
         assert results["total"] == 2
         assert len(results["failed"]) >= 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_execute_all_with_retry_policy(self, executor):
         """Test execute_all applies retry policy"""
         call_count = 0
@@ -866,7 +866,7 @@ class TestBulkRetryExecutor:
         assert results["successful"][0]["result"] == "success after retry"
         assert call_count >= 2  # Should have retried
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_execute_all_empty_operations(self, executor):
         """Test execute_all with empty operations list"""
         results = await executor.execute_all([])
@@ -876,7 +876,7 @@ class TestBulkRetryExecutor:
         assert len(results["failed"]) == 0
         assert results["success_rate"] == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_execute_all_concurrency_limit(self, executor):
         """Test execute_all respects concurrency limit"""
         # This test is more about ensuring no errors occur with concurrency
@@ -897,7 +897,7 @@ class TestBulkRetryExecutor:
 class TestResilientTool:
     """Test ResilientTool example class"""
 
-    @pytest.fixture
+    @pytest.fixture()
     def resilient_tool(self):
         """Create ResilientTool instance"""
         return ResilientTool()
@@ -907,7 +907,7 @@ class TestResilientTool:
         assert isinstance(resilient_tool.retry_executor, RetryableMusic21Operation)
         assert isinstance(resilient_tool.bulk_executor, BulkRetryExecutor)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_analyze_with_retry_success(self, resilient_tool):
         """Test analyze_with_retry success"""
         mock_score = Mock()
@@ -924,7 +924,7 @@ class TestResilientTool:
         assert result["key"] == "C major"
         assert result["time_signature"] == "4/4"
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_analyze_with_retry_no_time_signatures(self, resilient_tool):
         """Test analyze_with_retry with no time signatures"""
         mock_score = Mock()
@@ -939,7 +939,7 @@ class TestResilientTool:
         assert result["key"] == "D minor"
         assert result["time_signature"] == "None"
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_analyze_with_retry_index_error(self, resilient_tool):
         """Test analyze_with_retry handles index error as non-retryable"""
         mock_score = Mock()
@@ -950,7 +950,7 @@ class TestResilientTool:
         
         assert "Score has no time signatures" in str(exc_info.value)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_analyze_with_retry_retryable_error(self, resilient_tool):
         """Test analyze_with_retry converts other errors to retryable"""
         mock_score = Mock()
@@ -965,7 +965,7 @@ class TestResilientTool:
 class TestIntegration:
     """Integration tests combining multiple components"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_retry_with_circuit_breaker_integration(self):
         """Test retry decorator with circuit breaker integration"""
         circuit_breaker = CircuitBreaker(failure_threshold=2, recovery_timeout=0.1)
@@ -1001,7 +1001,7 @@ class TestIntegration:
         with pytest.raises(CircuitBreakerOpenError):
             await consistently_failing()
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_bulk_executor_with_circuit_breaker(self):
         """Test BulkRetryExecutor handles circuit breaker scenarios"""
         # Create executor with circuit breaker-enabled operations
@@ -1026,7 +1026,7 @@ class TestIntegration:
         # Should have attempted retries
         assert call_count > 3  # More than one attempt per operation
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_music21_operation_integration(self):
         """Test RetryableMusic21Operation with real-ish scenarios"""
         music21_op = RetryableMusic21Operation()
@@ -1051,7 +1051,7 @@ class TestIntegration:
             assert len(policy.retryable_exceptions) > 0
             assert len(policy.non_retryable_exceptions) > 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_resilient_tool_integration(self):
         """Test ResilientTool integration"""
         tool = ResilientTool()
@@ -1072,3 +1072,4 @@ class TestIntegration:
             "key": "F# major",
             "time_signature": "3/4"
         }
+
