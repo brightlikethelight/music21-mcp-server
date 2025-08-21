@@ -26,7 +26,7 @@ class CacheWarmer:
             "progressions_cached": 0,
             "chords_cached": 0,
             "keys_processed": 0,
-            "time_taken_ms": 0,
+            "time_taken_ms": 0.0,
         }
 
     async def warm_all_caches(self) -> dict[str, Any]:

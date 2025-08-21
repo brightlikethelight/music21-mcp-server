@@ -47,7 +47,8 @@ class BaseTool(ABC):
     @property
     def scores(self) -> dict[str, Any]:
         """Provide access to scores for backward compatibility with tests"""
-        return self.score_manager
+        # Cast MutableMapping to dict for type compatibility
+        return dict(self.score_manager)
 
     @abstractmethod
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
