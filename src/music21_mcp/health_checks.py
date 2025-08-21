@@ -100,7 +100,7 @@ class HealthChecker:
         )
 
         # Process results
-        results = []
+        results: list[HealthCheckResult] = []
         overall_status = HealthStatus.HEALTHY
 
         for check in checks:
@@ -114,6 +114,8 @@ class HealthChecker:
                 results.append(result)
                 overall_status = HealthStatus.UNHEALTHY
             else:
+                # check is HealthCheckResult in this branch
+                assert isinstance(check, HealthCheckResult)
                 results.append(check)
                 # Downgrade overall status if needed
                 if check.status == HealthStatus.UNHEALTHY:
@@ -331,7 +333,7 @@ class HealthChecker:
         start_time = time.time()
 
         try:
-            dependencies = {
+            dependencies: dict[str, str | None] = {
                 "music21": None,
                 "mcp": None,
                 "asyncio": None,
@@ -448,14 +450,15 @@ class HealthChecker:
         )
 
         ready = all(
-            not isinstance(check, Exception) and check.status != HealthStatus.UNHEALTHY
+            isinstance(check, HealthCheckResult) and check.status != HealthStatus.UNHEALTHY
             for check in checks
+            if not isinstance(check, Exception)
         )
 
         return {
             "ready": ready,
             "checks": [
-                c.to_dict() if not isinstance(c, Exception) else {"error": str(c)}
+                c.to_dict() if isinstance(c, HealthCheckResult) else {"error": str(c)}
                 for c in checks
             ],
         }

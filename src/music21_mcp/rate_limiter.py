@@ -37,7 +37,7 @@ class RateLimitConfig:
     strategy: RateLimitStrategy = RateLimitStrategy.SLIDING_WINDOW
 
     # Different limits for different endpoints
-    endpoint_limits: dict[str, int] = None
+    endpoint_limits: dict[str, int] | None = None
 
     def __post_init__(self):
         if self.endpoint_limits is None:
@@ -63,11 +63,11 @@ class RateLimiter:
         self.request_history: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=10000)
         )
-        self._cleanup_task = None
+        self._cleanup_task: asyncio.Task[None] | None = None
         self._lock = asyncio.Lock()
 
     async def check_rate_limit(
-        self, identifier: str, endpoint: str = None, cost: int = 1
+        self, identifier: str, endpoint: str | None = None, cost: int = 1
     ) -> tuple[bool, dict[str, Any]]:
         """
         Check if request is within rate limits
@@ -88,7 +88,7 @@ class RateLimiter:
             bucket = self.buckets[identifier]
 
             # Check endpoint-specific limits
-            if endpoint and endpoint in self.config.endpoint_limits:
+            if endpoint and self.config.endpoint_limits and endpoint in self.config.endpoint_limits:
                 endpoint_limit = self.config.endpoint_limits[endpoint]
                 endpoint_bucket_key = f"{identifier}:{endpoint}"
 
@@ -132,7 +132,7 @@ class RateLimiter:
             return allowed, self._get_metadata(bucket, endpoint)
 
     def _get_metadata(
-        self, bucket: "TokenBucket", endpoint: str = None
+        self, bucket: "TokenBucket", endpoint: str | None = None
     ) -> dict[str, Any]:
         """Get rate limit metadata for response headers"""
         return {
@@ -239,7 +239,7 @@ class TokenBucket:
 class RateLimitMiddleware:
     """FastAPI middleware for rate limiting"""
 
-    def __init__(self, config: RateLimitConfig = None):
+    def __init__(self, config: RateLimitConfig | None = None):
         self.config = config or RateLimitConfig()
         self.limiter = RateLimiter(self.config)
         self.limiter.start_cleanup_task()
@@ -337,10 +337,10 @@ def rate_limit(
             # Simple in-memory rate limit check
             # In production, use Redis or similar
             if not hasattr(wrapper, "_rate_limit_data"):
-                wrapper._rate_limit_data = {}
+                wrapper._rate_limit_data = {}  # type: ignore
 
             now = time.time()
-            data = wrapper._rate_limit_data.get(
+            data = wrapper._rate_limit_data.get(  # type: ignore
                 identifier, {"count": 0, "reset": now + 60}
             )
 
@@ -355,14 +355,14 @@ def rate_limit(
                 )
 
             data["count"] += cost
-            wrapper._rate_limit_data[identifier] = data
+            wrapper._rate_limit_data[identifier] = data  # type: ignore
 
             # Clean up old entries
-            if len(wrapper._rate_limit_data) > 1000:
+            if len(wrapper._rate_limit_data) > 1000:  # type: ignore
                 # Remove expired entries
-                wrapper._rate_limit_data = {
+                wrapper._rate_limit_data = {  # type: ignore
                     k: v
-                    for k, v in wrapper._rate_limit_data.items()
+                    for k, v in wrapper._rate_limit_data.items()  # type: ignore
                     if v["reset"] > now
                 }
 
