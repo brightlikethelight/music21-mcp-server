@@ -89,6 +89,7 @@ class TestBaseTool:
         """Test BaseTool basic input validation"""
         # Use the actual ImportScoreTool which has real validation
         from music21_mcp.tools.import_tool import ImportScoreTool
+
         tool = ImportScoreTool({})
 
         # Test with valid inputs

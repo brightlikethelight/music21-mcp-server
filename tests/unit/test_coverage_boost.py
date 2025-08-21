@@ -268,7 +268,9 @@ class TestImportToolComprehensive:
         """Test validation of invalid file source"""
         # Test source detection instead since _validate_source doesn't exist
         source_type = import_tool._detect_source_type("/path/to/file.txt")
-        assert source_type == "file"  # Will still detect as file but would fail during import
+        assert (
+            source_type == "file"
+        )  # Will still detect as file but would fail during import
 
         source_type = import_tool._detect_source_type("not/absolute/path.xml")
         assert source_type == "file"  # Will still detect as file
@@ -277,7 +279,9 @@ class TestImportToolComprehensive:
         """Test validation of valid text source"""
         # Test source detection instead since _validate_source doesn't exist
         source_type = import_tool._detect_source_type("tinyNotation: 4/4 c4 d4 e4 f4")
-        assert source_type == "file"  # Might detect as file due to no spaces in first token
+        assert (
+            source_type == "file"
+        )  # Might detect as file due to no spaces in first token
 
         source_type = import_tool._detect_source_type("C4 D4 E4 F4 G4")
         assert source_type == "text"  # Should detect as text
