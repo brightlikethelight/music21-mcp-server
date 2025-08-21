@@ -45,20 +45,20 @@ class PerformanceMetrics:
                 "fast_lookup_hits": 0,
                 "music21_fallbacks": 0,
                 "total_time_ms": 0,
-                "avg_time_ms": 0,
+                "avg_time_ms": 0.0,
             },
             "chord_analysis": {
                 "total_chords": 0,
                 "total_batches": 0,
                 "timeouts": 0,
                 "total_time_ms": 0,
-                "avg_time_per_chord_ms": 0,
+                "avg_time_per_chord_ms": 0.0,
             },
             "cache_stats": {
                 "roman_cache_size": 0,
                 "chord_cache_size": 0,
                 "key_cache_size": 0,
-                "hit_rate": 0,
+                "hit_rate": 0.0,
             },
         }
 

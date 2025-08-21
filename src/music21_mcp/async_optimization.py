@@ -41,7 +41,7 @@ class AnalysisTask:
     key_obj: key.Key
     future: asyncio.Future
     priority: int = 0  # Higher = more important
-    created_at: float = None
+    created_at: float | None = None
 
     def __post_init__(self):
         if self.created_at is None:
@@ -78,7 +78,7 @@ class AsyncOptimizer:
 
         # Async infrastructure
         self.executor = ThreadPoolExecutor(max_workers=thread_pool_workers)
-        self.batch_processor_task = None
+        self.batch_processor_task: asyncio.Task[None] | None = None
         self.shutdown_event = asyncio.Event()
 
         # Performance tracking
@@ -181,7 +181,7 @@ class AsyncOptimizer:
         """Process Roman numeral analysis tasks in optimized batches"""
         while not self.shutdown_event.is_set():
             try:
-                batch = []
+                batch: list[AnalysisTask] = []
                 deadline = time.time() + self.batch_timeout
 
                 # Collect tasks for batching
@@ -327,7 +327,7 @@ class AsyncOptimizer:
 
         # Queue for batched processing
         task_id = f"{cache_key}_{time.time()}"
-        future = asyncio.Future()
+        future: asyncio.Future[str] = asyncio.Future()
         task = AnalysisTask(task_id, chord_obj, key_obj, future, priority)
 
         await self.roman_analysis_queue.put(task)
@@ -501,7 +501,7 @@ class AsyncOptimizer:
             },
         }
 
-    async def warm_caches(self, common_progressions: list[list[str]] = None):
+    async def warm_caches(self, common_progressions: list[list[str]] | None = None):
         """Warm up caches with common patterns"""
         if common_progressions is None:
             common_progressions = [
