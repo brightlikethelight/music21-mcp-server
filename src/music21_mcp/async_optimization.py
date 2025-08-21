@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from typing import Any
 from weakref import WeakValueDictionary
 
-from cachetools import TTLCache
+from cachetools import TTLCache  # type: ignore
 from music21 import chord, key, roman, stream
 
 logger = logging.getLogger(__name__)

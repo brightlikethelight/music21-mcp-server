@@ -12,7 +12,7 @@ import logging
 from functools import lru_cache
 from typing import Any
 
-from cachetools import TTLCache
+from cachetools import TTLCache  # type: ignore
 from music21 import chord, key, roman
 
 logger = logging.getLogger(__name__)
