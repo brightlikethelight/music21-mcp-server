@@ -341,6 +341,9 @@ def rate_limit(
     """
 
     def decorator(func):
+        import functools
+        
+        @functools.wraps(func)
         async def wrapper(request: Request, *args, **kwargs):
             # Get identifier
             if key_func:

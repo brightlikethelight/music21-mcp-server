@@ -121,6 +121,31 @@ class ParallelProcessor:
             batch_size=8,  # Optimized for chord analysis
         )
 
+    async def map_reduce(
+        self,
+        items: list[T],
+        map_func: Callable[[T], R],
+        reduce_func: Callable[[list[R]], Any],
+        batch_size: int = 10,
+    ) -> Any:
+        """
+        Perform map-reduce operation on items
+
+        Args:
+            items: List of items to process
+            map_func: Function to apply to each item (map phase)
+            reduce_func: Function to combine all results (reduce phase)
+            batch_size: Number of items to process per batch
+
+        Returns:
+            Result of reduce operation
+        """
+        # Map phase: process all items in parallel
+        mapped_results = await self.process_batch(items, map_func, batch_size)
+        
+        # Reduce phase: combine all results
+        return reduce_func(mapped_results)
+
     def __del__(self) -> None:
         """Clean up executor on deletion"""
         if hasattr(self, "_executor"):

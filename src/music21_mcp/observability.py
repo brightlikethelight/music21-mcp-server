@@ -226,6 +226,25 @@ class MetricsCollector:
             self._timers[key].append(duration)
             self._record_metadata(key, MetricType.TIMER, labels)
 
+    def record_metric(self, name: str, value: float, **labels: Any) -> None:
+        """Record a general metric (creates a gauge)"""
+        with self._lock:
+            key = self._build_metric_key(name, labels)
+            self._gauges[key] = value
+            self._record_metadata(key, MetricType.GAUGE, labels)
+
+    def record_error(self, operation: str, error: Exception, **labels: Any) -> None:
+        """Record an error occurrence"""
+        with self._lock:
+            error_labels = {
+                "operation": operation,
+                "error_type": type(error).__name__,
+                **labels
+            }
+            key = self._build_metric_key("errors", error_labels)
+            self._counters[key] += 1
+            self._record_metadata(key, MetricType.COUNTER, error_labels)
+
     def get_metrics(self) -> dict[str, Any]:
         """Get all collected metrics"""
         with self._lock:
@@ -493,3 +512,13 @@ def monitor_performance(
         return sync_wrapper
 
     return decorator
+
+
+def record_metric(name: str, value: float, **labels: Any) -> None:
+    """Record a metric value globally"""
+    _metrics_collector.record_metric(name, value, **labels)
+
+
+def record_error(operation: str, error: Exception, **labels: Any) -> None:
+    """Record an error globally"""
+    _metrics_collector.record_error(operation, error, **labels)

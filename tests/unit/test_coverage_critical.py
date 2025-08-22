@@ -425,45 +425,46 @@ class TestAsyncAndParallel:
     async def test_async_optimization(self):
         """Test async optimization components"""
         from music21_mcp.async_optimization import (
-            AsyncAnalysisExecutor,
-            AsyncBatchProcessor,
-            OptimizedAsyncRomanNumeralAnalyzer,
-            build_roman_numeral_lookup,
+            AsyncOptimizer,
+            AnalysisTask,
+            get_async_optimizer,
         )
 
-        # Test lookup table building
-        lookup = build_roman_numeral_lookup()
+        # Test async optimizer creation
+        optimizer = AsyncOptimizer()
+        
+        # Test lookup table building (internal method)
+        lookup = optimizer._build_roman_lookup_table()
         assert len(lookup) > 0
 
-        # Test async executor
-        executor = AsyncAnalysisExecutor(max_workers=2)
-
-        # Test async execution
-        async def test_func():
-            return "result"
-
-        result = await executor.execute(test_func())
-        assert result == "result"
-
-        # Test batch processor
-        processor = AsyncBatchProcessor(max_concurrent=2)
-
-        async def process_item(item):
-            return item * 2
-
-        results = await processor.process_batch([1, 2, 3], process_item)
-        assert results == [2, 4, 6]
-
-        # Test optimized analyzer
-        analyzer = OptimizedAsyncRomanNumeralAnalyzer()
+        # Test analysis task creation
         test_chord = chord.Chord(["C4", "E4", "G4"])
         test_key = key.Key("C")
+        
+        # Create a future for the task
+        task_future = asyncio.Future()
+        
+        task = AnalysisTask(
+            id="test_1",
+            chord_obj=test_chord,
+            key_obj=test_key,
+            future=task_future,
+            priority=0
+        )
+        assert task.id == "test_1"
+        assert task.chord_obj == test_chord
+        assert task.key_obj == test_key
 
-        result = await analyzer.analyze_fast(test_chord, test_key)
-        assert result is not None
+        # Test async roman numeral analysis
+        roman_result = await optimizer.get_cached_roman_numeral(test_chord, test_key)
+        assert roman_result is not None
 
-        # Shutdown
-        await executor.shutdown()
+        # Test global optimizer
+        global_optimizer = await get_async_optimizer()
+        assert global_optimizer is not None
+
+        # Cleanup
+        await optimizer.stop()
 
     def test_parallel_processor(self):
         """Test parallel processing"""
@@ -538,7 +539,8 @@ class TestObservability:
 
         metrics = collector.get_metrics()
         assert "counters" in metrics
-        assert "errors" in metrics
+        # Errors are stored as counters with error_type labels
+        assert any("errors{" in key for key in metrics["counters"].keys())
 
         # Test global functions
         record_metric("global_metric", 50)
@@ -601,7 +603,7 @@ class TestPerformanceCache:
         stats = cache.get_cache_stats()
         assert "hits" in stats
         assert "misses" in stats
-        assert "hit_rate" in stats
+        assert "hit_rate_percent" in stats
 
         # Clear caches
         cache.clear_all_caches()

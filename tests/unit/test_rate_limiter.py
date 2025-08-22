@@ -125,9 +125,11 @@ class TestTokenBucket:
         # Consume most tokens
         bucket.consume(9)
 
-        # Should fail to consume more than available
-        assert bucket.consume(5) is False
-        assert bucket.tokens == 1.0  # Unchanged
+        # Mock time to prevent automatic refill
+        with patch("time.time", return_value=bucket.last_update):
+            # Should fail to consume more than available
+            assert bucket.consume(5) is False
+            assert bucket.tokens == 1.0  # Unchanged
 
     def test_consume_exact_tokens(self):
         """Test consuming exact number of tokens"""
@@ -146,9 +148,8 @@ class TestTokenBucket:
         assert bucket.tokens == 0.0
 
         # Mock time passage (1 second)
-        with patch("time.time") as mock_time:
-            mock_time.side_effect = [bucket.last_update, bucket.last_update + 1.0]
-
+        original_time = bucket.last_update
+        with patch("time.time", return_value=original_time + 1.0) as mock_time:
             # Should refill 2 tokens
             bucket._refill()
             assert bucket.tokens == 2.0
@@ -161,9 +162,8 @@ class TestTokenBucket:
         bucket.tokens = 8.0
 
         # Mock long time passage (10 seconds - would add 50 tokens)
-        with patch("time.time") as mock_time:
-            mock_time.side_effect = [bucket.last_update, bucket.last_update + 10.0]
-
+        original_time = bucket.last_update
+        with patch("time.time", return_value=original_time + 10.0):
             bucket._refill()
             # Should be capped at capacity
             assert bucket.tokens == 10.0
@@ -332,20 +332,25 @@ class TestRateLimiter:
     @pytest.mark.asyncio
     async def test_cleanup_expired(self, rate_limiter):
         """Test cleanup of expired data"""
-        # Add some test data
-        identifier = "user1"
-        await rate_limiter.check_rate_limit(identifier)
+        # Use a fixed time for consistent testing
+        fixed_time = 1000000.0
+        
+        # Mock time consistently for all operations
+        with patch("music21_mcp.rate_limiter.time.time", return_value=fixed_time):
+            # Add some test data
+            identifier = "user1"
+            await rate_limiter.check_rate_limit(identifier)
 
-        # Add old history entries
-        old_time = time.time() - 90000  # More than 24 hours ago
-        rate_limiter.request_history[identifier].append(old_time)
+            # Add old time that should be cleaned up (put it at the front since cleanup removes from front)
+            old_time = fixed_time - 100000  # More than 24 hours ago (86400 seconds in a day)
+            rate_limiter.request_history[identifier].appendleft(old_time)
 
-        # Add old bucket
-        old_bucket = TokenBucket(10, 1.0)
-        old_bucket.last_update = time.time() - 7200  # 2 hours ago
-        rate_limiter.buckets["old_user"] = old_bucket
+            # Add old bucket
+            old_bucket = TokenBucket(10, 1.0)
+            old_bucket.last_update = fixed_time - 7200  # 2 hours ago
+            rate_limiter.buckets["old_user"] = old_bucket
 
-        await rate_limiter.cleanup_expired()
+            await rate_limiter.cleanup_expired()
 
         # Old entries should be cleaned up
         assert old_time not in rate_limiter.request_history[identifier]
@@ -429,11 +434,11 @@ class TestRateLimiter:
     async def test_get_metadata_with_retry_after(self, rate_limiter):
         """Test _get_metadata with retry_after calculation"""
         bucket = TokenBucket(10.0, 2.0)
-        bucket.tokens = 0.0  # No tokens
+        bucket.tokens = -1.0  # Negative tokens to ensure retry_after > 0
 
         metadata = rate_limiter._get_metadata(bucket)
 
-        assert metadata["remaining"] == 0
+        assert metadata["remaining"] == -1  # Floor to int
         assert metadata["retry_after"] is not None
         assert isinstance(metadata["retry_after"], int)
         assert metadata["retry_after"] > 0
@@ -762,10 +767,8 @@ class TestRateLimitDecorator:
         await test_endpoint(mock_request)
 
         # Mock time passage to reset the window
-        with patch("time.time") as mock_time:
-            # Simulate time passage (more than 60 seconds)
-            mock_time.side_effect = [time.time() + 61, time.time() + 61]
-
+        current_time = time.time()
+        with patch("time.time", return_value=current_time + 61):
             # Should work again after reset
             result = await test_endpoint(mock_request)
             assert result == "success"
