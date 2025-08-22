@@ -617,6 +617,7 @@ def test_final_coverage_check():
     # Import all main modules to ensure they're covered
     import music21_mcp
     import music21_mcp.adapters
+
     # import music21_mcp.server  # Module doesn't exist
     import music21_mcp.server_minimal
     import music21_mcp.services
