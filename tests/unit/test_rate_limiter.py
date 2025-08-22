@@ -494,7 +494,8 @@ class TestRateLimitMiddleware:
         """Test middleware initialization"""
         assert isinstance(middleware.config, RateLimitConfig)
         assert isinstance(middleware.limiter, RateLimiter)
-        assert middleware.limiter._cleanup_task is not None
+        # Cleanup task should be None initially (started on first use)
+        assert middleware.limiter._cleanup_task is None
 
     @pytest.mark.asyncio
     async def test_middleware_initialization_default_config(self):
@@ -856,7 +857,11 @@ class TestIntegration:
         # Clean up any lingering tasks
         import asyncio
 
-        tasks = [t for t in asyncio.all_tasks() if not t.done()]
-        for task in tasks:
-            if "cleanup" in str(task):
-                task.cancel()
+        try:
+            tasks = [t for t in asyncio.all_tasks() if not t.done()]
+            for task in tasks:
+                if "cleanup" in str(task):
+                    task.cancel()
+        except RuntimeError:
+            # No running event loop, nothing to clean up
+            pass

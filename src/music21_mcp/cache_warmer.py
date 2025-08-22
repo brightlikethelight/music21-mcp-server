@@ -29,6 +29,30 @@ class CacheWarmer:
             "time_taken_ms": 0.0,
         }
 
+    def warm_common_progressions(self) -> None:
+        """Warm cache with common chord progressions (synchronous wrapper)"""
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self._warm_common_progressions())
+        except RuntimeError:
+            # No event loop, create a new one
+            asyncio.run(self._warm_common_progressions())
+
+    def warm_common_chords(self) -> None:
+        """Warm cache with common chords (synchronous wrapper)"""
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self._warm_standard_chords())
+        except RuntimeError:
+            # No event loop, create a new one
+            asyncio.run(self._warm_standard_chords())
+
+    def get_stats(self) -> dict[str, Any]:
+        """Get cache warming statistics"""
+        return self.stats.copy()
+
     async def warm_all_caches(self) -> dict[str, Any]:
         """Warm all caches with common patterns"""
         start_time = time.time()

@@ -176,7 +176,13 @@ class RateLimiter:
     def start_cleanup_task(self):
         """Start background cleanup task"""
         if self._cleanup_task is None:
-            self._cleanup_task = asyncio.create_task(self._cleanup_loop())
+            try:
+                # Only start task if we have a running event loop
+                loop = asyncio.get_running_loop()
+                self._cleanup_task = asyncio.create_task(self._cleanup_loop())
+            except RuntimeError:
+                # No running event loop, task will be started later
+                pass
 
     async def _cleanup_loop(self):
         """Background task to clean up expired data"""
@@ -246,10 +252,14 @@ class RateLimitMiddleware:
     def __init__(self, config: RateLimitConfig | None = None):
         self.config = config or RateLimitConfig()
         self.limiter = RateLimiter(self.config)
-        self.limiter.start_cleanup_task()
+        # Don't start cleanup task immediately - it will be started on first use
 
     async def __call__(self, request: Request, call_next: Callable) -> Response:
         """Process request with rate limiting"""
+        # Start cleanup task on first use if not already started
+        if self.limiter._cleanup_task is None:
+            self.limiter.start_cleanup_task()
+            
         # Get client identifier (IP address or API key)
         client_ip = request.client.host if request.client else "unknown"
         api_key = request.headers.get("X-API-Key")

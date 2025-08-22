@@ -393,3 +393,40 @@ class ResourceManager:
             "stats": stats,
             "timestamp": time.time(),
         }
+    
+    def get_memory_usage(self) -> float:
+        """Get current memory usage in MB"""
+        return self.scores._get_memory_usage_mb()
+    
+    def check_memory(self, additional_mb: int) -> bool:
+        """Check if we can allocate additional memory"""
+        current_usage = self.get_memory_usage()
+        return (current_usage + additional_mb) <= self.max_memory_mb
+    
+    def cleanup(self) -> dict[str, Any]:
+        """Force cleanup and return statistics"""
+        memory_before = self.get_memory_usage()
+        cleanup_stats = self.scores.cleanup()
+        memory_after = self.get_memory_usage()
+        
+        return {
+            "memory_before": memory_before,
+            "memory_after": memory_after,
+            "memory_freed": memory_before - memory_after,
+            **cleanup_stats
+        }
+    
+    def _monitor_resources(self) -> None:
+        """Monitor resource usage and log warnings if needed"""
+        stats = self.get_system_stats()
+        storage = stats["storage"]
+        
+        if storage["memory_utilization_percent"] > 75:
+            logger.warning(
+                f"High memory usage: {storage['memory_utilization_percent']:.1f}%"
+            )
+        
+        if storage["total_scores"] > self.max_scores * 0.8:
+            logger.warning(
+                f"High score count: {storage['total_scores']}/{self.max_scores}"
+            )

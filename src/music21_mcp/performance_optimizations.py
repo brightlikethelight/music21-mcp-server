@@ -588,6 +588,58 @@ class PerformanceOptimizer:
         except Exception as e:
             logger.error(f"Error during PerformanceOptimizer shutdown: {e}")
 
+    def analyze_chord_with_cache(self, chord_obj: chord.Chord) -> dict[str, Any]:
+        """Analyze chord with caching for performance"""
+        chord_key = self.chord_hash(chord_obj)
+        
+        # Check cache first
+        if chord_key in self.chord_analysis_cache:
+            return self.chord_analysis_cache[chord_key]
+        
+        # Perform analysis
+        try:
+            analysis = {
+                "root": chord_obj.root().name if chord_obj.root() else None,
+                "bass": chord_obj.bass().name if chord_obj.bass() else None,
+                "pitches": [p.name for p in chord_obj.pitches],
+                "quality": chord_obj.quality if hasattr(chord_obj, 'quality') else None,
+                "inversion": chord_obj.inversion() if hasattr(chord_obj, 'inversion') else None,
+            }
+            
+            # Cache the result
+            self.chord_analysis_cache[chord_key] = analysis
+            return analysis
+            
+        except Exception as e:
+            logger.warning(f"Chord analysis failed for {chord_obj}: {e}")
+            return {"error": str(e)}
+
+    def analyze_key_with_cache(self, score_obj: Any) -> dict[str, Any]:
+        """Analyze key with caching for performance"""
+        # Create a simple hash for the score
+        score_hash = hashlib.md5(str(score_obj).encode()).hexdigest()[:16]
+        
+        # Check cache first
+        if score_hash in self.key_cache:
+            return self.key_cache[score_hash]
+        
+        # Perform key analysis
+        try:
+            analyzed_key = score_obj.analyze('key')
+            analysis = {
+                "key": analyzed_key.name if analyzed_key else None,
+                "mode": analyzed_key.mode if analyzed_key else None,
+                "tonic": analyzed_key.tonic.name if analyzed_key and analyzed_key.tonic else None,
+            }
+            
+            # Cache the result
+            self.key_cache[score_hash] = analysis
+            return analysis
+            
+        except Exception as e:
+            logger.warning(f"Key analysis failed for score: {e}")
+            return {"error": str(e)}
+
     def __del__(self):
         """Ensure proper cleanup when PerformanceOptimizer is destroyed"""
         import contextlib
