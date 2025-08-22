@@ -334,13 +334,13 @@ def cached_analysis(cache_attr: str):
             cache_key = f"{func.__name__}:{str(args)}:{str(sorted(kwargs.items()))}"
 
             if not hasattr(wrapper, "_cache"):
-                wrapper._cache = {}
+                wrapper._cache = {}  # type: ignore[attr-defined]
 
-            if cache_key in wrapper._cache:
-                return wrapper._cache[cache_key]
+            if cache_key in wrapper._cache:  # type: ignore[attr-defined]
+                return wrapper._cache[cache_key]  # type: ignore[attr-defined]
 
             result = func(*args, **kwargs)
-            wrapper._cache[cache_key] = result
+            wrapper._cache[cache_key] = result  # type: ignore[attr-defined]
 
             return result
 
