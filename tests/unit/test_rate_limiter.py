@@ -334,7 +334,7 @@ class TestRateLimiter:
         """Test cleanup of expired data"""
         # Use a fixed time for consistent testing
         fixed_time = 1000000.0
-        
+
         # Mock time consistently for all operations
         with patch("music21_mcp.rate_limiter.time.time", return_value=fixed_time):
             # Add some test data
@@ -342,7 +342,9 @@ class TestRateLimiter:
             await rate_limiter.check_rate_limit(identifier)
 
             # Add old time that should be cleaned up (put it at the front since cleanup removes from front)
-            old_time = fixed_time - 100000  # More than 24 hours ago (86400 seconds in a day)
+            old_time = (
+                fixed_time - 100000
+            )  # More than 24 hours ago (86400 seconds in a day)
             rate_limiter.request_history[identifier].appendleft(old_time)
 
             # Add old bucket

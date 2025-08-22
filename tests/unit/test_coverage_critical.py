@@ -343,10 +343,14 @@ class TestPerformanceOptimizations:
         assert "cache_stats" in metrics["current_metrics"]
 
         # Test optimized tools
-        opt_chord_tool = OptimizedChordAnalysisTool(score_manager={}, optimizer=optimizer)
+        opt_chord_tool = OptimizedChordAnalysisTool(
+            score_manager={}, optimizer=optimizer
+        )
         assert hasattr(opt_chord_tool, "optimizer")
 
-        opt_harmony_tool = OptimizedHarmonyAnalysisTool(score_manager={}, optimizer=optimizer)
+        opt_harmony_tool = OptimizedHarmonyAnalysisTool(
+            score_manager={}, optimizer=optimizer
+        )
         assert hasattr(opt_harmony_tool, "optimizer")
 
         # Shutdown
@@ -355,8 +359,8 @@ class TestPerformanceOptimizations:
     def test_memory_pressure_monitor(self):
         """Test memory pressure monitoring"""
         from music21_mcp.memory_pressure_monitor import (
-            MemoryPressureMonitor,
             MemoryPressureLevel,
+            MemoryPressureMonitor,
             get_memory_monitor,
         )
 
@@ -372,7 +376,11 @@ class TestPerformanceOptimizations:
 
         stats = monitor.get_current_stats()
         if stats:
-            assert stats.level in [MemoryPressureLevel.NORMAL, MemoryPressureLevel.HIGH, MemoryPressureLevel.CRITICAL]
+            assert stats.level in [
+                MemoryPressureLevel.NORMAL,
+                MemoryPressureLevel.HIGH,
+                MemoryPressureLevel.CRITICAL,
+            ]
 
         monitor_stats = monitor.get_monitor_stats()
         assert "max_memory_mb" in monitor_stats
@@ -413,7 +421,7 @@ class TestPerformanceOptimizations:
         assert "keys_processed" in stats
         assert "progressions_cached" in stats
         assert "chords_cached" in stats
-        
+
         # Cleanup
         optimizer.shutdown()
 
@@ -425,14 +433,14 @@ class TestAsyncAndParallel:
     async def test_async_optimization(self):
         """Test async optimization components"""
         from music21_mcp.async_optimization import (
-            AsyncOptimizer,
             AnalysisTask,
+            AsyncOptimizer,
             get_async_optimizer,
         )
 
         # Test async optimizer creation
         optimizer = AsyncOptimizer()
-        
+
         # Test lookup table building (internal method)
         lookup = optimizer._build_roman_lookup_table()
         assert len(lookup) > 0
@@ -440,16 +448,16 @@ class TestAsyncAndParallel:
         # Test analysis task creation
         test_chord = chord.Chord(["C4", "E4", "G4"])
         test_key = key.Key("C")
-        
+
         # Create a future for the task
         task_future = asyncio.Future()
-        
+
         task = AnalysisTask(
             id="test_1",
             chord_obj=test_chord,
             key_obj=test_key,
             future=task_future,
-            priority=0
+            priority=0,
         )
         assert task.id == "test_1"
         assert task.chord_obj == test_chord
@@ -540,7 +548,7 @@ class TestObservability:
         metrics = collector.get_metrics()
         assert "counters" in metrics
         # Errors are stored as counters with error_type labels
-        assert any("errors{" in key for key in metrics["counters"].keys())
+        assert any("errors{" in key for key in metrics["counters"])
 
         # Test global functions
         record_metric("global_metric", 50)

@@ -277,7 +277,9 @@ class TestHealthChecker:
         assert result.name == "music21_functionality"
         # The test might result in either DEGRADED (slow) or UNHEALTHY (error) - accept both
         assert result.status in [HealthStatus.DEGRADED, HealthStatus.UNHEALTHY]
-        assert ("operations slow" in result.message) or ("operations failed" in result.message)
+        assert ("operations slow" in result.message) or (
+            "operations failed" in result.message
+        )
 
     @pytest.mark.asyncio
     async def test_check_music21_functionality_exception(self, health_checker):
@@ -475,7 +477,9 @@ class TestHealthChecker:
     async def test_check_performance_metrics_exception(self, health_checker):
         """Test performance metrics check with exception"""
         # Force an exception by setting invalid data and non-zero request count
-        health_checker.total_response_time_ms = "invalid"  # Make it break during calculation
+        health_checker.total_response_time_ms = (
+            "invalid"  # Make it break during calculation
+        )
         health_checker.request_count = 1  # This will trigger division that will fail
         result = await health_checker.check_performance_metrics()
 
