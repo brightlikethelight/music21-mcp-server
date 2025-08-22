@@ -329,11 +329,11 @@ class AsyncOptimizer:
         task_id = f"{cache_key}_{time.time()}"
         future: asyncio.Future[str] = asyncio.Future()
         task = AnalysisTask(
-            id=task_id, 
-            chord_obj=chord_obj, 
-            key_obj=key_obj, 
-            future=future, 
-            priority=priority
+            id=task_id,
+            chord_obj=chord_obj,
+            key_obj=key_obj,
+            future=future,
+            priority=priority,
         )
 
         await self.roman_analysis_queue.put(task)

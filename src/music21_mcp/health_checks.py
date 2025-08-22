@@ -451,7 +451,7 @@ class HealthChecker:
 
         # If any check failed with exception, not ready
         has_exceptions = any(isinstance(check, Exception) for check in checks)
-        
+
         ready = not has_exceptions and all(
             isinstance(check, HealthCheckResult)
             and check.status != HealthStatus.UNHEALTHY

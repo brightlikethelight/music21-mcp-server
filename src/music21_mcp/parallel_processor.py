@@ -142,7 +142,7 @@ class ParallelProcessor:
         """
         # Map phase: process all items in parallel
         mapped_results = await self.process_batch(items, map_func, batch_size)
-        
+
         # Reduce phase: combine all results
         return reduce_func(mapped_results)
 

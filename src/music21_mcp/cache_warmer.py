@@ -32,6 +32,7 @@ class CacheWarmer:
     def warm_common_progressions(self) -> None:
         """Warm cache with common chord progressions (synchronous wrapper)"""
         import asyncio
+
         try:
             loop = asyncio.get_event_loop()
             loop.run_until_complete(self._warm_common_progressions())
@@ -42,6 +43,7 @@ class CacheWarmer:
     def warm_common_chords(self) -> None:
         """Warm cache with common chords (synchronous wrapper)"""
         import asyncio
+
         try:
             loop = asyncio.get_event_loop()
             loop.run_until_complete(self._warm_standard_chords())

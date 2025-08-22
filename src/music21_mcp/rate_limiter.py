@@ -259,7 +259,7 @@ class RateLimitMiddleware:
         # Start cleanup task on first use if not already started
         if self.limiter._cleanup_task is None:
             self.limiter.start_cleanup_task()
-            
+
         # Get client identifier (IP address or API key)
         client_ip = request.client.host if request.client else "unknown"
         api_key = request.headers.get("X-API-Key")
@@ -342,7 +342,7 @@ def rate_limit(
 
     def decorator(func):
         import functools
-        
+
         @functools.wraps(func)
         async def wrapper(request: Request, *args, **kwargs):
             # Get identifier

@@ -219,7 +219,9 @@ class PerformanceCache:
             ),
         }
 
-    def cache_roman_numeral(self, chord_obj: Any, key_obj: Any, roman_numeral: str) -> None:
+    def cache_roman_numeral(
+        self, chord_obj: Any, key_obj: Any, roman_numeral: str
+    ) -> None:
         """Cache a Roman numeral analysis result"""
         cache_key = self._generate_chord_key(chord_obj, key_obj)
         self._roman_numeral_cache[cache_key] = roman_numeral
@@ -232,12 +234,14 @@ class PerformanceCache:
     def cache_key_analysis(self, score_obj: Any, key_obj: Any) -> None:
         """Cache a key analysis result"""
         import hashlib
+
         score_hash = hashlib.md5(str(score_obj).encode()).hexdigest()[:16]
         self._key_analysis_cache[score_hash] = key_obj
 
     def get_cached_key_analysis(self, score_obj: Any) -> Any:
         """Get cached key analysis if available"""
         import hashlib
+
         score_hash = hashlib.md5(str(score_obj).encode()).hexdigest()[:16]
         return self._key_analysis_cache.get(score_hash)
 
@@ -287,13 +291,13 @@ def clear_performance_cache():
 def cached_analysis(cache_attr: str):
     """
     Decorator to cache analysis results
-    
+
     Args:
         cache_attr: Name of the cache attribute on the instance
     """
-    from functools import wraps
     import inspect
-    
+    from functools import wraps
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -302,10 +306,12 @@ def cached_analysis(cache_attr: str):
                 # This is a method call - first arg is self
                 instance = args[0]
                 call_args = args[1:]
-                
+
                 # Generate cache key
-                cache_key = f"{func.__name__}:{str(call_args)}:{str(sorted(kwargs.items()))}"
-                
+                cache_key = (
+                    f"{func.__name__}:{str(call_args)}:{str(sorted(kwargs.items()))}"
+                )
+
                 # Get cache from instance or create simple dict cache
                 if hasattr(instance, cache_attr):
                     cache = getattr(instance, cache_attr)
@@ -313,31 +319,31 @@ def cached_analysis(cache_attr: str):
                     # Create a simple dict cache if attribute doesn't exist
                     cache = {}
                     setattr(instance, cache_attr, cache)
-                
+
                 # Check cache
                 if cache_key in cache:
                     return cache[cache_key]
-                
+
                 # Compute and cache
                 result = func(instance, *call_args, **kwargs)
                 cache[cache_key] = result
-                
+
                 return result
-            else:
-                # This is a regular function call
-                # Use a global cache stored on the function
-                cache_key = f"{func.__name__}:{str(args)}:{str(sorted(kwargs.items()))}"
-                
-                if not hasattr(wrapper, '_cache'):
-                    wrapper._cache = {}
-                
-                if cache_key in wrapper._cache:
-                    return wrapper._cache[cache_key]
-                
-                result = func(*args, **kwargs)
-                wrapper._cache[cache_key] = result
-                
-                return result
-        
+            # This is a regular function call
+            # Use a global cache stored on the function
+            cache_key = f"{func.__name__}:{str(args)}:{str(sorted(kwargs.items()))}"
+
+            if not hasattr(wrapper, "_cache"):
+                wrapper._cache = {}
+
+            if cache_key in wrapper._cache:
+                return wrapper._cache[cache_key]
+
+            result = func(*args, **kwargs)
+            wrapper._cache[cache_key] = result
+
+            return result
+
         return wrapper
+
     return decorator

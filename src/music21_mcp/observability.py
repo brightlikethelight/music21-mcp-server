@@ -239,7 +239,7 @@ class MetricsCollector:
             error_labels = {
                 "operation": operation,
                 "error_type": type(error).__name__,
-                **labels
+                **labels,
             }
             key = self._build_metric_key("errors", error_labels)
             self._counters[key] += 1
