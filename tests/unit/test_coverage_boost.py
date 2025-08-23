@@ -579,7 +579,7 @@ class TestExtraCoverage:
 
     def test_retry_logic_edge_cases(self):
         """Test edge cases in retry logic"""
-        from music21_mcp.retry_logic import CircuitBreaker, RetryPolicy, CircuitState
+        from music21_mcp.retry_logic import CircuitBreaker, CircuitState, RetryPolicy
 
         # Test RetryPolicy with edge cases
         policy = RetryPolicy(max_attempts=0)
