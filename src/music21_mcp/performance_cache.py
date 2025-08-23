@@ -235,14 +235,18 @@ class PerformanceCache:
         """Cache a key analysis result"""
         import hashlib
 
-        score_hash = hashlib.md5(str(score_obj).encode(), usedforsecurity=False).hexdigest()[:16]
+        score_hash = hashlib.md5(
+            str(score_obj).encode(), usedforsecurity=False
+        ).hexdigest()[:16]
         self._key_analysis_cache[score_hash] = key_obj
 
     def get_cached_key_analysis(self, score_obj: Any) -> Any:
         """Get cached key analysis if available"""
         import hashlib
 
-        score_hash = hashlib.md5(str(score_obj).encode(), usedforsecurity=False).hexdigest()[:16]
+        score_hash = hashlib.md5(
+            str(score_obj).encode(), usedforsecurity=False
+        ).hexdigest()[:16]
         return self._key_analysis_cache.get(score_hash)
 
     def cache_chord_analysis(self, chord_obj: Any, analysis: dict[str, Any]) -> None:
