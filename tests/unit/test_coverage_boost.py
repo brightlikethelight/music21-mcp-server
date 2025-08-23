@@ -623,7 +623,11 @@ class TestExtraCoverage:
         # Test more imports to increase import coverage
         from music21_mcp.health_checks import HealthChecker, HealthStatus
         from music21_mcp.parallel_processor import ParallelProcessor
-        from music21_mcp.rate_limiter import TokenBucket, RateLimitConfig, RateLimitStrategy
+        from music21_mcp.rate_limiter import (
+            RateLimitConfig,
+            RateLimitStrategy,
+            TokenBucket,
+        )
         from music21_mcp.resource_manager import ResourceExhaustedError, ScoreStorage
         from music21_mcp.retry_logic import (
             NonRetryableError,
@@ -698,7 +702,7 @@ class TestExtraCoverage:
         custom_config = RateLimitConfig(
             requests_per_minute=100,
             burst_size=20,
-            strategy=RateLimitStrategy.TOKEN_BUCKET
+            strategy=RateLimitStrategy.TOKEN_BUCKET,
         )
         assert custom_config.requests_per_minute == 100
         assert custom_config.burst_size == 20
@@ -720,7 +724,7 @@ class TestExtraCoverage:
             status=HealthStatus.HEALTHY,
             message="All good",
             details={"cpu": 50.0},
-            duration_ms=123.5
+            duration_ms=123.5,
         )
 
         assert result.name == "test_check"
@@ -740,10 +744,7 @@ class TestExtraCoverage:
         assert "timestamp" in result_dict
 
         # Test with defaults
-        minimal_result = HealthCheckResult(
-            name="minimal",
-            status=HealthStatus.DEGRADED
-        )
+        minimal_result = HealthCheckResult(name="minimal", status=HealthStatus.DEGRADED)
         assert minimal_result.message == ""
         assert minimal_result.details == {}
         assert minimal_result.duration_ms is None
@@ -788,7 +789,11 @@ class TestExtraCoverage:
     @pytest.mark.asyncio
     async def test_convenience_health_functions(self):
         """Test convenience health check functions"""
-        from music21_mcp.health_checks import health_check, liveness_check, readiness_check
+        from music21_mcp.health_checks import (
+            health_check,
+            liveness_check,
+            readiness_check,
+        )
 
         # Test liveness check - should be simple and fast
         liveness_result = await liveness_check()
