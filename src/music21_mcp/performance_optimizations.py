@@ -619,7 +619,9 @@ class PerformanceOptimizer:
     def analyze_key_with_cache(self, score_obj: Any) -> dict[str, Any]:
         """Analyze key with caching for performance"""
         # Create a simple hash for the score
-        score_hash = hashlib.md5(str(score_obj).encode()).hexdigest()[:16]
+        score_hash = hashlib.md5(
+            str(score_obj).encode(), usedforsecurity=False
+        ).hexdigest()[:16]
 
         # Check cache first
         if score_hash in self.key_cache:
