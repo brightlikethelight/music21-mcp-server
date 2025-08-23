@@ -984,8 +984,11 @@ class TestIntegration:
     async def test_retry_with_circuit_breaker_integration(self):
         """Test retry decorator with circuit breaker integration"""
         circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=0.1)
-        policy = RetryPolicy(max_attempts=3, base_delay=0.01, 
-                           retryable_exceptions=(ConnectionError, RuntimeError))
+        policy = RetryPolicy(
+            max_attempts=3,
+            base_delay=0.01,
+            retryable_exceptions=(ConnectionError, RuntimeError),
+        )
 
         call_count = 0
 
