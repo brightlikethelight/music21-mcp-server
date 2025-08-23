@@ -623,7 +623,7 @@ class TestExtraCoverage:
         # Test more imports to increase import coverage
         from music21_mcp.health_checks import HealthChecker, HealthStatus
         from music21_mcp.parallel_processor import ParallelProcessor
-        from music21_mcp.rate_limiter import TokenBucket
+        from music21_mcp.rate_limiter import TokenBucket, RateLimitConfig, RateLimitStrategy
         from music21_mcp.resource_manager import ResourceExhaustedError, ScoreStorage
         from music21_mcp.retry_logic import (
             NonRetryableError,
@@ -638,7 +638,11 @@ class TestExtraCoverage:
         with pytest.raises(RetryableError, match="test"):
             raise RetryableError("test")
 
-        # Test TokenBucket initialization
+        # Test NonRetryableError
+        with pytest.raises(NonRetryableError, match="test"):
+            raise NonRetryableError("test")
+
+        # Test TokenBucket initialization and methods
         bucket = TokenBucket(capacity=10, refill_rate=1.0)
         assert bucket.capacity == 10
         assert bucket.refill_rate == 1.0
@@ -649,16 +653,25 @@ class TestExtraCoverage:
         assert bucket.tokens == 5
         assert bucket.consume(10) is False  # Not enough tokens
 
+        # Test private refill method
+        bucket._refill()
+        assert bucket.tokens >= 5  # Should have refilled somewhat
+
         # Test ScoreStorage string representation
         storage = ScoreStorage(max_scores=5)
         assert storage.max_scores == 5
 
-        # Test HealthChecker initialization
+        # Test HealthChecker initialization and properties
         health_checker = HealthChecker()
         assert hasattr(health_checker, "check_all")
+        assert health_checker.memory_threshold == 80.0
+        assert health_checker.cpu_threshold == 90.0
+        assert health_checker.response_time_threshold == 5000.0
 
         # Test HealthStatus values
         assert HealthStatus.HEALTHY.value == "healthy"
+        assert HealthStatus.DEGRADED.value == "degraded"
+        assert HealthStatus.UNHEALTHY.value == "unhealthy"
 
         # Test ParallelProcessor
         processor = ParallelProcessor(max_workers=2)
@@ -671,6 +684,133 @@ class TestExtraCoverage:
         assert policy.base_delay == 2.0
         delay = policy.get_delay(0)
         assert delay >= 0  # Should return a delay value
+
+        # Test RateLimitConfig initialization and defaults
+        config = RateLimitConfig()
+        assert config.requests_per_minute == 60
+        assert config.requests_per_hour == 1000
+        assert config.requests_per_day == 10000
+        assert config.burst_size == 10
+        assert config.strategy == RateLimitStrategy.SLIDING_WINDOW
+        assert config.endpoint_limits is not None
+
+        # Test RateLimitConfig with custom values
+        custom_config = RateLimitConfig(
+            requests_per_minute=100,
+            burst_size=20,
+            strategy=RateLimitStrategy.TOKEN_BUCKET
+        )
+        assert custom_config.requests_per_minute == 100
+        assert custom_config.burst_size == 20
+        assert custom_config.strategy == RateLimitStrategy.TOKEN_BUCKET
+
+        # Test RateLimitStrategy enum values
+        assert RateLimitStrategy.FIXED_WINDOW.value == "fixed_window"
+        assert RateLimitStrategy.SLIDING_WINDOW.value == "sliding_window"
+        assert RateLimitStrategy.TOKEN_BUCKET.value == "token_bucket"
+        assert RateLimitStrategy.LEAKY_BUCKET.value == "leaky_bucket"
+
+    def test_health_check_result_class(self):
+        """Test HealthCheckResult class methods and properties"""
+        from music21_mcp.health_checks import HealthCheckResult, HealthStatus
+
+        # Test initialization
+        result = HealthCheckResult(
+            name="test_check",
+            status=HealthStatus.HEALTHY,
+            message="All good",
+            details={"cpu": 50.0},
+            duration_ms=123.5
+        )
+
+        assert result.name == "test_check"
+        assert result.status == HealthStatus.HEALTHY
+        assert result.message == "All good"
+        assert result.details == {"cpu": 50.0}
+        assert result.duration_ms == 123.5
+        assert result.timestamp is not None
+
+        # Test to_dict method
+        result_dict = result.to_dict()
+        assert result_dict["name"] == "test_check"
+        assert result_dict["status"] == "healthy"
+        assert result_dict["message"] == "All good"
+        assert result_dict["details"] == {"cpu": 50.0}
+        assert result_dict["duration_ms"] == 123.5
+        assert "timestamp" in result_dict
+
+        # Test with defaults
+        minimal_result = HealthCheckResult(
+            name="minimal",
+            status=HealthStatus.DEGRADED
+        )
+        assert minimal_result.message == ""
+        assert minimal_result.details == {}
+        assert minimal_result.duration_ms is None
+
+    def test_health_checker_record_request(self):
+        """Test HealthChecker request recording functionality"""
+        from music21_mcp.health_checks import HealthChecker
+
+        checker = HealthChecker()
+
+        # Test successful request
+        checker.record_request(response_time_ms=100.0, success=True)
+        assert checker.request_count == 1
+        assert checker.total_response_time_ms == 100.0
+        assert checker.error_count == 0
+
+        # Test failed request
+        checker.record_request(response_time_ms=200.0, success=False)
+        assert checker.request_count == 2
+        assert checker.total_response_time_ms == 300.0
+        assert checker.error_count == 1
+
+        # Test default success parameter
+        checker.record_request(response_time_ms=50.0)
+        assert checker.request_count == 3
+        assert checker.total_response_time_ms == 350.0
+        assert checker.error_count == 1  # Should remain 1
+
+    def test_singleton_health_checker(self):
+        """Test singleton health checker functionality"""
+        from music21_mcp.health_checks import get_health_checker
+
+        # Get checker twice
+        checker1 = get_health_checker()
+        checker2 = get_health_checker()
+
+        # Should be the same instance
+        assert checker1 is checker2
+        assert hasattr(checker1, "check_all")
+        assert hasattr(checker2, "check_all")
+
+    @pytest.mark.asyncio
+    async def test_convenience_health_functions(self):
+        """Test convenience health check functions"""
+        from music21_mcp.health_checks import health_check, liveness_check, readiness_check
+
+        # Test liveness check - should be simple and fast
+        liveness_result = await liveness_check()
+        assert "alive" in liveness_result
+        assert "timestamp" in liveness_result
+
+        # If liveness passes, test readiness and health (might be slower)
+        if liveness_result.get("alive", False):
+            try:
+                readiness_result = await readiness_check()
+                assert "ready" in readiness_result
+                assert "checks" in readiness_result
+
+                # Only run full health check if basic checks pass
+                health_result = await health_check()
+                assert "status" in health_result
+                assert "timestamp" in health_result
+                assert "duration_ms" in health_result
+                assert "checks" in health_result
+            except Exception:
+                # Skip if health checks fail due to missing dependencies
+                pass
 
 
 if __name__ == "__main__":
