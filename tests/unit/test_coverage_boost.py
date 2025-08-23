@@ -619,21 +619,58 @@ class TestExtraCoverage:
 
     def test_additional_coverage_boost(self):
         """Additional test to push coverage above 76%"""
+
         # Test more imports to increase import coverage
-        from music21_mcp.resource_manager import ResourceExhaustedError
-        from music21_mcp.retry_logic import NonRetryableError, RetryableError
-
-        # Test exceptions exist
-        assert ResourceExhaustedError.__name__ == "ResourceExhaustedError"
-        assert RetryableError.__name__ == "RetryableError"
-        assert NonRetryableError.__name__ == "NonRetryableError"
-
-        # Test simple functionality
+        from music21_mcp.health_checks import HealthChecker, HealthStatus
         from music21_mcp.parallel_processor import ParallelProcessor
+        from music21_mcp.rate_limiter import TokenBucket
+        from music21_mcp.resource_manager import ResourceExhaustedError, ScoreStorage
+        from music21_mcp.retry_logic import (
+            NonRetryableError,
+            RetryableError,
+            RetryPolicy,
+        )
 
-        processor = ParallelProcessor()
+        # Test exceptions exist and can be raised
+        with pytest.raises(ResourceExhaustedError, match="test"):
+            raise ResourceExhaustedError("test")
+
+        with pytest.raises(RetryableError, match="test"):
+            raise RetryableError("test")
+
+        # Test TokenBucket initialization
+        bucket = TokenBucket(capacity=10, refill_rate=1.0)
+        assert bucket.capacity == 10
+        assert bucket.refill_rate == 1.0
+        assert bucket.tokens == 10
+
+        # Test consume tokens
+        assert bucket.consume(5) is True
+        assert bucket.tokens == 5
+        assert bucket.consume(10) is False  # Not enough tokens
+
+        # Test ScoreStorage string representation
+        storage = ScoreStorage(max_scores=5)
+        assert storage.max_scores == 5
+
+        # Test HealthChecker initialization
+        health_checker = HealthChecker()
+        assert hasattr(health_checker, "check_all")
+
+        # Test HealthStatus values
+        assert HealthStatus.HEALTHY.value == "healthy"
+
+        # Test ParallelProcessor
+        processor = ParallelProcessor(max_workers=2)
+        assert processor.max_workers == 2
         assert hasattr(processor, "_executor")
-        assert hasattr(processor, "max_workers")
+
+        # Test RetryPolicy with different parameters
+        policy = RetryPolicy(max_attempts=5, base_delay=2.0)
+        assert policy.max_attempts == 5
+        assert policy.base_delay == 2.0
+        delay = policy.get_delay(0)
+        assert delay >= 0  # Should return a delay value
 
 
 if __name__ == "__main__":
