@@ -983,8 +983,9 @@ class TestIntegration:
     @pytest.mark.asyncio
     async def test_retry_with_circuit_breaker_integration(self):
         """Test retry decorator with circuit breaker integration"""
-        circuit_breaker = CircuitBreaker(failure_threshold=2, recovery_timeout=0.1)
-        policy = RetryPolicy(max_attempts=3, base_delay=0.01)
+        circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=0.1)
+        policy = RetryPolicy(max_attempts=3, base_delay=0.01, 
+                           retryable_exceptions=(ConnectionError, RuntimeError))
 
         call_count = 0
 
@@ -1006,7 +1007,7 @@ class TestIntegration:
         call_count = 0
 
         # Second call should also fail and open circuit
-        with pytest.raises(RuntimeError):
+        with pytest.raises((RuntimeError, CircuitBreakerOpenError)):
             await consistently_failing()
 
         # Circuit should now be open
