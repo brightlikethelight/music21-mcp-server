@@ -79,7 +79,7 @@ class Music21AsyncExecutor:
             asyncio.TimeoutError: If operation exceeds timeout
             Any exception raised by the function
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         start_time = time.time()
         operation_timeout = timeout or DEFAULT_TIMEOUT_SECONDS
 

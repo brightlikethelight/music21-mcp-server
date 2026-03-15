@@ -14,6 +14,7 @@ import asyncio
 import hashlib
 import logging
 import os
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, wraps
@@ -192,6 +193,7 @@ class PerformanceOptimizer:
         self.chord_analysis_cache: TTLCache[str, Any] = TTLCache(
             maxsize=500, ttl=cache_ttl
         )
+        self._cache_lock = threading.Lock()
 
         # Thread pool for parallel processing
         self.executor = ThreadPoolExecutor(max_workers=4)
@@ -274,24 +276,28 @@ class PerformanceOptimizer:
         # Generate cache key
         cache_key = f"{self.chord_hash(chord_obj)}:{key_obj.tonic.name}:{key_obj.mode}"
 
-        # Check cache first
-        if cache_key in self.roman_cache:
-            cache_hit = True
-            result = self.roman_cache[cache_key]
-            logger.debug(f"Roman numeral cache hit: {cache_key}")
-        else:
+        # Check cache first (thread-safe)
+        with self._cache_lock:
+            if cache_key in self.roman_cache:
+                cache_hit = True
+                result = self.roman_cache[cache_key]
+                logger.debug(f"Roman numeral cache hit: {cache_key}")
+
+        if not cache_hit:
             # Try fast lookup first
             result = self._fast_roman_lookup(chord_obj, key_obj)
             if result:
                 fast_lookup = True
-                self.roman_cache[cache_key] = result
+                with self._cache_lock:
+                    self.roman_cache[cache_key] = result
             else:
                 # Fall back to music21 (expensive)
                 fallback = True
                 try:
                     rn = roman.romanNumeralFromChord(chord_obj, key_obj)
                     result = str(rn.romanNumeral)
-                    self.roman_cache[cache_key] = result
+                    with self._cache_lock:
+                        self.roman_cache[cache_key] = result
                     logger.debug(f"Computed Roman numeral: {result} for {cache_key}")
                 except Exception as e:
                     logger.warning(f"Failed to compute Roman numeral: {e}")
@@ -389,7 +395,7 @@ class PerformanceOptimizer:
             batch_idx: int, batch: list[chord.Chord]
         ) -> list[dict[str, Any]]:
             """Process a batch of chords in parallel with timeout"""
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             batch_start = time.time()
 
             try:
@@ -598,9 +604,10 @@ class PerformanceOptimizer:
         """Analyze chord with caching for performance"""
         chord_key = self.chord_hash(chord_obj)
 
-        # Check cache first
-        if chord_key in self.chord_analysis_cache:
-            return self.chord_analysis_cache[chord_key]
+        # Check cache first (thread-safe)
+        with self._cache_lock:
+            if chord_key in self.chord_analysis_cache:
+                return self.chord_analysis_cache[chord_key]
 
         # Perform analysis
         try:
@@ -615,7 +622,8 @@ class PerformanceOptimizer:
             }
 
             # Cache the result
-            self.chord_analysis_cache[chord_key] = analysis
+            with self._cache_lock:
+                self.chord_analysis_cache[chord_key] = analysis
             return analysis
 
         except Exception as e:
@@ -629,9 +637,10 @@ class PerformanceOptimizer:
             str(score_obj).encode(), usedforsecurity=False
         ).hexdigest()[:16]
 
-        # Check cache first
-        if score_hash in self.key_cache:
-            return self.key_cache[score_hash]
+        # Check cache first (thread-safe)
+        with self._cache_lock:
+            if score_hash in self.key_cache:
+                return self.key_cache[score_hash]
 
         # Perform key analysis
         try:
@@ -645,7 +654,8 @@ class PerformanceOptimizer:
             }
 
             # Cache the result
-            self.key_cache[score_hash] = analysis
+            with self._cache_lock:
+                self.key_cache[score_hash] = analysis
             return analysis
 
         except Exception as e:
@@ -687,12 +697,13 @@ class OptimizedChordAnalysisTool:
             ).hexdigest()[:16]
             cache_key = f"chord_analysis:{score_hash}:{limit}"
 
-            if cache_key in self.optimizer.chord_analysis_cache:
-                logger.info(f"Chord analysis cache hit for {score_id}")
-                return self.optimizer.chord_analysis_cache[cache_key]
+            with self.optimizer._cache_lock:
+                if cache_key in self.optimizer.chord_analysis_cache:
+                    logger.info(f"Chord analysis cache hit for {score_id}")
+                    return self.optimizer.chord_analysis_cache[cache_key]
 
             # Perform analysis with timeout
-            start_time = asyncio.get_event_loop().time()
+            start_time = asyncio.get_running_loop().time()
 
             # 1. Chordify (still expensive but unavoidable)
             chordified = score.chordify(removeRedundantPitches=True)
@@ -716,13 +727,14 @@ class OptimizedChordAnalysisTool:
                 "total_chords": len(analyzed_chords),
                 "chords": analyzed_chords,
                 "key": str(key_obj),
-                "analysis_time_ms": (asyncio.get_event_loop().time() - start_time)
+                "analysis_time_ms": (asyncio.get_running_loop().time() - start_time)
                 * 1000,
                 "timeout_applied": timeout,
             }
 
             # Cache the result
-            self.optimizer.chord_analysis_cache[cache_key] = result
+            with self.optimizer._cache_lock:
+                self.optimizer.chord_analysis_cache[cache_key] = result
 
             return result
 

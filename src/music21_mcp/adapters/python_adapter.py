@@ -286,12 +286,14 @@ class Music21Analysis:
         import asyncio
 
         try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            asyncio.get_running_loop()
+            # Already in async context — run in separate thread
+            import concurrent.futures
 
-        return loop.run_until_complete(coro)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                return pool.submit(asyncio.run, coro).result()
+        except RuntimeError:
+            return asyncio.run(coro)
 
     # === Synchronous API ===
 

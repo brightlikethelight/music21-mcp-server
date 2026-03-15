@@ -27,9 +27,7 @@ class ParallelProcessor:
         Args:
             max_workers: Maximum number of worker threads (defaults to CPU)
         """
-        self.max_workers = max_workers or min(
-            4, (asyncio.get_event_loop().is_running() and 4) or 4
-        )
+        self.max_workers = max_workers or 4
         self._executor = ThreadPoolExecutor(max_workers=self.max_workers)
         logger.info(f"Parallel processor initialized with {self.max_workers} workers")
 
@@ -66,7 +64,7 @@ class ParallelProcessor:
             batch_items = items[batch_start:batch_end]
 
             # Create futures for this batch
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             futures = [
                 loop.run_in_executor(self._executor, processor_func, item)
                 for item in batch_items
