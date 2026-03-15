@@ -107,7 +107,7 @@ class ExportScoreTool(BaseTool):
 
             except Exception:
                 # Clean up temp file on error
-                if output_path and os.path.exists(output_path) and not output_path:
+                if output_path and os.path.exists(output_path):
                     with contextlib.suppress(builtins.BaseException):
                         os.unlink(output_path)
                 raise

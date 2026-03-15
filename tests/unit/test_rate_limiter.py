@@ -149,7 +149,7 @@ class TestTokenBucket:
 
         # Mock time passage (1 second)
         original_time = bucket.last_update
-        with patch("time.time", return_value=original_time + 1.0) as mock_time:
+        with patch("time.time", return_value=original_time + 1.0) as _mock_time:
             # Should refill 2 tokens
             bucket._refill()
             assert bucket.tokens == 2.0
@@ -276,7 +276,7 @@ class TestRateLimiter:
         endpoint = "/scores/import"
 
         # Get endpoint bucket and exhaust it
-        bucket_key = f"{identifier}:{endpoint}"
+        _bucket_key = f"{identifier}:{endpoint}"
 
         # Make requests until endpoint limit is hit
         attempts = 0
@@ -547,7 +547,7 @@ class TestRateLimitMiddleware:
         """Test middleware uses API key as identifier"""
         mock_request.headers = {"X-API-Key": "test-key-123"}
 
-        response = await middleware(mock_request, mock_call_next)
+        _response = await middleware(mock_request, mock_call_next)
 
         # Should use API key as identifier (check by making sure bucket exists)
         assert "test-key-123" in middleware.limiter.buckets
@@ -560,7 +560,7 @@ class TestRateLimitMiddleware:
         mock_request.headers = {}
         mock_request.client.host = "192.168.1.1"
 
-        response = await middleware(mock_request, mock_call_next)
+        _response = await middleware(mock_request, mock_call_next)
 
         # Should use IP as identifier
         assert "192.168.1.1" in middleware.limiter.buckets
@@ -574,7 +574,7 @@ class TestRateLimitMiddleware:
         mock_request.url.path = "/test"
         mock_request.headers = {}
 
-        response = await middleware(mock_request, mock_call_next)
+        _response = await middleware(mock_request, mock_call_next)
 
         # Should use "unknown" as identifier
         assert "unknown" in middleware.limiter.buckets
@@ -603,7 +603,7 @@ class TestRateLimitMiddleware:
         """Test middleware applies endpoint-specific limits"""
         mock_request.url.path = "/scores/import"  # Has specific limit in config
 
-        response = await middleware(mock_request, mock_call_next)
+        _response = await middleware(mock_request, mock_call_next)
 
         # Should create endpoint-specific bucket
         bucket_key = f"{mock_request.client.host}:/scores/import"

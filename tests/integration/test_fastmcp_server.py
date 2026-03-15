@@ -121,7 +121,7 @@ class TestFastMCPServer:
         from music21_mcp import server_minimal as server
 
         # Get list of expected tools
-        expected_tools = [
+        _expected_tools = [
             "import_score",
             "list_scores",
             "key_analysis",
@@ -414,7 +414,7 @@ class TestFastMCPServer:
         # from music21_mcp.server_minimal import cleanup_memory
 
         # Get initial memory usage
-        initial_memory = psutil.Process().memory_info().rss / 1024 / 1024
+        _initial_memory = psutil.Process().memory_info().rss / 1024 / 1024
 
         # Create and store multiple scores
         import_tool = ImportScoreTool(scores)
@@ -424,7 +424,7 @@ class TestFastMCPServer:
             )
 
         # Memory should have increased
-        after_import_memory = psutil.Process().memory_info().rss / 1024 / 1024
+        _after_import_memory = psutil.Process().memory_info().rss / 1024 / 1024
         assert len(scores) == 10
 
         # Clear scores and run cleanup

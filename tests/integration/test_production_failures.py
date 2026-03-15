@@ -533,7 +533,7 @@ class TestProductionFailures:
         # Test 2: File system constraints (read-only, permissions)
         with tempfile.TemporaryDirectory() as tmpdir:
             # Simulate read-only file system
-            test_file = Path(tmpdir) / "test_export.xml"
+            _test_file = Path(tmpdir) / "test_export.xml"
 
             # Make directory read-only (simulating cloud constraints)
             os.chmod(tmpdir, 0o555)
@@ -778,7 +778,7 @@ class TestServerStability:
         import_tool = ImportScoreTool(scores)
         delete_tool = DeleteScoreTool(scores)
 
-        leak_detected = False
+        _leak_detected = False
         memory_readings = [initial_memory]
 
         # Reduced from 10×20 to 3×5 for faster CI
@@ -810,7 +810,7 @@ class TestServerStability:
 
             # Check for steady increase (potential leak)
             if current_memory > initial_memory * 1.5:  # 50% increase
-                leak_detected = True
+                _leak_detected = True
                 print(
                     f"⚠️  Potential memory leak: {initial_memory:.1f}MB -> {current_memory:.1f}MB"
                 )

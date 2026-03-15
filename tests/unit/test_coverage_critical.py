@@ -291,7 +291,7 @@ class TestResourceManagement:
         assert "memory_after" in cleanup_stats
 
         # Test monitoring
-        with patch("music21_mcp.resource_manager.logger") as mock_logger:
+        with patch("music21_mcp.resource_manager.logger") as _mock_logger:
             manager._monitor_resources()
             # Should log something about resources
 
@@ -365,8 +365,8 @@ class TestPerformanceOptimizations:
         )
 
         # Test singleton-like behavior
-        monitor1 = get_memory_monitor()
-        monitor2 = get_memory_monitor()
+        _monitor1 = get_memory_monitor()
+        _monitor2 = get_memory_monitor()
         # Note: get_memory_monitor may not be a true singleton
 
         # Test memory monitoring

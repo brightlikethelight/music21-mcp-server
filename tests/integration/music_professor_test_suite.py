@@ -695,7 +695,7 @@ class MusicProfessorTester:
                         key_result = await self.harmonic_analyzer.analyze_key_signature(
                             melody
                         )
-                        melodic_result = (
+                        _melodic_result = (
                             await self.melodic_analyzer.analyze_melodic_patterns(melody)
                         )
 
@@ -844,7 +844,7 @@ async def run_music_professor_tests():
     # Professor approval assessment
     critical_errors = errors_by_severity["critical"]
     high_errors = errors_by_severity["high"]
-    total_errors = len(tester.musical_errors)
+    _total_errors = len(tester.musical_errors)
 
     professor_approval = False
 
