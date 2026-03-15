@@ -39,8 +39,8 @@ dependencies = [
     "cachetools>=5.3.0",
     "python-dotenv>=1.0.0",
     "psutil>=5.9.0",
-    "mcp>=1.11.0",
-    "fastmcp==2.9.0",
+    "mcp>=1.23.0",
+    "fastmcp>=2.14.0,<3.0",
     "bleach>=6.1.0",
     "pathvalidate>=3.2.0",
     "fastapi>=0.115.0",
@@ -70,8 +70,8 @@ cachetools = "^5.3.0"
 python-dotenv = "^1.0.0"
 # MCP uses stdio transport, no HTTP server needed
 psutil = "^5.9.0"
-mcp = "^1.11.0"
-fastmcp = "==2.9.0"  # Pinned version for stability - MCP breaks frequently
+mcp = "^1.23.0"
+fastmcp = ">=2.14.0,<3.0"
 # Basic security and web dependencies  
 bleach = "^6.1.0"
 pathvalidate = "^3.2.0"
@@ -294,9 +294,17 @@ omit = [
     "*/__init__.py",
     # Infrastructure files - tested via integration, not unit tests
     "*/health_check.py",           # Docker health check utility
-    "*/launcher.py",               # Multi-interface launcher 
+    "*/launcher.py",               # Multi-interface launcher
     "*/adapters/cli_adapter.py",   # CLI interface (tested via integration)
     "*/adapters/http_adapter.py",  # HTTP interface (tested via integration)
+    # Dead infrastructure - never imported by any production code path
+    "*/retry_logic.py",
+    "*/async_optimization.py",
+    "*/memory_manager.py",
+    "*/memory_pressure_monitor.py",
+    "*/cache_warmer.py",
+    "*/config.py",
+    "*/schemas/*",
 ]
 
 [tool.coverage.report]
