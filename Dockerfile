@@ -28,11 +28,9 @@ FROM python:3.11-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
-    # For music21 functionality
     lilypond \
-    musescore3 \
-    # For health checks
     curl \
+    && (apt-get install -y musescore || true) \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
@@ -74,4 +72,4 @@ USER music21user
 EXPOSE 8000
 
 # Default command - can be overridden
-CMD ["python", "-m", "music21_mcp.launcher", "--mode", "http"]
+CMD ["python", "-m", "music21_mcp.launcher", "http"]
