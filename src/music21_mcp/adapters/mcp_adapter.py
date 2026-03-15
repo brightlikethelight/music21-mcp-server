@@ -150,7 +150,7 @@ class MCPAdapter:
     def __init__(self):
         """Initialize MCP adapter with core service"""
         self.core_service = MusicAnalysisService()
-        self.mcp_version = "fastmcp-2.9.0"  # Track which version we support
+        self.mcp_version = "fastmcp-2.14.0"  # Track which version we support
 
         logger.info(f"MCP adapter initialized for {self.mcp_version}")
 
@@ -292,7 +292,7 @@ class MCPAdapter:
             return {
                 "supported_version": self.mcp_version,
                 "current_version": current_version,
-                "compatible": current_version.startswith("2.9"),
+                "compatible": current_version.startswith("2."),
                 "core_service_healthy": self.core_service.get_score_count() >= 0,
             }
         except ImportError:

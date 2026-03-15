@@ -16,10 +16,8 @@ updates:
       prefix: "deps"
       prefix-development: "deps-dev"
       include: "scope"
-    ignore:
-      - dependency-name: "fastmcp"
 
-  # GitHub Actions dependencies  
+  # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
