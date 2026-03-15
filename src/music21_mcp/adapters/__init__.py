@@ -32,17 +32,25 @@ def __getattr__(name):
     """Lazy-load adapters that aren't needed for MCP startup."""
     if name == "CLIAdapter":
         from .cli_adapter import CLIAdapter
+
         return CLIAdapter
     if name in ("HTTPAdapter", "create_http_server"):
         from .http_adapter import HTTPAdapter, create_http_server
+
         return HTTPAdapter if name == "HTTPAdapter" else create_http_server
-    if name in ("PythonAdapter", "Music21Analysis", "create_music_analyzer", "create_sync_analyzer"):
+    if name in (
+        "PythonAdapter",
+        "Music21Analysis",
+        "create_music_analyzer",
+        "create_sync_analyzer",
+    ):
         from .python_adapter import (
             Music21Analysis,
             PythonAdapter,
             create_music_analyzer,
             create_sync_analyzer,
         )
+
         _map = {
             "PythonAdapter": PythonAdapter,
             "Music21Analysis": Music21Analysis,

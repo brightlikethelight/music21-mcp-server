@@ -344,7 +344,9 @@ class RetryableMusic21Operation:
         try:
             import aiofiles
         except ImportError:
-            raise ImportError("aiofiles is required for async file operations") from None
+            raise ImportError(
+                "aiofiles is required for async file operations"
+            ) from None
 
         mode = "wb" if isinstance(content, bytes) else "w"
         async with aiofiles.open(path, mode) as f:
