@@ -55,9 +55,6 @@ def mcp_tool(tool_name: str, error_prefix: str | None = None):
     ) -> Callable[P, Awaitable[dict[str, Any]]]:
         @functools.wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> dict[str, Any]:
-            # First arg is self (the MCPAdapter instance)
-            adapter = args[0] if args else None
-
             try:
                 result = await func(*args, **kwargs)
                 return _format_mcp_response(result, tool_name)

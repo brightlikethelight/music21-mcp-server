@@ -6,6 +6,7 @@ and ensure fair resource usage across clients.
 """
 
 import asyncio
+import contextlib
 import time
 from collections import defaultdict, deque
 from collections.abc import Callable
@@ -176,13 +177,8 @@ class RateLimiter:
     def start_cleanup_task(self):
         """Start background cleanup task"""
         if self._cleanup_task is None:
-            try:
-                # Only start task if we have a running event loop
-                loop = asyncio.get_running_loop()
+            with contextlib.suppress(RuntimeError):
                 self._cleanup_task = asyncio.create_task(self._cleanup_loop())
-            except RuntimeError:
-                # No running event loop, task will be started later
-                pass
 
     async def _cleanup_loop(self):
         """Background task to clean up expired data"""

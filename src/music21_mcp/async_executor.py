@@ -109,7 +109,7 @@ class Music21AsyncExecutor:
             self._total_time += duration
             error_msg = f"Music21 operation {func.__name__} timed out after {operation_timeout}s"
             logger.error(error_msg)
-            raise asyncio.TimeoutError(error_msg)
+            raise asyncio.TimeoutError(error_msg) from None
         except Exception as e:
             duration = time.time() - start_time
             self._total_operations += 1

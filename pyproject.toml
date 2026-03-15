@@ -45,31 +45,12 @@ dependencies = [
     "pathvalidate>=3.2.0",
     "fastapi>=0.115.0",
     "uvicorn>=0.31.0",
-    "starlette>=0.49.1",
 ]
 
 [tool.poetry]
-name = "music21-mcp-server"
-version = "1.0.0"
-description = "Enterprise-grade Model Context Protocol server for music analysis and composition"
-authors = ["Bright Liu <brightliu@college.harvard.edu>"]
-license = "MIT"
-readme = "README.md"
 homepage = "https://github.com/brightlikethelight/music21-mcp-server"
 repository = "https://github.com/brightlikethelight/music21-mcp-server"
 documentation = "https://github.com/brightlikethelight/music21-mcp-server/blob/main/README.md"
-keywords = ["music", "analysis", "mcp", "music21", "composition"]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Multimedia :: Sound/Audio :: Analysis",
-    "Topic :: Scientific/Engineering :: Information Analysis",
-]
 packages = [{include = "music21_mcp", from = "src"}]
 
 [tool.poetry.dependencies]
@@ -135,11 +116,14 @@ seaborn = "^0.12.0"
 
 # No enterprise extras - keeping it simple until MCP ecosystem stabilizes
 
-[tool.poetry.scripts]
-# Unified launcher for all interfaces
+[project.scripts]
 music21-analysis = "music21_mcp.launcher:main"
+music21-mcp = "music21_mcp.server_minimal:main"
+music21-http = "music21_mcp.adapters.http_adapter:main"
+music21-cli = "music21_mcp.adapters.cli_adapter:main"
 
-# Individual interface entry points
+[tool.poetry.scripts]
+music21-analysis = "music21_mcp.launcher:main"
 music21-mcp = "music21_mcp.server_minimal:main"
 music21-http = "music21_mcp.adapters.http_adapter:main"
 music21-cli = "music21_mcp.adapters.cli_adapter:main"
@@ -151,9 +135,6 @@ music21-cli = "music21_mcp.adapters.cli_adapter:main"
 "Bug Tracker" = "https://github.com/brightlikethelight/music21-mcp-server/issues"
 "Changelog" = "https://github.com/brightlikethelight/music21-mcp-server/blob/main/CHANGELOG.md"
 "Discussions" = "https://github.com/brightlikethelight/music21-mcp-server/discussions"
-
-[tool.poetry.urls]
-"Bug Tracker" = "https://github.com/brightlikethelight/music21-mcp-server/issues"
 
 [tool.black]
 line-length = 88
@@ -196,7 +177,6 @@ ignore = [
     "S311",   # pseudo-random generators are OK for music generation
     "B007",   # unused loop control variable (sometimes needed for clarity)
     "UP038",  # isinstance with union (backwards compatibility)
-    "E722",   # bare except (used intentionally in error recovery)
     "S110",   # try-except-pass (acceptable for optional operations)
     "S112",   # try-except-continue (acceptable in loops)
     "F541",   # f-string without placeholders (sometimes clearer)
@@ -206,8 +186,6 @@ ignore = [
     "S104",   # Binding to all interfaces (intentional for servers)
     "S324",   # MD5 hash for caching (not used for security)
     "B019",   # LRU cache on methods (acceptable for performance)
-    "B904",   # Exception raising without 'from' (acceptable)
-    "F841",   # unused variable (sometimes for documentation)
     "PLR",    # too many arguments/branches/statements (complexity needed)
 ]
 
@@ -267,6 +245,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "fastmcp.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "aiofiles.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -200,10 +200,11 @@ class ScoreStorage(MutableMapping[str, Any]):
         """Estimate memory usage of an object in bytes"""
         try:
             # For music21 objects, use a heuristic based on typical sizes
-            if hasattr(obj, "flat") and hasattr(obj, "notes"):
+            if hasattr(obj, "flatten") and hasattr(obj, "notes"):
                 # This is likely a music21 Score
+                flat_obj = obj.flatten()
                 note_count = (
-                    len(list(obj.flat.notes)) if hasattr(obj.flat, "notes") else 100
+                    len(list(flat_obj.notes)) if hasattr(flat_obj, "notes") else 100
                 )
                 # Estimate ~1KB per note plus base overhead
                 return max(note_count * 1024, 50 * 1024)  # Minimum 50KB

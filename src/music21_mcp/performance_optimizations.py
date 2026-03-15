@@ -465,7 +465,7 @@ class PerformanceOptimizer:
             raise asyncio.TimeoutError(
                 f"Chord analysis operation timed out after {timeout} seconds. "
                 f"Consider reducing the number of chords or increasing the timeout."
-            )
+            ) from None
 
     def _process_chord_batch(
         self, batch: list[chord.Chord], key_obj: key.Key

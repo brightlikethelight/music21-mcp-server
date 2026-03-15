@@ -222,10 +222,10 @@ class HealthChecker:
             test_key = test_score.analyze("key")
 
             # Test 3: Conversion
-            midi_data = test_score.write("midi")
+            _midi_data = test_score.write("midi")
 
             # Test 4: Parse musicxml
-            xml_test = converter.parse("tinyNotation: 4/4 c4 d4 e4 f4")
+            _xml_test = converter.parse("tinyNotation: 4/4 c4 d4 e4 f4")
 
             duration = (time.time() - start_time) * 1000
 
@@ -276,8 +276,8 @@ class HealthChecker:
             test_key = key.Key("C")
 
             # Test caching
-            result1 = test_optimizer.get_cached_roman_numeral(test_chord, test_key)
-            result2 = test_optimizer.get_cached_roman_numeral(
+            _result1 = test_optimizer.get_cached_roman_numeral(test_chord, test_key)
+            _result2 = test_optimizer.get_cached_roman_numeral(
                 test_chord, test_key
             )  # Should hit cache
 
@@ -471,7 +471,7 @@ class HealthChecker:
         """Check if service is alive (basic health)"""
         try:
             # Simple check - can we create a basic music21 object?
-            test_chord = chord.Chord(["C4"])
+            _test_chord = chord.Chord(["C4"])
 
             return {
                 "alive": True,

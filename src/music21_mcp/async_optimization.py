@@ -15,6 +15,7 @@ Key optimizations:
 
 import asyncio
 import atexit
+import contextlib
 import hashlib
 import logging
 import time
@@ -402,14 +403,14 @@ class AsyncOptimizer:
         chords = []
 
         # Try direct chord extraction first
-        for element in score.flat.getElementsByClass(chord.Chord):
+        for element in score.flatten().getElementsByClass(chord.Chord):
             chords.append(element)
 
         # If no chords found, try chordification
         if not chords:
             try:
                 chordified = score.chordify(removeRedundantPitches=True)
-                for element in chordified.flat.getElementsByClass(chord.Chord):
+                for element in chordified.flatten().getElementsByClass(chord.Chord):
                     chords.append(element)
             except Exception as e:
                 logger.warning(f"Chordification failed: {e}")
@@ -569,12 +570,8 @@ def _sync_shutdown_async_optimizer():
 
             # Cancel the task only if we can get a running loop
             if _global_async_optimizer.batch_processor_task:
-                try:
-                    loop = asyncio.get_running_loop()
+                with contextlib.suppress(RuntimeError):
                     _global_async_optimizer.batch_processor_task.cancel()
-                except RuntimeError:
-                    # No running loop - task will be cleaned up by Python
-                    pass
 
             # Shutdown executor without waiting (non-blocking)
             _global_async_optimizer.executor.shutdown(wait=False)

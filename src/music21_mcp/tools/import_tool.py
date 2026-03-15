@@ -265,7 +265,7 @@ class ImportScoreTool(BaseTool):
                         part.append(n)
                     except Exception as e:
                         logger.warning(f"Invalid note '{note_str}': {e}")
-                        raise ValueError(f"Invalid note: {note_str}")
+                        raise ValueError(f"Invalid note: {note_str}") from e
 
                 score.append(part)
                 return score

@@ -150,7 +150,7 @@ class HTTPAdapter:
                 response.headers["X-Response-Time-ms"] = str(response_time_ms)
                 return response
 
-            except Exception as e:
+            except Exception:
                 # Record failed request
                 response_time_ms = (time.time() - start_time) * 1000
                 health_checker = get_health_checker()
@@ -179,7 +179,7 @@ class HTTPAdapter:
                 detail=f"Operation timed out after {timeout} seconds. "
                 "The request took too long to process, possibly due to "
                 "complex music analysis or high server load.",
-            )
+            ) from None
 
     def _setup_routes(self):
         """Setup FastAPI routes"""

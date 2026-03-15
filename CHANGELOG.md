@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-03-14
+
 ### Added
 - GitHub branch protection rules for main branch
 - Discord webhook integration for CI/CD notifications
@@ -14,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test coverage increased from 75.70% to 79.74%
 - Advanced CI/CD monitoring capabilities
 - Webhook test scripts for validation
+- Lazy adapter loading to prevent startup crashes from missing optional deps
+- `python -m music21_mcp` entry point
+- PEP 621 `[project.scripts]` entry points
 
 ### Fixed
 - Fixed 54 test failures in unit tests
@@ -23,12 +28,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected import sorting and formatting issues
 - Fixed MemoryManager constructor parameters
 - Fixed ParallelProcessor.process_batch() parameters
+- Moved 5 standalone verification scripts out of tests/ (were failing as pytest tests)
+- Fixed mypy error from redundant `# type: ignore` on aiofiles import
+- Fixed music21 `.flat` deprecation warnings (replaced with `.flatten()`)
+- Removed deprecated `event_loop` pytest fixture (handled by pytest-asyncio config)
+- Fixed 18 ruff violations (E722, F841, B904)
 
 ### Changed
 - Updated test modules to use get_logger() instead of direct logger import
 - Improved test assertions for tool attributes
 - Enhanced CI/CD pipeline stability
 - Refactored observability module imports
+- Enabled stricter ruff rules: E722 (bare except), F841 (unused variable), B904 (raise without from)
+- Removed redundant `starlette` dependency (transitive from fastapi)
+- Deduplicated `[tool.poetry]` metadata with `[project]` (PEP 621)
+- Fixed dependabot Docker path and added fastmcp ignore rule
 
 ### Security
 - Implemented webhook secret management
@@ -74,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation framework
 - Basic CI/CD setup
 
-[Unreleased]: https://github.com/brightlikethelight/music21-mcp-server/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/brightlikethelight/music21-mcp-server/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/brightlikethelight/music21-mcp-server/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/brightlikethelight/music21-mcp-server/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/brightlikethelight/music21-mcp-server/releases/tag/v0.8.0

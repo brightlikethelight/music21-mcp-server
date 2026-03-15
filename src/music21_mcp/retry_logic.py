@@ -335,16 +335,16 @@ class RetryableMusic21Operation:
             return converter.parse(data)
         except Exception as e:
             if "memory" in str(e).lower() or "timeout" in str(e).lower():
-                raise RetryableError(f"Transient error parsing score: {e}")
+                raise RetryableError(f"Transient error parsing score: {e}") from e
             raise
 
     @retry(policy=FILE_IO_POLICY)
     async def write_file(self, path: str, content: str | bytes) -> None:
         """Write file with retry logic"""
         try:
-            import aiofiles  # type: ignore
+            import aiofiles
         except ImportError:
-            raise ImportError("aiofiles is required for async file operations")
+            raise ImportError("aiofiles is required for async file operations") from None
 
         mode = "wb" if isinstance(content, bytes) else "w"
         async with aiofiles.open(path, mode) as f:
@@ -359,7 +359,7 @@ class RetryableMusic21Operation:
             return corpus.parse(corpus_path)
         except Exception as e:
             if "network" in str(e).lower() or "connection" in str(e).lower():
-                raise RetryableError(f"Network error fetching corpus: {e}")
+                raise RetryableError(f"Network error fetching corpus: {e}") from e
             raise
 
 
@@ -455,5 +455,5 @@ class ResilientTool:
         except Exception as e:
             # Determine if error is retryable
             if "list index out of range" in str(e):
-                raise NonRetryableError(f"Score has no time signatures: {e}")
-            raise RetryableError(f"Transient analysis error: {e}")
+                raise NonRetryableError(f"Score has no time signatures: {e}") from e
+            raise RetryableError(f"Transient analysis error: {e}") from e
