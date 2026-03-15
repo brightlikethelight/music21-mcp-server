@@ -16,13 +16,9 @@ from typing import Any
 import psutil
 from cachetools import TTLCache
 
+from .exceptions import ResourceExhaustedError
+
 logger = logging.getLogger(__name__)
-
-
-class ResourceExhaustedError(Exception):
-    """Raised when resource limits are exceeded"""
-
-    pass
 
 
 class ScoreStorage(MutableMapping[str, Any]):
@@ -97,8 +93,9 @@ class ScoreStorage(MutableMapping[str, Any]):
                 if self._would_exceed_memory_limit(estimated_size):
                     self._memory_warnings += 1
                     raise ResourceExhaustedError(
-                        f"Adding score '{key}' would exceed memory limit "
-                        f"({self.max_memory_mb}MB). Current usage: {self._get_memory_usage_mb():.1f}MB"
+                        resource_type="scores",
+                        current=self._get_memory_usage_mb(),
+                        limit=float(self.max_memory_mb),
                     )
 
             # Store with metadata

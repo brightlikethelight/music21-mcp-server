@@ -12,7 +12,7 @@ import os
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +31,8 @@ class Music21AsyncExecutor:
     music21 operations like parsing, analysis, and generation.
     """
 
-    _instance: Optional["Music21AsyncExecutor"] = None
-    _lock = asyncio.Lock()
+    _instance: "Music21AsyncExecutor | None" = None
+    _lock: asyncio.Lock | None = None
 
     def __init__(self, max_workers: int = 4):
         """
@@ -52,6 +52,8 @@ class Music21AsyncExecutor:
     @classmethod
     async def get_instance(cls, max_workers: int = 4) -> "Music21AsyncExecutor":
         """Get or create the singleton executor instance"""
+        if cls._lock is None:
+            cls._lock = asyncio.Lock()
         if cls._instance is None:
             async with cls._lock:
                 if cls._instance is None:

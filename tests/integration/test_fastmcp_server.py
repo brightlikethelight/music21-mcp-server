@@ -578,6 +578,7 @@ class TestFastMCPServerStress:
         gc.collect()
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
     async def test_large_score_handling(self):
         """Test handling of large scores"""
         if not MUSIC21_AVAILABLE:
