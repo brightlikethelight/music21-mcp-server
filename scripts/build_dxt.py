@@ -16,7 +16,7 @@ class DesktopExtensionBuilder:
     """Build a Desktop Extension package for easy installation"""
 
     def __init__(self):
-        self.root_dir = Path(__file__).parent
+        self.root_dir = Path(__file__).parent.parent
         self.dist_dir = self.root_dir / "dist"
         self.dxt_dir = self.root_dir / "dxt"
         self.version = self._get_version()
