@@ -222,10 +222,18 @@ Unified Entry Point:
 
 ### Environment Variables
 ```bash
-# Optional configuration
-export MUSIC21_MCP_LOG_LEVEL=INFO
-export MUSIC21_MCP_CACHE_SIZE=100
-export MUSIC21_MCP_TIMEOUT=30
+# Server host and port (used by HTTP adapter and launcher)
+export MUSIC21_MCP_HOST=127.0.0.1
+export MUSIC21_MCP_PORT=8000
+
+# Operation timeouts (seconds)
+export MUSIC21_MCP_TIMEOUT=30          # General async operation timeout
+export MUSIC21_TOOL_TIMEOUT=30         # Per-tool execution timeout
+export MUSIC21_CHORD_ANALYSIS_TIMEOUT=60  # Chord analysis timeout
+export MUSIC21_BATCH_TIMEOUT=30        # Batch processing timeout
+
+# CORS origins for HTTP adapter (comma-separated)
+export MUSIC21_CORS_ORIGINS="http://localhost:*"
 ```
 
 ### Music21 Setup

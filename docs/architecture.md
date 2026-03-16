@@ -34,14 +34,15 @@ music21-mcp-server/
 │   │   ├── counterpoint_tool.py        # Counterpoint generation
 │   │   └── style_imitation_tool.py     # Style imitation
 │   │
-│   ├── config.py                # Centralized configuration
 │   ├── exceptions.py            # Custom exception hierarchy
 │   ├── resource_manager.py      # Memory and score management
 │   ├── health_checks.py         # Health check system
 │   ├── observability.py         # Logging and metrics
 │   ├── rate_limiter.py          # Rate limiting
-│   ├── retry_logic.py           # Retry patterns
-│   └── [performance files]      # Caching and optimization
+│   ├── performance_cache.py     # High-performance caching
+│   ├── performance_optimizations.py  # Optimized analysis tools
+│   ├── async_executor.py        # Async/thread execution
+│   └── parallel_processor.py    # Parallel batch processing
 │
 ├── tests/
 │   ├── unit/                    # Unit tests for tools
@@ -123,11 +124,12 @@ Client Request
 
 ## Configuration
 
-Configuration is centralized in `config.py` using Pydantic Settings:
+Configuration uses environment variables with `MUSIC21_` prefix:
 
-- Environment variables with `MUSIC21_` prefix
-- `.env` file support
-- Sensible defaults for all settings
+- `MUSIC21_MCP_HOST` / `MUSIC21_MCP_PORT` — server binding
+- `MUSIC21_MCP_TIMEOUT` / `MUSIC21_TOOL_TIMEOUT` — operation timeouts
+- `MUSIC21_CORS_ORIGINS` — HTTP CORS policy
+- See `.env.example` for the full list with defaults
 
 ## Resource Management
 

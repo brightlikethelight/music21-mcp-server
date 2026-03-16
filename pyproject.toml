@@ -98,12 +98,6 @@ music21-mcp = "music21_mcp.server_minimal:main"
 music21-http = "music21_mcp.adapters.http_adapter:main"
 music21-cli = "music21_mcp.adapters.cli_adapter:main"
 
-[tool.poetry.scripts]
-music21-analysis = "music21_mcp.launcher:main"
-music21-mcp = "music21_mcp.server_minimal:main"
-music21-http = "music21_mcp.adapters.http_adapter:main"
-music21-cli = "music21_mcp.adapters.cli_adapter:main"
-
 [project.urls]
 "Homepage" = "https://github.com/brightlikethelight/music21-mcp-server"
 "Repository" = "https://github.com/brightlikethelight/music21-mcp-server"
@@ -265,7 +259,6 @@ omit = [
     "*/tests/*",
     "*/__init__.py",
     # Infrastructure files - tested via integration, not unit tests
-    "*/health_check.py",           # Docker health check utility
     "*/launcher.py",               # Multi-interface launcher
     "*/adapters/cli_adapter.py",   # CLI interface (tested via integration)
     "*/adapters/http_adapter.py",  # HTTP interface (tested via integration)

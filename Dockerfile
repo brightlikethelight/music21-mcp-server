@@ -61,9 +61,9 @@ ENV PYTHONUNBUFFERED=1 \
     MUSIC21_LOG_LEVEL=INFO \
     MUSIC21_CORPUS_PATH=/app/data/corpus
 
-# Health check
+# Health check - uses the HTTP health endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.path.insert(0, '/app/src'); from music21_mcp.health_check import check_health; exit(0 if check_health() else 1)"
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Switch to non-root user
 USER music21user
