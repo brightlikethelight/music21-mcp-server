@@ -803,7 +803,7 @@ class StyleImitationTool(BaseTool):
             # Add whole-tone passages
             refined_score = self._add_debussy_colors(refined_score)
 
-        return score
+        return refined_score
 
     def _add_bach_ornaments(self, score: stream.Score) -> stream.Score:
         """Add Bach-style ornaments"""

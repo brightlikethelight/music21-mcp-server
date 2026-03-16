@@ -169,7 +169,7 @@
   "installation": {
     "pre_install_script": "scripts/pre_install.py",
     "post_install_script": "scripts/post_install.py",
-    "requirements_file": "requirements.txt"
+    "requirements_file": "dxt/requirements.txt"
   },
   "security": {
     "permissions": [

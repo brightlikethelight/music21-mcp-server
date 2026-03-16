@@ -47,7 +47,7 @@ pip install music21-mcp-server
 music21-mcp          # MCP server for Claude Desktop
 music21-http         # REST API at localhost:8000
 music21-cli          # Interactive CLI
-music21-analysis --mode mcp   # Unified launcher with --mode flag
+music21-analysis mcp          # Unified launcher (positional arg)
 ```
 
 #### Install from Source
@@ -62,7 +62,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv sync
 
 # Or with pip
-pip install -r requirements.txt
+pip install .
 
 # Configure music21 corpus
 python -m music21.configure
