@@ -263,6 +263,7 @@ omit = [
     "*/adapters/cli_adapter.py",   # CLI interface (tested via integration)
     "*/adapters/http_adapter.py",  # HTTP interface (tested via integration)
     "*/schemas/*",
+    "*/__main__.py",
 ]
 
 [tool.coverage.report]
