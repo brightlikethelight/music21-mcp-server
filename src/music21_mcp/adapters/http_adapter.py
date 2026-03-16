@@ -33,6 +33,16 @@ from ..services import MusicAnalysisService
 
 # Security constants
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB limit for file uploads
+ALLOWED_EXTENSIONS = {
+    ".mid",
+    ".midi",
+    ".xml",
+    ".musicxml",
+    ".mxl",
+    ".abc",
+    ".krn",
+    ".mei",
+}
 
 # Timeout constants
 HTTP_REQUEST_TIMEOUT = 60.0  # 60 seconds for HTTP operations
@@ -111,10 +121,31 @@ class HTTPAdapter:
             )
 
     def _setup_middleware(self):
-        """Setup middleware for request tracking and monitoring"""
+        """Setup middleware for request tracking, security headers, and CORS"""
         import time
 
         from fastapi import Request
+        from starlette.middleware.cors import CORSMiddleware
+
+        # CORS — restrict origins via env var, default to localhost
+        allowed_origins = os.getenv("MUSIC21_CORS_ORIGINS", "http://localhost:*").split(
+            ","
+        )
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=allowed_origins,
+            allow_methods=["GET", "POST", "DELETE"],
+            allow_headers=["*"],
+        )
+
+        @self.app.middleware("http")
+        async def security_headers(request: Request, call_next):
+            """Add security headers to every response"""
+            response = await call_next(request)
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Content-Security-Policy"] = "default-src 'self'"
+            return response
 
         # Add rate limiting middleware
         rate_limiter = create_rate_limiter(
@@ -234,6 +265,14 @@ class HTTPAdapter:
         async def upload_score(score_id: str, file: UploadFile = File(...)):
             """Upload and import a score file"""
             try:
+                # Validate file extension
+                ext = Path(file.filename or "").suffix.lower()
+                if ext not in ALLOWED_EXTENSIONS:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Unsupported file type '{ext}'. Allowed: {sorted(ALLOWED_EXTENSIONS)}",
+                    )
+
                 # Check file size before processing
                 content = await file.read()
                 if len(content) > MAX_FILE_SIZE:
@@ -385,24 +424,28 @@ def create_http_server():
     return adapter.get_app()
 
 
-# For direct execution
-if __name__ == "__main__":
-    import os
+# Module-level app for uvicorn import path (used by main())
+app = create_http_server()
 
+
+def main():
+    """Entry point for music21-http console script."""
     import uvicorn
 
-    app = create_http_server()
-
-    # Get host and port from environment variables with defaults
-    # SECURITY: Default to localhost only. Set MUSIC21_MCP_HOST=0.0.0.0 to bind to all interfaces
-    # WARNING: Binding to 0.0.0.0 exposes the service to external network access
     host = os.getenv("MUSIC21_MCP_HOST", "127.0.0.1")
     port = int(os.getenv("MUSIC21_MCP_PORT", "8000"))
     display_host = "localhost" if host in ["0.0.0.0", "127.0.0.1"] else host
 
-    print("🎵 Music21 HTTP API Server")
-    print("📊 REST API alternative to MCP protocol")
-    print(f"🌐 Starting server on http://{display_host}:{port}")
-    print(f"📖 API docs: http://{display_host}:{port}/docs")
+    print("Music21 HTTP API Server")
+    print(f"Starting server on http://{display_host}:{port}")
+    print(f"API docs: http://{display_host}:{port}/docs")
 
-    uvicorn.run(app, host=host, port=port)  # noqa: S104 # HTTP server needs to bind to all interfaces
+    uvicorn.run(
+        "music21_mcp.adapters.http_adapter:app",
+        host=host,
+        port=port,
+    )
+
+
+if __name__ == "__main__":
+    main()
