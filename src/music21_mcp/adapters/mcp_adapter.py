@@ -302,4 +302,3 @@ class MCPAdapter:
                 "compatible": False,
                 "error": "FastMCP not available",
             }
-

@@ -55,11 +55,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     MUSIC21_MCP_HOST=0.0.0.0 \
     MUSIC21_MCP_PORT=8000 \
-    MUSIC21_MAX_MEMORY_MB=512 \
-    MUSIC21_GC_THRESHOLD_MB=100 \
-    MUSIC21_MCP_TIMEOUT=30 \
-    MUSIC21_LOG_LEVEL=INFO \
-    MUSIC21_CORPUS_PATH=/app/data/corpus
+    MUSIC21_MCP_TIMEOUT=30
 
 # Health check - uses the HTTP health endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

@@ -92,7 +92,7 @@ Implement tempo analysis using music21's tempo detection
 algorithms. Supports automatic BPM detection and tempo
 change analysis throughout a score.
 
-- Add analyze_tempo() tool to server.py
+- Add analyze_tempo() tool to server_minimal.py
 - Include confidence scoring for tempo detection
 - Support tempo change timeline analysis
 - Add comprehensive tests with classical music examples

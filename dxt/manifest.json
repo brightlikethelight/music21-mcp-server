@@ -19,11 +19,6 @@
   "documentation": "https://github.com/brightlikethelight/music21-mcp-server/blob/main/README.md",
   "support": "https://github.com/brightlikethelight/music21-mcp-server/issues",
   "keywords": ["music", "analysis", "composition", "music21", "theory", "harmony", "counterpoint", "midi", "musicxml"],
-  "icon": "assets/music21-icon.png",
-  "screenshots": [
-    "assets/screenshots/analysis-demo.png",
-    "assets/screenshots/harmonization-demo.png"
-  ],
   "server": {
     "type": "python",
     "entry_point": "src/music21_mcp/server_minimal.py",
@@ -107,41 +102,6 @@
       "name": "health_check",
       "description": "Check server health and verify all tools are functioning",
       "parameters": []
-    }
-  ],
-  "configuration": [
-    {
-      "key": "music21_corpus_path",
-      "name": "Music21 Corpus Directory",
-      "description": "Path to the music21 corpus directory for accessing built-in musical examples",
-      "type": "directory",
-      "required": false,
-      "default": "~/.music21"
-    },
-    {
-      "key": "output_directory",
-      "name": "Output Directory",
-      "description": "Directory where exported musical files will be saved",
-      "type": "directory",
-      "required": false,
-      "default": "~/Music/music21-exports"
-    },
-    {
-      "key": "cache_enabled",
-      "name": "Enable Caching",
-      "description": "Enable caching of analysis results for improved performance",
-      "type": "boolean",
-      "required": false,
-      "default": true
-    },
-    {
-      "key": "log_level",
-      "name": "Log Level",
-      "description": "Set the logging level for the server",
-      "type": "string",
-      "required": false,
-      "default": "INFO",
-      "options": ["DEBUG", "INFO", "WARNING", "ERROR"]
     }
   ],
   "compatibility": {

@@ -2,14 +2,7 @@
 Pytest configuration and fixtures for music21-mcp-server tests
 """
 
-import sys
-from pathlib import Path
-
 import pytest
-
-# Add src directory to Python path
-src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
 
 # Import what we actually have
 from music21_mcp.tools import (
