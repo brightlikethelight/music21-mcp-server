@@ -6,7 +6,7 @@ music21>=9.1.0
 
 # MCP Protocol support
 mcp>=1.11.0
-fastmcp==2.9.0
+fastmcp==2.14.2
 
 # Numerical computing
 numpy>=1.24.0
