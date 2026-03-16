@@ -8,7 +8,7 @@ This automated setup script connects the Music21 MCP Server to Claude Desktop, e
 
 ### 1. One-Command Setup
 ```bash
-python setup_claude_desktop.py
+python scripts/setup_claude_desktop.py
 ```
 
 That's it! The script automatically:
@@ -33,17 +33,17 @@ You should see Claude analyzing the Bach chorale using music21!
 
 ### Check Current Configuration
 ```bash
-python setup_claude_desktop.py --check-only
+python scripts/setup_claude_desktop.py --check-only
 ```
 
 ### Skip Diagnostics (Faster)
 ```bash
-python setup_claude_desktop.py --skip-diagnostics
+python scripts/setup_claude_desktop.py --skip-diagnostics
 ```
 
 ### Restore from Backup
 ```bash
-python setup_claude_desktop.py --restore-backup backup_file.json
+python scripts/setup_claude_desktop.py --restore-backup backup_file.json
 ```
 
 ## 🛠️ Manual Setup (Alternative)
@@ -114,7 +114,7 @@ Once configured, you can ask Claude Desktop to:
 - 📖 **Documentation**: See main README.md
 - 🐛 **Issues**: Report problems on GitHub
 - 💬 **Community**: Join our Discord/Forum
-- ⚡ **Quick Test**: Run `python setup_claude_desktop.py --check-only`
+- ⚡ **Quick Test**: Run `python scripts/setup_claude_desktop.py --check-only`
 
 ## 🎉 Success Indicators
 
