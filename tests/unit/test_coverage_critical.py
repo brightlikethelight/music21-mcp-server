@@ -292,6 +292,7 @@ class TestPerformanceOptimizations:
         # Shutdown
         optimizer.shutdown()
 
+
 class TestAsyncAndParallel:
     """Test async and parallel processing"""
 
