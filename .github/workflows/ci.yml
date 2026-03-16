@@ -9,7 +9,6 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
-  UV_CACHE_DIR: /tmp/.uv-cache
 
 jobs:
   lint-and-type-check:
@@ -23,7 +22,7 @@ jobs:
       uses: astral-sh/setup-uv@v7
       with:
         enable-cache: true
-        cache-dependency-glob: "**/pyproject.toml"
+        cache-dependency-glob: "**/pyproject.toml,**/uv.lock"
     
     - name: Set up Python
       run: uv python install ${{ env.PYTHON_VERSION }}
@@ -226,28 +225,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
     
-    - name: Set up Python
-      uses: actions/setup-python@v6
+    - name: Set up UV
+      uses: astral-sh/setup-uv@v7
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip build twine
-    
+        enable-cache: true
+        cache-dependency-glob: "**/pyproject.toml,**/uv.lock"
+
+    - name: Set up Python
+      run: uv python install ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: uv sync --dev
+
     - name: Build distribution
-      run: |
-        python -m build
-    
+      run: uv build
+
     - name: Check distribution
-      run: |
-        twine check dist/*
-        
+      run: uv run twine check dist/*
+
     - name: Test installation
       run: |
-        pip install dist/*.whl
-        python -c "import music21_mcp; print(music21_mcp.__version__)"
-        pip uninstall -y music21-mcp-server
+        uv pip install dist/*.whl
+        uv run python -c "import music21_mcp; print(music21_mcp.__version__)"
     
     - name: Store distribution packages
       uses: actions/upload-artifact@v4
