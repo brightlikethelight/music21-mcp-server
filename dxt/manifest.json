@@ -127,8 +127,8 @@
     }
   },
   "installation": {
-    "pre_install_script": "scripts/pre_install.py",
-    "post_install_script": "scripts/post_install.py",
+    "pre_install_script": "dxt/scripts/pre_install.py",
+    "post_install_script": "dxt/scripts/post_install.py",
     "requirements_file": "dxt/requirements.txt"
   },
   "security": {
