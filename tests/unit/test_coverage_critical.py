@@ -357,9 +357,7 @@ class TestScoreStorageLifecycle:
         from music21_mcp.resource_manager import ResourceExhaustedError, ScoreStorage
 
         # Very small memory limit
-        storage = ScoreStorage(
-            max_scores=100, score_ttl_seconds=300, max_memory_mb=1
-        )
+        storage = ScoreStorage(max_scores=100, score_ttl_seconds=300, max_memory_mb=1)
 
         # Add a real entry then inflate its tracked size so cleanup won't orphan it
         filler = stream.Score()

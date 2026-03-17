@@ -419,4 +419,3 @@ class ResourceManager:
             "memory_freed": memory_before - memory_after,
             **cleanup_stats,
         }
-
