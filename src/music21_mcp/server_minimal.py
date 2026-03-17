@@ -206,7 +206,7 @@ def main():
         return
 
     logger.info("🎵 Music21 MCP Server - Minimal Implementation")
-    logger.info("📊 16 music analysis and generation tools available")
+    logger.info("📊 14 music analysis tools available")
     logger.info("🚀 Starting server...")
 
     try:
