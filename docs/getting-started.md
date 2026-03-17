@@ -139,7 +139,7 @@ The server provides 13 music analysis tools:
 | `key_analysis` | Analyze key signature |
 | `chord_analysis` | Analyze chord progressions |
 | `harmony_analysis` | Roman numeral analysis |
-| `voice_leading` | Voice leading quality analysis |
+| `voice_leading_analysis` | Voice leading quality analysis |
 | `pattern_recognition` | Find melodic/rhythmic patterns |
 | `harmonize_melody` | Generate harmonization |
 | `generate_counterpoint` | Create counterpoint |

@@ -106,7 +106,7 @@ pytest tests/
 # Run with coverage
 pytest tests/ --cov=src/music21_mcp --cov-report=term-missing
 
-# Run with coverage threshold (will fail if below 76%)
+# Run with coverage threshold (will fail if below 74%)
 pytest tests/ --cov=src/music21_mcp --cov-fail-under=74
 
 # Run specific test file

@@ -113,7 +113,7 @@ cross-platform, mcp-integration, open-source, bach-analysis
 ## Quality Assurance
 
 ### Testing Coverage
-- **Unit Tests**: 76%+ coverage with pytest
+- **Unit Tests**: 74%+ coverage with pytest
 - **Integration Tests**: MCP protocol compliance
 - **Performance Tests**: Memory and speed optimization
 - **Security Tests**: Input validation and sanitization
