@@ -238,12 +238,7 @@ addopts = [
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests",
-    "performance: marks tests as performance tests",
-    "stress: marks tests as stress tests",
     "security: marks tests as security tests",
-    "chaos: marks tests as chaos engineering tests",
-    "health: marks tests as health check tests",
 ]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
