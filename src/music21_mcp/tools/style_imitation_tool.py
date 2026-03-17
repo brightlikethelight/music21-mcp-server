@@ -806,35 +806,23 @@ class StyleImitationTool(BaseTool):
         return refined_score
 
     def _add_bach_ornaments(self, score: stream.Score) -> stream.Score:
-        """Add Bach-style ornaments"""
-        # Simplified - add some passing tones
-        for part in score.parts:
-            notes = list(part.flatten().notes)
-            for i in range(len(notes) - 1):
-                current_note = notes[i]
-                next_note = notes[i + 1]
-                if isinstance(current_note, note.Note) and isinstance(
-                    next_note, note.Note
-                ):
-                    interval_size = abs(current_note.pitch.midi - next_note.pitch.midi)
-                    if interval_size == 4:  # Major third
-                        # Could add passing tone
-                        pass
+        """Add Bach-style ornaments (passing tones, mordents, trills)."""
+        # TODO: implement ornament insertion for stepwise motion and thirds
         return score
 
     def _add_mozart_accompaniment(self, score: stream.Score) -> stream.Score:
-        """Add Mozart-style accompaniment patterns"""
-        # Simplified implementation
+        """Add Mozart-style accompaniment patterns."""
+        # TODO: implement Alberti bass patterns
         return score
 
     def _add_chopin_expression(self, score: stream.Score) -> stream.Score:
-        """Add Chopin-style expression"""
-        # Add tempo markings, dynamics
+        """Add Chopin-style expression."""
+        # TODO: implement expression markings (rubato, pedal, dynamics)
         return score
 
     def _add_debussy_colors(self, score: stream.Score) -> stream.Score:
-        """Add Debussy-style harmonic colors"""
-        # Add pedal markings, parallel motion
+        """Add Debussy-style harmonic colors."""
+        # TODO: implement whole-tone passages and parallel motion
         return score
 
     async def _analyze_generation(
