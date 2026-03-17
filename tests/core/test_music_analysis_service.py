@@ -503,5 +503,72 @@ class TestMusicAnalysisWorkflows:
         assert "lifecycle" not in score_ids_after
 
 
+class TestMusicAnalysisServiceGeneration:
+    """Test generation methods and resource management at the service layer"""
+
+    @pytest_asyncio.fixture
+    async def service_with_score(self):
+        """Service with pre-loaded Bach chorale"""
+        service = MusicAnalysisService()
+        service.scores.clear()
+        await service.import_score("gen_test", "bach/bwv66.6", "corpus")
+        return service
+
+    @pytest.mark.asyncio
+    async def test_harmonize_melody(self, service_with_score):
+        """Test harmonize_melody returns a result"""
+        result = await service_with_score.harmonize_melody("gen_test")
+        assert result["status"] in ("success", "error")
+
+    @pytest.mark.asyncio
+    async def test_generate_counterpoint(self, service_with_score):
+        """Test generate_counterpoint returns a result"""
+        result = await service_with_score.generate_counterpoint("gen_test", species=1)
+        assert result["status"] in ("success", "error")
+
+    @pytest.mark.asyncio
+    async def test_imitate_style(self, service_with_score):
+        """Test imitate_style returns a result"""
+        result = await service_with_score.imitate_style("gen_test", target_style="bach")
+        assert isinstance(result, dict)
+        assert "status" in result
+
+    def test_cleanup_resources(self, service_with_score):
+        """Test cleanup_resources returns expected keys"""
+        result = service_with_score.cleanup_resources()
+        assert isinstance(result, dict)
+        assert "removed_scores" in result
+        assert "gc_collected_objects" in result
+
+    def test_get_memory_usage(self, service_with_score):
+        """Test get_memory_usage returns numeric fields"""
+        result = service_with_score.get_memory_usage()
+        assert isinstance(result, dict)
+        assert "storage_memory_mb" in result
+        assert "system_memory_mb" in result
+        assert "scores_loaded" in result
+        assert isinstance(result["storage_memory_mb"], (int, float))
+
+    def test_is_resource_healthy(self, service_with_score):
+        """Test is_resource_healthy returns bool"""
+        result = service_with_score.is_resource_healthy()
+        assert isinstance(result, bool)
+
+    def test_get_performance_metrics(self, service_with_score):
+        """Test get_performance_metrics returns dict"""
+        result = service_with_score.get_performance_metrics()
+        assert isinstance(result, dict)
+
+    def test_get_service_status(self, service_with_score):
+        """Test get_service_status returns nested structure"""
+        result = service_with_score.get_service_status()
+        assert isinstance(result, dict)
+        assert "service" in result
+        assert "health" in result
+        assert "resources" in result
+        assert "performance" in result
+        assert result["service"]["name"] == "music21-mcp-server"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
