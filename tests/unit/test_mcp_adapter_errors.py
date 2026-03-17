@@ -64,3 +64,105 @@ class TestMCPToolErrorHandling:
     async def test_pattern_recognition_score_not_found(self, adapter):
         result = await adapter.pattern_recognition("vanished_score")
         assert result["status"] == "error"
+
+
+class TestMCPToolDecoratorExceptionBranches:
+    """Test @mcp_tool decorator catches each exception type correctly via monkeypatch."""
+
+    @pytest.mark.asyncio
+    async def test_score_import_error(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise ScoreImportError("src", "corpus", "bad data")
+
+        monkeypatch.setattr(adapter.core_service, "import_score", raise_err)
+        result = await adapter.import_score("x", "y", "corpus")
+        assert result["status"] == "error"
+        assert "bad data" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_export_error(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise ExportError("s", "midi", "write failed")
+
+        monkeypatch.setattr(adapter.core_service, "export_score", raise_err)
+        result = await adapter.export_score("s", "midi")
+        assert result["status"] == "error"
+        assert "write failed" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_analysis_error(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise AnalysisError("key", "s", "analysis broke")
+
+        monkeypatch.setattr(adapter.core_service, "analyze_key", raise_err)
+        result = await adapter.key_analysis("s")
+        assert result["status"] == "error"
+        assert "analysis broke" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_generation_error(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise GenerationError("harmonization", "gen failed")
+
+        monkeypatch.setattr(adapter.core_service, "harmonize_melody", raise_err)
+        result = await adapter.harmonize_melody("s")
+        assert result["status"] == "error"
+        assert "gen failed" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_key_error(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise KeyError("missing_field")
+
+        monkeypatch.setattr(adapter.core_service, "analyze_chords", raise_err)
+        result = await adapter.chord_analysis("s")
+        assert result["status"] == "error"
+        assert "missing required data" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_type_error(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise TypeError("bad type")
+
+        monkeypatch.setattr(adapter.core_service, "analyze_chords", raise_err)
+        result = await adapter.chord_analysis("s")
+        assert result["status"] == "error"
+        assert "invalid input type" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_os_error(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(adapter.core_service, "analyze_chords", raise_err)
+        result = await adapter.chord_analysis("s")
+        assert result["status"] == "error"
+        assert "file error" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_connection_error(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise ConnectionError("refused")
+
+        monkeypatch.setattr(adapter.core_service, "analyze_chords", raise_err)
+        result = await adapter.chord_analysis("s")
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_timeout_error(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise TimeoutError("timed out")
+
+        monkeypatch.setattr(adapter.core_service, "analyze_chords", raise_err)
+        result = await adapter.chord_analysis("s")
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_generic_exception(self, adapter, monkeypatch):
+        async def raise_err(*a, **kw):
+            raise RuntimeError("something unexpected")
+
+        monkeypatch.setattr(adapter.core_service, "analyze_chords", raise_err)
+        result = await adapter.chord_analysis("s")
+        assert result["status"] == "error"
+        assert "something unexpected" in result["error"]
