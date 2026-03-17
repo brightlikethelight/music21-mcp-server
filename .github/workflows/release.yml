@@ -57,47 +57,5 @@ jobs:
     - name: Semantic Release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         semantic-release publish
-
-  build-and-publish:
-    name: Build and Publish to PyPI
-    runs-on: ubuntu-latest
-    needs: [smoke-test, release]
-    if: github.ref == 'refs/heads/main' && success()
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-
-    - name: Set up UV
-      uses: astral-sh/setup-uv@v7
-      with:
-        enable-cache: true
-        cache-dependency-glob: "**/pyproject.toml,**/uv.lock"
-
-    - name: Set up Python
-      run: uv python install ${{ env.PYTHON_VERSION }}
-
-    - name: Install dependencies
-      run: uv sync --dev
-
-    - name: Build distribution
-      run: uv build
-
-    - name: Check distribution
-      run: uv run twine check dist/*
-
-    - name: Publish to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: uv run twine upload dist/*
-
-    - name: Verify publication
-      run: |
-        sleep 30
-        uv pip install music21-mcp-server
-        uv run python -c "import music21_mcp; print(f'Successfully installed version {music21_mcp.__version__}')"
