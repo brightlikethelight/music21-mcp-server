@@ -20,50 +20,50 @@ jobs:
   test-build:
     name: Test Build and Distribution
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
+
+    - name: Set up UV
+      uses: astral-sh/setup-uv@v7
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip build twine
-        
+        enable-cache: true
+        cache-dependency-glob: "**/pyproject.toml,**/uv.lock"
+
+    - name: Set up Python
+      run: uv python install ${{ env.PYTHON_VERSION }}
+
     - name: Update version for testing
       run: |
         # Create temporary version for testing
         TEST_VERSION="${{ inputs.version }}-test.$(date +%Y%m%d%H%M%S)"
         echo "TEST_VERSION=$TEST_VERSION" >> $GITHUB_ENV
-        
+
         # Update pyproject.toml with test version
         sed -i "s/version = \"[^\"]*\"/version = \"$TEST_VERSION\"/" pyproject.toml
-        
+
         echo "Updated version to: $TEST_VERSION"
         grep "version =" pyproject.toml
-        
+
     - name: Build distribution
       run: |
-        python -m build
+        uv build
         ls -la dist/
-        
+
     - name: Check distribution
       run: |
-        python -m twine check dist/*
-        
+        uv run twine check dist/*
+
         # Detailed package inspection
         echo "=== Package Contents ==="
-        python -c "
+        uv run python -c "
         import zipfile
         import tarfile
         import os
-        
+
         for file in os.listdir('dist'):
-            print(f'\\n📦 {file}:')
+            print(f'\n📦 {file}:')
             if file.endswith('.whl'):
                 with zipfile.ZipFile(f'dist/{file}', 'r') as z:
                     files = z.namelist()
@@ -80,64 +80,50 @@ jobs:
                     music21_files = [f for f in files if 'music21_mcp' in f]
                     print(f'  - {len(music21_files)} music21_mcp files')
         "
-        
+
     - name: Test installation from wheel
       run: |
-        # Create clean test environment
-        python -m venv test_wheel_env
-        source test_wheel_env/bin/activate
-        
         # Install from wheel
-        pip install dist/*.whl
-        
+        uv pip install dist/*.whl
+
         # Test basic functionality
-        python -c "
+        uv run python -c "
         print('🧪 Testing basic imports...')
         import music21_mcp
         print(f'✅ Version: {music21_mcp.__version__}')
-        
+
         from music21_mcp.services import MusicAnalysisService
         service = MusicAnalysisService()
         tools = service.get_available_tools()
         print(f'✅ Found {len(tools)} tools: {list(tools.keys())[:5]}...')
-        
+
         # Test adapters
         from music21_mcp.adapters import create_sync_analyzer
         analyzer = create_sync_analyzer()
         status = analyzer.get_status()
         print(f'✅ Adapter status: {status[\"status\"]}')
-        
+
         print('🎉 Basic functionality test passed!')
         "
-        
+
         # Test CLI entry points
         echo "🧪 Testing CLI entry points..."
-        music21-analysis --help > /dev/null && echo "✅ music21-analysis CLI works"
-        music21-mcp --help > /dev/null && echo "✅ music21-mcp CLI works"  
-        music21-http --help > /dev/null && echo "✅ music21-http CLI works"
-        music21-cli --help > /dev/null && echo "✅ music21-cli CLI works"
-        
-        deactivate
-        rm -rf test_wheel_env
-        
+        uv run music21-analysis --help > /dev/null && echo "✅ music21-analysis CLI works"
+        uv run music21-mcp --help > /dev/null && echo "✅ music21-mcp CLI works"
+        uv run music21-http --help > /dev/null && echo "✅ music21-http CLI works"
+        uv run music21-cli --help > /dev/null && echo "✅ music21-cli CLI works"
+
     - name: Test installation from source
       run: |
-        # Create clean test environment
-        python -m venv test_source_env
-        source test_source_env/bin/activate
-        
         # Install from source
-        pip install dist/*.tar.gz
-        
+        uv pip install dist/*.tar.gz
+
         # Quick verification
-        python -c "
+        uv run python -c "
         import music21_mcp
         print(f'✅ Source install version: {music21_mcp.__version__}')
         "
-        
-        deactivate
-        rm -rf test_source_env
-        
+
     - name: Store test artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -149,58 +135,53 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-build
     if: inputs.publish_to_test_pypi
-    environment: 
+    environment:
       name: test-pypi
       url: https://test.pypi.org/project/music21-mcp-server/
-      
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
+
+    - name: Set up UV
+      uses: astral-sh/setup-uv@v7
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip build twine
-        
+        enable-cache: true
+        cache-dependency-glob: "**/pyproject.toml,**/uv.lock"
+
+    - name: Set up Python
+      run: uv python install ${{ env.PYTHON_VERSION }}
+
     - name: Update version for Test PyPI
       run: |
         # Create unique test version
         TEST_VERSION="${{ inputs.version }}-test.$(date +%Y%m%d%H%M%S)"
         echo "TEST_VERSION=$TEST_VERSION" >> $GITHUB_ENV
-        
+
         # Update pyproject.toml
         sed -i "s/version = \"[^\"]*\"/version = \"$TEST_VERSION\"/" pyproject.toml
-        
+
         echo "Test PyPI version: $TEST_VERSION"
-        
+
     - name: Build distribution
-      run: |
-        python -m build
-        
+      run: uv build
+
     - name: Publish to Test PyPI
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
       run: |
-        python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
-        
+        uv run twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
+
     - name: Verify Test PyPI publication
       run: |
         echo "🕐 Waiting for Test PyPI to process package..."
         sleep 60
-        
-        # Try to install from Test PyPI
-        python -m venv testpypi_env
-        source testpypi_env/bin/activate
-        
-        # Install from Test PyPI with retries
+
+        # Try to install from Test PyPI with retries
         for i in {1..3}; do
           echo "Attempt $i to install from Test PyPI..."
-          if pip install -i https://test.pypi.org/simple/ music21-mcp-server==$TEST_VERSION --extra-index-url https://pypi.org/simple/; then
+          if uv pip install -i https://test.pypi.org/simple/ music21-mcp-server==$TEST_VERSION --extra-index-url https://pypi.org/simple/; then
             echo "✅ Successfully installed from Test PyPI"
             break
           else
@@ -208,17 +189,14 @@ jobs:
             sleep 30
           fi
         done
-        
+
         # Verify installation
-        python -c "
+        uv run python -c "
         import music21_mcp
         print(f'🎉 Test PyPI version verified: {music21_mcp.__version__}')
         assert '$TEST_VERSION' in music21_mcp.__version__, f'Version mismatch: {music21_mcp.__version__}'
         "
-        
-        deactivate
-        rm -rf testpypi_env
-        
+
         echo "🎉 Test PyPI release successful!"
         echo "📦 Test PyPI URL: https://test.pypi.org/project/music21-mcp-server/$TEST_VERSION/"
 
@@ -227,58 +205,52 @@ jobs:
     runs-on: ubuntu-latest
     needs: publish-test-pypi
     if: always() && inputs.publish_to_test_pypi
-    
+
     steps:
+    - name: Set up UV
+      uses: astral-sh/setup-uv@v7
+
     - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
+      run: uv python install ${{ env.PYTHON_VERSION }}
+
     - name: Test end-to-end workflow
       run: |
-        # Create fresh environment
-        python -m venv integration_env
-        source integration_env/bin/activate
-        
         # Calculate test version (same logic as before)
         TEST_VERSION="${{ inputs.version }}-test.$(date +%Y%m%d%H%M%S)"
-        
+
         # Wait for Test PyPI propagation
         echo "🕐 Waiting for Test PyPI propagation..."
         sleep 120
-        
+
         # Install from Test PyPI
-        pip install -i https://test.pypi.org/simple/ music21-mcp-server --extra-index-url https://pypi.org/simple/
-        
+        uv pip install -i https://test.pypi.org/simple/ music21-mcp-server --extra-index-url https://pypi.org/simple/
+
         # Run comprehensive test
-        python -c "
+        uv run python -c "
         print('🧪 Running integration tests...')
-        
+
         # Test imports
         import music21_mcp
         from music21_mcp.services import MusicAnalysisService
         from music21_mcp.adapters import create_sync_analyzer
-        
+
         print(f'✅ Package version: {music21_mcp.__version__}')
-        
+
         # Test service
         service = MusicAnalysisService()
         tools = service.get_available_tools()
         assert len(tools) == 13, f'Expected 13 tools, got {len(tools)}'
         print(f'✅ Service has {len(tools)} tools')
-        
+
         # Test adapter
         analyzer = create_sync_analyzer()
         status = analyzer.get_status()
         assert status['status'] == 'ready', f'Expected ready status, got {status}'
         print(f'✅ Adapter status: {status[\"status\"]}')
-        
+
         print('🎉 Integration test passed!')
         "
-        
-        deactivate
-        rm -rf integration_env
-        
+
     - name: Summary
       if: always()
       run: |
