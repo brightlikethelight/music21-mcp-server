@@ -1,72 +1,142 @@
 """Tests for server_minimal.py tool functions and resources.
 
-FastMCP's @mcp.tool() wraps functions into FunctionTool objects,
-so we test through the mcp_adapter instance which the tools delegate to.
+Tests cover:
+1. Direct calls to @mcp.tool() wrapper functions via .fn accessor
+2. MCP resource handlers via .fn accessor
+3. Module-level objects and registration verification
 """
 
 import pytest
 
+import music21_mcp.server_minimal as sm
 from music21_mcp.server_minimal import mcp_adapter
 
+# ---------------------------------------------------------------------------
+# Part 1: Direct wrapper function tests
+# FastMCP @mcp.tool() wraps functions into FunctionTool objects.
+# The original async function is accessible via the .fn attribute.
+# ---------------------------------------------------------------------------
 
-class TestHealthCheck:
+
+class TestHealthCheckWrapper:
     @pytest.mark.asyncio
-    async def test_health_check_via_adapter(self):
-        compat = mcp_adapter.check_protocol_compatibility()
-        result = {
-            "status": "healthy",
-            "server": "Music21 MCP Server - Minimal",
-            "adapter_version": compat.get("supported_version", "unknown"),
-            "tools_available": len(mcp_adapter.get_supported_tools()),
-            "core_service_healthy": compat.get("core_service_healthy", False),
-        }
+    async def test_health_check_returns_healthy(self):
+        result = await sm.health_check.fn()
         assert result["status"] == "healthy"
-        assert result["tools_available"] == 13
+        assert result["server"] == "Music21 MCP Server - Minimal"
+        assert "tools_available" in result
         assert "adapter_version" in result
-
-
-class TestToolsViaAdapter:
-    """Test tool functions through the mcp_adapter instance from server_minimal."""
+        assert "core_service_healthy" in result
 
     @pytest.mark.asyncio
-    async def test_list_scores(self):
-        result = await mcp_adapter.list_scores()
+    async def test_health_check_tool_count(self):
+        result = await sm.health_check.fn()
+        assert result["tools_available"] == 13
+
+
+class TestScoreManagementWrappers:
+    @pytest.mark.asyncio
+    async def test_list_scores_wrapper(self):
+        result = await sm.list_scores.fn()
         assert isinstance(result, dict)
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        ("method", "args"),
-        [
-            ("score_info", ("no_such_sm",)),
-            ("export_score", ("no_such_sm",)),
-            ("delete_score", ("no_such_sm",)),
-            ("key_analysis", ("no_such_sm",)),
-            ("chord_analysis", ("no_such_sm",)),
-            ("harmony_analysis", ("no_such_sm",)),
-            ("voice_leading_analysis", ("no_such_sm",)),
-            ("pattern_recognition", ("no_such_sm",)),
-            ("harmonize_melody", ("no_such_sm",)),
-            ("generate_counterpoint", ("no_such_sm",)),
-        ],
-    )
-    async def test_tool_handles_missing_score(self, method, args):
-        func = getattr(mcp_adapter, method)
-        result = await func(*args)
-        assert isinstance(result, dict)
-        assert result.get("status") == "error"
+    async def test_import_score_wrapper(self):
+        result = await sm.import_score.fn("wrapper_test", "bach/bwv66.6", "corpus")
+        assert result["status"] == "success"
 
     @pytest.mark.asyncio
-    async def test_imitate_style_no_args(self):
-        result = await mcp_adapter.imitate_style()
+    async def test_score_info_wrapper_missing(self):
+        result = await sm.score_info.fn("nonexistent_wrapper")
         assert result["status"] == "error"
 
     @pytest.mark.asyncio
-    async def test_import_and_score_info(self):
-        result = await mcp_adapter.import_score("sm_test2", "bach/bwv66.6", "corpus")
-        assert result["status"] == "success"
+    async def test_export_score_wrapper_missing(self):
+        result = await sm.export_score.fn("nonexistent_wrapper")
+        assert result["status"] == "error"
 
-        info = await mcp_adapter.score_info("sm_test2")
-        assert info["status"] == "success"
+    @pytest.mark.asyncio
+    async def test_delete_score_wrapper_missing(self):
+        result = await sm.delete_score.fn("nonexistent_wrapper")
+        assert result["status"] == "error"
+
+
+class TestAnalysisWrappers:
+    @pytest.mark.asyncio
+    async def test_key_analysis_wrapper_missing(self):
+        result = await sm.key_analysis.fn("nonexistent_wrapper")
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_chord_analysis_wrapper_missing(self):
+        result = await sm.chord_analysis.fn("nonexistent_wrapper")
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_harmony_analysis_wrapper_missing(self):
+        result = await sm.harmony_analysis.fn("nonexistent_wrapper")
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_voice_leading_analysis_wrapper_missing(self):
+        result = await sm.voice_leading_analysis.fn("nonexistent_wrapper")
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_pattern_recognition_wrapper_missing(self):
+        result = await sm.pattern_recognition.fn("nonexistent_wrapper")
+        assert result["status"] == "error"
+
+
+class TestGenerationWrappers:
+    @pytest.mark.asyncio
+    async def test_harmonize_melody_wrapper_missing(self):
+        result = await sm.harmonize_melody.fn("nonexistent_wrapper")
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_generate_counterpoint_wrapper_missing(self):
+        result = await sm.generate_counterpoint.fn("nonexistent_wrapper")
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_imitate_style_wrapper_no_args(self):
+        result = await sm.imitate_style.fn()
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_imitate_style_wrapper_missing_score(self):
+        result = await sm.imitate_style.fn(score_id="nonexistent_wrapper")
+        assert result["status"] == "error"
+
+
+# ---------------------------------------------------------------------------
+# Part 2: MCP resource handler tests
+# FastMCP wraps @mcp.resource() into FunctionResource / FunctionResourceTemplate.
+# The original async function is accessible via the .fn attribute.
+# ---------------------------------------------------------------------------
+
+
+class TestMCPResources:
+    @pytest.mark.asyncio
+    async def test_list_scores_resource(self):
+        result = await sm.list_scores_resource.fn()
+        assert isinstance(result, dict)
+        assert "contents" in result
+        assert isinstance(result["contents"], list)
+
+    @pytest.mark.asyncio
+    async def test_get_score_resource_missing(self):
+        result = await sm.get_score_resource.fn("nonexistent_resource")
+        assert isinstance(result, dict)
+        assert "contents" in result
+        assert len(result["contents"]) == 1
+        assert result["contents"][0]["uri"] == "music21://scores/nonexistent_resource"
+
+
+# ---------------------------------------------------------------------------
+# Part 3: Module-level object and registration tests
+# ---------------------------------------------------------------------------
 
 
 class TestModuleLevelObjects:
@@ -85,3 +155,13 @@ class TestModuleLevelObjects:
         compat = mcp_adapter.check_protocol_compatibility()
         assert "supported_version" in compat
         assert "current_version" in compat
+
+    def test_mcp_server_instance(self):
+        assert sm.mcp is not None
+        assert sm.mcp.name == "Music21 MCP Server - Minimal"
+
+    def test_has_mcp_flag(self):
+        assert sm.HAS_MCP is True
+
+    def test_main_function_exists(self):
+        assert callable(sm.main)
