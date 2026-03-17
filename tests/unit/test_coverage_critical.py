@@ -289,6 +289,95 @@ class TestPerformanceOptimizations:
         optimizer.shutdown()
 
 
+class TestScoreStorageLifecycle:
+    """Test ScoreStorage shutdown, __del__, and eviction paths"""
+
+    def test_score_storage_shutdown(self):
+        """Test shutdown stops the cleanup thread"""
+        from music21_mcp.resource_manager import ScoreStorage
+
+        storage = ScoreStorage(max_scores=5, score_ttl_seconds=300)
+        assert storage._cleanup_thread is not None
+        assert storage._cleanup_thread.is_alive()
+
+        storage.shutdown()
+
+        assert storage._shutdown_event.is_set()
+        # Thread should have stopped (may already be dead from daemon flag)
+        assert not storage._cleanup_thread.is_alive()
+
+    def test_score_storage_del(self):
+        """Test __del__ sets shutdown event"""
+        from music21_mcp.resource_manager import ScoreStorage
+
+        storage = ScoreStorage(max_scores=5, score_ttl_seconds=300)
+        event = storage._shutdown_event
+        assert not event.is_set()
+
+        storage.__del__()
+
+        assert event.is_set()
+
+    def test_resource_manager_del(self):
+        """Test ResourceManager __del__ sets shutdown event on scores"""
+        from music21_mcp.resource_manager import ResourceManager
+
+        manager = ResourceManager(max_scores=5)
+        event = manager.scores._shutdown_event
+        assert not event.is_set()
+
+        manager.__del__()
+
+        assert event.is_set()
+
+    def test_score_storage_max_scores_eviction(self):
+        """Test that TTLCache evicts oldest entry when max_scores exceeded"""
+        from music21 import stream
+
+        from music21_mcp.resource_manager import ScoreStorage
+
+        storage = ScoreStorage(max_scores=2, score_ttl_seconds=300, max_memory_mb=1024)
+
+        s1 = stream.Score()
+        s2 = stream.Score()
+        s3 = stream.Score()
+
+        storage["first"] = s1
+        storage["second"] = s2
+        assert len(storage) == 2
+
+        # Adding a third should evict the first (TTLCache maxsize=2)
+        storage["third"] = s3
+        assert len(storage) == 2
+        assert "third" in storage
+        # One of the earlier entries should have been evicted
+        assert "first" not in storage or "second" not in storage
+
+        # Cleanup
+        storage.shutdown()
+
+    def test_score_storage_memory_limit_raises(self):
+        """Test that exceeding memory limit raises ResourceExhaustedError"""
+        from music21 import stream
+
+        from music21_mcp.resource_manager import ResourceExhaustedError, ScoreStorage
+
+        # Very small memory limit
+        storage = ScoreStorage(
+            max_scores=100, score_ttl_seconds=300, max_memory_mb=1
+        )
+
+        # Add a real entry then inflate its tracked size so cleanup won't orphan it
+        filler = stream.Score()
+        storage["filler"] = filler
+        storage._memory_usage["filler"] = 2 * 1024 * 1024  # 2 MB (over 1 MB limit)
+
+        with pytest.raises(ResourceExhaustedError):
+            storage["overflow"] = stream.Score()
+
+        storage.shutdown()
+
+
 def test_final_coverage_check():
     """Final test to ensure we have adequate coverage"""
     # Import all main modules to ensure they're covered
