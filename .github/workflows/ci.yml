@@ -95,7 +95,7 @@ jobs:
           --cov-report=term-missing \
           --cov-report=html \
           --junitxml=junit/test-results-${{ matrix.python-version }}.xml \
-          --cov-fail-under=80
+          --cov-fail-under=82
     
     - name: Run slow tests separately
       if: matrix.python-version == '3.11'
@@ -168,14 +168,6 @@ jobs:
         uv run pip-audit --desc --format=json --output=pip-audit-results.json || true
         uv run pip-audit --desc || true
 
-    # Safety scan temporarily disabled due to compatibility issue
-    # Error: post_dump() got an unexpected keyword argument 'pass_many'
-    # TODO: Re-enable when safety package is fixed or find alternative
-    # - name: Run safety security scan
-    #   run: |
-    #     uv run safety check --json > safety-results.json
-    #     uv run safety check
-
     - name: Upload security results
       uses: actions/upload-artifact@v4
       with:
@@ -183,12 +175,12 @@ jobs:
         path: |
           bandit-results.json
           pip-audit-results.json
-          # safety-results.json (disabled due to compatibility issue)
 
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: test
+    if: success()
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
