@@ -420,17 +420,3 @@ class ResourceManager:
             **cleanup_stats,
         }
 
-    def _monitor_resources(self) -> None:
-        """Monitor resource usage and log warnings if needed"""
-        stats = self.get_system_stats()
-        storage = stats["storage"]
-
-        if storage["memory_utilization_percent"] > 75:
-            logger.warning(
-                f"High memory usage: {storage['memory_utilization_percent']:.1f}%"
-            )
-
-        if storage["total_scores"] > self.max_scores * 0.8:
-            logger.warning(
-                f"High score count: {storage['total_scores']}/{self.max_scores}"
-            )

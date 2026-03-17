@@ -4,7 +4,6 @@ Tests key functionality across all major modules
 """
 
 import asyncio
-from unittest.mock import patch
 
 import pytest
 from music21 import chord, key, stream
@@ -221,11 +220,6 @@ class TestResourceManagement:
         cleanup_stats = manager.cleanup()
         assert "memory_before" in cleanup_stats
         assert "memory_after" in cleanup_stats
-
-        # Test monitoring
-        with patch("music21_mcp.resource_manager.logger") as _mock_logger:
-            manager._monitor_resources()
-            # Should log something about resources
 
         # Shutdown
         manager.shutdown()
