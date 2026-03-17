@@ -153,7 +153,7 @@ analysis = analyzer.quick_analysis("chorale")
 python -m pytest tests/ -v
 
 # Run with coverage threshold
-python -m pytest tests/ --cov=src/music21_mcp --cov-fail-under=74
+python -m pytest tests/ --cov=src/music21_mcp --cov-fail-under=80
 ```
 
 ### Development Setup
@@ -308,14 +308,14 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 - Development setup and requirements
 - Code style guidelines (Ruff, MyPy)
-- Testing requirements (maintain >74% coverage)
+- Testing requirements (maintain >80% coverage)
 - Pull request process
 - Branch protection rules
 
 Quick start:
 1. Fork the repository
 2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Run tests: `pytest tests/ --cov=src/music21_mcp --cov-fail-under=74`
+3. Run tests: `pytest tests/ --cov=src/music21_mcp --cov-fail-under=80`
 4. Commit changes: `git commit -m 'feat: Add amazing feature'`
 5. Push branch: `git push origin feature/amazing-feature`
 6. Submit pull request

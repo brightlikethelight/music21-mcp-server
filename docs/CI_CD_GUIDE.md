@@ -6,7 +6,7 @@ The Music21 MCP Server uses GitHub Actions for continuous integration and deploy
 
 ## Current Status
 
-- **Coverage**: 81.55% (Required: 74%)
+- **Coverage**: 83.34% (Required: 80%)
 - **Python Versions**: 3.10, 3.11, 3.12
 - **Protected Branch**: main
 - **Auto-deployment**: PyPI on tag push
@@ -26,7 +26,7 @@ The Music21 MCP Server uses GitHub Actions for continuous integration and deploy
 
 #### Run Tests
 - **Matrix**: Python 3.10, 3.11, 3.12
-- **Coverage**: Must maintain >74% coverage
+- **Coverage**: Must maintain >80% coverage
 - **Tools**: pytest with coverage reporting
 - **Reports**: Coverage badge updated automatically
 
@@ -150,7 +150,7 @@ The Music21 MCP Server uses GitHub Actions for continuous integration and deploy
 
 4. **CI Pipeline Runs**
    - All checks must pass
-   - Coverage must stay above 74%
+   - Coverage must stay above 80%
    - Security scans must pass
 
 5. **Code Review**
@@ -283,7 +283,7 @@ chore: Update dependencies
 ### Testing
 
 - Write tests before code (TDD)
-- Maintain >74% coverage
+- Maintain >80% coverage
 - Test edge cases
 - Mock external dependencies
 
