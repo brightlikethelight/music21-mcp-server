@@ -20,6 +20,8 @@ jobs:
   test-build:
     name: Test Build and Distribution
     runs-on: ubuntu-latest
+    outputs:
+      test_version: ${{ steps.version.outputs.test_version }}
 
     steps:
     - name: Checkout code
@@ -35,10 +37,12 @@ jobs:
       run: uv python install ${{ env.PYTHON_VERSION }}
 
     - name: Update version for testing
+      id: version
       run: |
-        # Create temporary version for testing
-        TEST_VERSION="${{ inputs.version }}-test.$(date +%Y%m%d%H%M%S)"
+        # Create PEP 440 compliant dev version
+        TEST_VERSION="${{ inputs.version }}.dev$(date +%Y%m%d%H%M%S)"
         echo "TEST_VERSION=$TEST_VERSION" >> $GITHUB_ENV
+        echo "test_version=$TEST_VERSION" >> $GITHUB_OUTPUT
 
         # Update pyproject.toml with test version
         sed -i "s/version = \"[^\"]*\"/version = \"$TEST_VERSION\"/" pyproject.toml
@@ -154,8 +158,8 @@ jobs:
 
     - name: Update version for Test PyPI
       run: |
-        # Create unique test version
-        TEST_VERSION="${{ inputs.version }}-test.$(date +%Y%m%d%H%M%S)"
+        # Use the same version computed during test-build
+        TEST_VERSION="${{ needs.test-build.outputs.test_version }}"
         echo "TEST_VERSION=$TEST_VERSION" >> $GITHUB_ENV
 
         # Update pyproject.toml
@@ -203,7 +207,7 @@ jobs:
   integration-test:
     name: Integration Test
     runs-on: ubuntu-latest
-    needs: publish-test-pypi
+    needs: [test-build, publish-test-pypi]
     if: always() && inputs.publish_to_test_pypi
 
     steps:
@@ -215,8 +219,8 @@ jobs:
 
     - name: Test end-to-end workflow
       run: |
-        # Calculate test version (same logic as before)
-        TEST_VERSION="${{ inputs.version }}-test.$(date +%Y%m%d%H%M%S)"
+        # Use the same version computed during test-build
+        TEST_VERSION="${{ needs.test-build.outputs.test_version }}"
 
         # Wait for Test PyPI propagation
         echo "🕐 Waiting for Test PyPI propagation..."
