@@ -95,7 +95,7 @@ jobs:
           --cov-report=term-missing \
           --cov-report=html \
           --junitxml=junit/test-results-${{ matrix.python-version }}.xml \
-          --cov-fail-under=74
+          --cov-fail-under=80
     
     - name: Run slow tests separately
       if: matrix.python-version == '3.11'

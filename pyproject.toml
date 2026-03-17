@@ -232,7 +232,7 @@ addopts = [
     "--cov-report=term-missing:skip-covered",
     "--cov-report=html",
     "--cov-report=xml",
-    "--cov-fail-under=74",  # Pragmatic coverage threshold (adjusted for new exceptions module)
+    "--cov-fail-under=80",  # Coverage threshold — 83%+ achieved with 555 tests
     "--timeout=60",  # Prevent infinite loops from hanging tests
 ]
 markers = [
