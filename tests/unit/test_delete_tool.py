@@ -102,3 +102,52 @@ class TestDeleteScoreTool:
         assert "score1" in clean_score_storage
         assert "score3" in clean_score_storage
         assert len(clean_score_storage) == 2
+
+    @pytest.mark.asyncio
+    async def test_delete_wildcard_empty_storage(self, clean_score_storage):
+        """Test wildcard delete on empty storage returns zero count"""
+        tool = DeleteScoreTool(clean_score_storage)
+
+        result = await tool.execute(score_id="*")
+
+        assert result["status"] == "success"
+        assert result["deleted_count"] == 0
+        assert "no scores" in result["message"].lower()
+
+    @pytest.mark.asyncio
+    async def test_delete_wildcard_populated_storage(
+        self, clean_score_storage, sample_bach_score
+    ):
+        """Test wildcard delete removes all scores"""
+        clean_score_storage["s1"] = sample_bach_score
+        clean_score_storage["s2"] = sample_bach_score
+        clean_score_storage["s3"] = sample_bach_score
+
+        tool = DeleteScoreTool(clean_score_storage)
+
+        result = await tool.execute(score_id="*")
+
+        assert result["status"] == "success"
+        assert result["deleted_count"] == 3
+        assert len(clean_score_storage) == 0
+
+    def test_validate_inputs_wildcard(self, clean_score_storage):
+        """Test validate_inputs accepts wildcard"""
+        tool = DeleteScoreTool(clean_score_storage)
+
+        result = tool.validate_inputs(score_id="*")
+        assert result is None
+
+    def test_validate_inputs_normal_id(self, clean_score_storage):
+        """Test validate_inputs accepts normal score ID"""
+        tool = DeleteScoreTool(clean_score_storage)
+
+        result = tool.validate_inputs(score_id="some_score")
+        assert result is None
+
+    def test_validate_inputs_empty_id(self, clean_score_storage):
+        """Test validate_inputs rejects empty score ID"""
+        tool = DeleteScoreTool(clean_score_storage)
+
+        result = tool.validate_inputs(score_id="")
+        assert result is not None
