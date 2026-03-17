@@ -750,7 +750,7 @@ The Music21 MCP Server provides powerful music analysis capabilities across mult
 For more detailed documentation:
 - [MCP Tools Reference](MCP_TOOLS.md)
 - [Installation Guide](MCP_INSTALLATION.md)
-- [API Documentation](API.md)
+- [API Documentation](MCP_TOOLS.md)
 
 For support and community:
 - [GitHub Issues](https://github.com/brightlikethelight/music21-mcp-server/issues)

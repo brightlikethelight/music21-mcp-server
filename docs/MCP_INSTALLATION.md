@@ -385,5 +385,5 @@ After installation:
 
 1. Read the [MCP Tools Documentation](MCP_TOOLS.md) for detailed tool usage
 2. Check out [Example Usage Patterns](MCP_EXAMPLES.md) for common workflows
-3. Explore the [API Documentation](API.md) for advanced usage
+3. Explore the [API Documentation](MCP_TOOLS.md) for advanced usage
 4. Join the [GitHub Discussions](https://github.com/brightlikethelight/music21-mcp-server/discussions) for community support

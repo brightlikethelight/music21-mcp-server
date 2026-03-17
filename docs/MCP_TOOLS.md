@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Music21 MCP Server provides 14 comprehensive music analysis and generation tools built on the powerful music21 library. All tools follow MCP standards and provide detailed error handling, progress reporting, and structured responses.
+The Music21 MCP Server provides 13 music analysis and generation tools, plus system health monitoring, built on the powerful music21 library. All tools follow MCP standards and provide detailed error handling, progress reporting, and structured responses.
 
 ## Tool Categories
 
