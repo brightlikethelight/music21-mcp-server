@@ -107,7 +107,7 @@ pytest tests/
 pytest tests/ --cov=src/music21_mcp --cov-report=term-missing
 
 # Run with coverage threshold (will fail if below 80%)
-pytest tests/ --cov=src/music21_mcp --cov-fail-under=74
+pytest tests/ --cov=src/music21_mcp --cov-fail-under=82
 
 # Run specific test file
 pytest tests/unit/test_tools_unit.py
@@ -201,7 +201,7 @@ uv run ruff format .
 uv run mypy .
 
 # Run tests with coverage
-pytest tests/ --cov=src/music21_mcp --cov-fail-under=74
+pytest tests/ --cov=src/music21_mcp --cov-fail-under=82
 ```
 
 ### 5. Push Your Branch

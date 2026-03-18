@@ -97,7 +97,6 @@ ignore = [
     "S608",   # possible SQL injection (false positives)
     "S311",   # pseudo-random generators are OK for music generation
     "B007",   # unused loop control variable (sometimes needed for clarity)
-    "UP038",  # isinstance with union (use X | Y) -- too many instances, low value
     "S110",   # try-except-pass (acceptable for optional operations)
     "S112",   # try-except-continue (acceptable in loops)
     "F541",   # f-string without placeholders (sometimes clearer)
