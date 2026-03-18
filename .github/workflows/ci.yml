@@ -49,7 +49,7 @@ jobs:
     needs: lint-and-type-check
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     
     steps:
     - name: Checkout code
@@ -163,7 +163,8 @@ jobs:
         uv run bandit -r src/ -lll -s B311,B110,B112,B104,B101
 
     - name: Run pip-audit vulnerability scan
-      continue-on-error: true  # Don't fail build for known vulnerabilities - address via dependabot PRs
+      # TODO: make blocking (continue-on-error: false) once CVE backlog is cleared
+      continue-on-error: true
       run: |
         uv run pip-audit --desc --format=json --output=pip-audit-results.json || true
         uv run pip-audit --desc || true
@@ -281,29 +282,25 @@ jobs:
           echo "No documentation directory found, skipping docs build"
         fi
 
-  performance:
-    name: Performance Benchmarks
+  docker-build:
+    name: Docker Build Test
     runs-on: ubuntu-latest
-    needs: test
+    continue-on-error: true
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
-
-    - name: Set up UV
-      uses: astral-sh/setup-uv@v7
-
-    - name: Set up Python
-      run: uv python install ${{ env.PYTHON_VERSION }}
-
-    - name: Install dependencies
+    - name: Build Docker image
+      run: docker build -t music21-mcp-test .
+    - name: Start container
       run: |
-        uv sync --dev
-
-    - name: Run performance benchmarks
+        docker run -d --name test-container -p 8000:8000 music21-mcp-test
+        sleep 10
+    - name: Health check
       run: |
-        if [ -d "tests/benchmarks" ]; then
-          uv run pytest tests/benchmarks/ -v --benchmark-only --benchmark-json=benchmark-results.json
-        fi
+        curl -f http://localhost:8000/health || exit 1
+    - name: Cleanup
+      if: always()
+      run: docker rm -f test-container 2>/dev/null || true
 
   release-readiness:
     name: Release Readiness Check
