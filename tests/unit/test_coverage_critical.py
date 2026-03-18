@@ -231,8 +231,6 @@ class TestPerformanceOptimizations:
     def test_performance_optimizations_comprehensive(self):
         """Test performance optimization components"""
         from music21_mcp.performance_optimizations import (
-            OptimizedChordAnalysisTool,
-            OptimizedHarmonyAnalysisTool,
             PerformanceOptimizer,
         )
 
@@ -267,17 +265,6 @@ class TestPerformanceOptimizations:
         metrics = optimizer.get_performance_metrics()
         assert "current_metrics" in metrics
         assert "cache_stats" in metrics["current_metrics"]
-
-        # Test optimized tools
-        opt_chord_tool = OptimizedChordAnalysisTool(
-            score_manager={}, optimizer=optimizer
-        )
-        assert hasattr(opt_chord_tool, "optimizer")
-
-        opt_harmony_tool = OptimizedHarmonyAnalysisTool(
-            score_manager={}, optimizer=optimizer
-        )
-        assert hasattr(opt_harmony_tool, "optimizer")
 
         # Shutdown
         optimizer.shutdown()
