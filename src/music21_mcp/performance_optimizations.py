@@ -794,9 +794,9 @@ class OptimizedHarmonyAnalysisTool:
 
     @cached_analysis(
         "cache",
-        key_func=lambda self,
-        *args,
-        **kwargs: f"harmony:{args[0] if args else 'unknown'}",
+        key_func=lambda self, *args, **kwargs: (
+            f"harmony:{args[0] if args else 'unknown'}"
+        ),
     )
     async def analyze_harmony_optimized(self, score_id: str) -> dict[str, Any]:
         """Optimized harmony analysis"""
