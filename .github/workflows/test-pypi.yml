@@ -249,7 +249,7 @@ jobs:
         # Test adapter
         analyzer = create_sync_analyzer()
         status = analyzer.get_status()
-        assert status['status'] == 'ready', f'Expected ready status, got {status}'
+        assert status['status'] == 'healthy', f'Expected healthy status, got {status}'
         print(f'✅ Adapter status: {status[\"status\"]}')
 
         print('🎉 Integration test passed!')

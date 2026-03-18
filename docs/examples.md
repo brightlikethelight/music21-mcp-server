@@ -16,7 +16,7 @@ This guide provides practical examples of using the music21 MCP server for vario
 First, start the MCP server:
 
 ```bash
-python -m music21_mcp.server
+python -m music21_mcp.server_minimal
 ```
 
 The server will be available at `http://localhost:8000`.
