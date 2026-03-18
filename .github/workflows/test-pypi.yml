@@ -129,7 +129,7 @@ jobs:
         "
 
     - name: Store test artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-distribution-${{ env.TEST_VERSION }}
         path: dist/
