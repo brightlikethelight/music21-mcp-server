@@ -371,21 +371,6 @@ Analyze musical style characteristics and generate new music following those pat
 - `score_id` (str): ID of the reference score
 - `target_style` (str, optional): `"bach"`, `"mozart"`, `"chopin"`, `"beethoven"`, `"jazz"` (default: `"bach"`)
 
-### 14. health_check
-
-Check server health and operational status.
-
-**Parameters:** None
-
-**Returns:**
-```json
-{
-  "status": "healthy",
-  "tools_available": 14,
-  "memory_usage": "24.5 MB"
-}
-```
-
 ## Error Handling
 
 All tools return consistent error responses:

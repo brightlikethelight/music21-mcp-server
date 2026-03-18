@@ -68,17 +68,18 @@ jobs:
     
     - name: Install from wheel
       run: |
+        uv venv .venv
         uv pip install dist/*.whl
-        
+
     - name: Test import
       run: |
-        uv run python -c "import music21_mcp; print(music21_mcp.__version__)"
-        uv run python -c "from music21_mcp.services import MusicAnalysisService"
-        
+        .venv/bin/python -c "import music21_mcp; print(music21_mcp.__version__)"
+        .venv/bin/python -c "from music21_mcp.services import MusicAnalysisService"
+
     - name: Test CLI
       run: |
-        uv run music21-analysis --help || true
-        uv run music21-mcp --help || true
+        .venv/bin/music21-analysis --help || true
+        .venv/bin/music21-mcp --help || true
 
   publish:
     needs: [build, test]
