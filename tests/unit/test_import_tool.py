@@ -202,3 +202,73 @@ class TestExtractMetadata:
         assert "num_notes" in result
         assert result["num_notes"] > 0
         assert "num_parts" in result
+
+
+class TestImportEdgeCases:
+    """Additional edge-case tests for import error paths."""
+
+    @pytest.mark.asyncio
+    async def test_invalid_source_type(self, clean_score_storage):
+        """Passing an unsupported source_type returns a validation error."""
+        tool = ImportScoreTool(clean_score_storage)
+        result = await tool.execute(
+            score_id="bad_type", source="anything", source_type="invalid"
+        )
+        assert result["status"] == "error"
+        assert "Invalid source_type" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_file_not_found(self, clean_score_storage, tmp_path):
+        """Passing a path inside an allowed dir that doesn't exist returns error."""
+        tool = ImportScoreTool(clean_score_storage)
+        missing = str(tmp_path / "does_not_exist.xml")
+        result = await tool.execute(
+            score_id="missing_file", source=missing, source_type="file"
+        )
+        assert result["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_safe_path_validation(self, clean_score_storage):
+        """Path traversal with '..' outside allowed dirs is rejected."""
+        tool = ImportScoreTool(clean_score_storage)
+        result = await tool.execute(
+            score_id="traversal",
+            source="/etc/../etc/passwd",
+            source_type="file",
+        )
+        assert result["status"] == "error"
+        assert "outside allowed directories" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_note_like_string_detection(self, clean_score_storage):
+        """Note-like text (e.g. 'C4 D4 E4') is auto-detected as text and imported."""
+        tool = ImportScoreTool(clean_score_storage)
+        result = await tool.execute(
+            score_id="note_detect",
+            source="C4 D4 E4",
+            source_type="auto",
+        )
+        assert result["status"] == "success"
+        assert result["source_type"] == "text"
+        assert result["num_notes"] == 3
+
+    @pytest.mark.asyncio
+    async def test_import_from_file_success(self, clean_score_storage, tmp_path):
+        """Importing a valid MusicXML file from tmp_path succeeds."""
+        from music21 import note, stream
+
+        # Create a real MusicXML file in tmp_path
+        score = stream.Score()
+        part = stream.Part()
+        part.append(note.Note("C4", quarterLength=1.0))
+        part.append(note.Note("D4", quarterLength=1.0))
+        score.append(part)
+        file_path = str(tmp_path / "test_score.musicxml")
+        score.write("musicxml", fp=file_path)
+
+        tool = ImportScoreTool(clean_score_storage)
+        result = await tool.execute(
+            score_id="file_import", source=file_path, source_type="file"
+        )
+        assert result["status"] == "success"
+        assert "file_import" in clean_score_storage

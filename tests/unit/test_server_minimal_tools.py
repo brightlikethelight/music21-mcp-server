@@ -165,3 +165,51 @@ class TestModuleLevelObjects:
 
     def test_main_function_exists(self):
         assert callable(sm.main)
+
+
+# ---------------------------------------------------------------------------
+# Part 4: main() branch coverage tests
+# ---------------------------------------------------------------------------
+
+
+class TestMainFunction:
+    """Test main() branches: no MCP, keyboard interrupt, exception, success."""
+
+    def test_main_no_mcp(self, monkeypatch):
+        """When HAS_MCP is False, main() logs error and returns early."""
+        monkeypatch.setattr(sm, "HAS_MCP", False)
+        errors = []
+        monkeypatch.setattr(sm.logger, "error", lambda msg: errors.append(msg))
+        sm.main()
+        assert any("MCP package not available" in e for e in errors)
+
+    def test_main_keyboard_interrupt(self, monkeypatch):
+        """KeyboardInterrupt during mcp.run() triggers graceful shutdown log."""
+        monkeypatch.setattr(sm, "HAS_MCP", True)
+        monkeypatch.setattr(sm.mcp, "run", lambda: (_ for _ in ()).throw(KeyboardInterrupt))
+        infos = []
+        monkeypatch.setattr(sm.logger, "info", lambda msg: infos.append(msg))
+        sm.main()
+        assert any("stopped by user" in i for i in infos)
+
+    def test_main_exception(self, monkeypatch):
+        """RuntimeError during mcp.run() is logged and re-raised."""
+        monkeypatch.setattr(sm, "HAS_MCP", True)
+
+        def _raise():
+            raise RuntimeError("test boom")
+
+        monkeypatch.setattr(sm.mcp, "run", _raise)
+        errors = []
+        monkeypatch.setattr(sm.logger, "error", lambda msg: errors.append(msg))
+        monkeypatch.setattr(sm.logger, "info", lambda msg: None)
+        with pytest.raises(RuntimeError, match="test boom"):
+            sm.main()
+        assert any("Server error" in e for e in errors)
+
+    def test_main_success(self, monkeypatch):
+        """When mcp.run() completes without error, main() exits cleanly."""
+        monkeypatch.setattr(sm, "HAS_MCP", True)
+        monkeypatch.setattr(sm.mcp, "run", lambda: None)
+        monkeypatch.setattr(sm.logger, "info", lambda msg: None)
+        sm.main()  # should not raise

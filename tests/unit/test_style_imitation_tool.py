@@ -178,3 +178,73 @@ class TestStyleImitationTool:
         assert result["status"] == "success"
         assert "generated_score_id" in result
         assert "musical_features" in result
+
+
+class TestAnalyzeStyleMethod:
+    """Test the analyze_style code path (lines 205-251)."""
+
+    @pytest.mark.asyncio
+    async def test_analyze_style_detailed(self, populated_score_storage):
+        """analyze_style with detailed=True exercises interval/rhythm/chord analysis."""
+        tool = StyleImitationTool(populated_score_storage)
+        result = await tool.analyze_style(score_id="bach_test", detailed=True)
+        assert result["status"] == "success"
+        assert "style_characteristics" in result
+        style = result["style_characteristics"]
+        assert "interval_distribution" in style
+        assert "rhythm_histogram" in style
+        assert "chord_vocabulary" in style
+        assert "phrase_lengths" in style
+        assert "distinctive_features" in style
+        assert "closest_known_styles" in result
+
+    @pytest.mark.asyncio
+    async def test_analyze_style_not_detailed(self, populated_score_storage):
+        """analyze_style with detailed=False skips extra analysis."""
+        tool = StyleImitationTool(populated_score_storage)
+        result = await tool.analyze_style(score_id="bach_test", detailed=False)
+        assert result["status"] == "success"
+        style = result["style_characteristics"]
+        assert "interval_distribution" not in style
+
+    @pytest.mark.asyncio
+    async def test_analyze_style_missing_score(self, clean_score_storage):
+        """analyze_style on non-existent score returns error."""
+        tool = StyleImitationTool(clean_score_storage)
+        result = await tool.analyze_style(score_id="missing")
+        assert result["status"] == "error"
+        assert "not found" in result["message"]
+
+
+class TestStyleHelpers:
+    """Test internal style helper methods for coverage."""
+
+    def test_identify_distinctive_features(self, clean_score_storage):
+        tool = StyleImitationTool(clean_score_storage)
+        style_data = {
+            "melodic": {"stepwise_motion": 0.9, "leap_frequency": 0.4},
+            "harmonic": {"dissonance_level": 2.0, "chord_density": 0.3},
+            "rhythmic": {"syncopation_level": 0.5, "rhythm_variety": 8},
+        }
+        features = tool._identify_distinctive_features(style_data)
+        assert "Highly stepwise melodic motion" in features
+        assert "Frequent melodic leaps" in features
+        assert "High harmonic dissonance" in features
+        assert "Sparse harmonic rhythm" in features
+        assert "Significant syncopation" in features
+        assert "Complex rhythmic vocabulary" in features
+
+    def test_compare_to_known_styles(self, clean_score_storage):
+        tool = StyleImitationTool(clean_score_storage)
+        style_data = {
+            "melodic": {"stepwise_motion": 0.7},
+            "harmonic": {},
+            "rhythmic": {},
+        }
+        similarities = tool._compare_to_known_styles(style_data)
+        assert isinstance(similarities, list)
+        assert len(similarities) <= 3
+        # Each entry is (composer_name, similarity_score)
+        for name, score in similarities:
+            assert isinstance(name, str)
+            assert 0 <= score <= 1

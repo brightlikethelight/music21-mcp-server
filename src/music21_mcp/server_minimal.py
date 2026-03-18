@@ -23,7 +23,7 @@ try:
     from fastmcp import FastMCP
 
     HAS_MCP = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_MCP = False
 
     class _FastMCP:  # Renamed to avoid redefinition
@@ -39,7 +39,7 @@ except ImportError:
 try:
     # Try relative imports first (when run as module)
     from .adapters import MCPAdapter
-except ImportError:
+except ImportError:  # pragma: no cover
     # Fallback to absolute imports (when run directly)
     from music21_mcp.adapters import MCPAdapter
 
