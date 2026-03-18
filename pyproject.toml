@@ -235,6 +235,22 @@ exclude_lines = [
 # See .github/workflows/ci.yml for the security scan configuration
 exclude_dirs = ["tests", "examples", "debug_test.py"]
 
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/music21_mcp/__init__.py:__version__"]
+branch = "main"
+commit_message = "chore(release): {version}"
+build_command = "uv build"
+upload_to_pypi = false  # handled by publish.yml on release event
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["feat", "fix", "perf", "refactor", "revert", "build", "chore", "ci", "docs", "style", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf", "refactor", "revert"]
+
+[tool.semantic_release.changelog]
+changelog_file = "CHANGELOG.md"
+
 [dependency-groups]
 dev = [
     # Testing
