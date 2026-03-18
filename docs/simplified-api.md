@@ -285,6 +285,107 @@ for score in scores_list['scores']:
     await delete_score(score['score_id'])
 ```
 
+### 8. harmony_analysis
+
+Perform Roman numeral and functional harmony analysis.
+
+**Parameters:**
+- `score_id` (str): ID of the score to analyze
+- `analysis_type` (str, optional): `"roman"`, `"functional"`, or `"both"` (default: `"roman"`)
+
+**Returns:**
+```json
+{
+  "status": "success",
+  "score_id": "bach_chorale",
+  "roman_numeral_analysis": [
+    {"measure": 1, "beat": 1, "roman": "I", "chord": "A major"},
+    {"measure": 1, "beat": 3, "roman": "IV", "chord": "D major"}
+  ],
+  "cadences": [
+    {"measure": 8, "type": "authentic", "strength": "perfect"}
+  ]
+}
+```
+
+### 9. voice_leading_analysis
+
+Analyze voice leading patterns, parallel motion, and voice crossing in multi-part music.
+
+**Parameters:**
+- `score_id` (str): ID of the score to analyze
+
+**Returns:**
+```json
+{
+  "status": "success",
+  "voice_leading_quality": {
+    "overall_score": 8.5,
+    "smoothness": 9.0,
+    "independence": 8.0
+  },
+  "parallel_motion": [...],
+  "voice_crossings": [...]
+}
+```
+
+### 10. pattern_recognition
+
+Identify melodic motifs, rhythmic patterns, and harmonic sequences.
+
+**Parameters:**
+- `score_id` (str): ID of the score to analyze
+- `pattern_type` (str, optional): `"melodic"`, `"rhythmic"`, `"harmonic"`, or `"all"` (default: `"melodic"`)
+
+**Returns:**
+```json
+{
+  "status": "success",
+  "melodic_patterns": [
+    {"pattern": "C-D-E-F", "occurrences": 3, "locations": ["m.1", "m.5", "m.9"]}
+  ]
+}
+```
+
+### 11. harmonize_melody
+
+Generate harmonic accompaniment for melodies in various styles.
+
+**Parameters:**
+- `score_id` (str): ID of the melody to harmonize
+- `style` (str, optional): `"bach"`, `"jazz"`, `"pop"`, `"classical"` (default: `"bach"`)
+
+### 12. generate_counterpoint
+
+Generate counterpoint lines following species counterpoint rules (1st through 5th species).
+
+**Parameters:**
+- `score_id` (str): ID of the cantus firmus
+- `species` (int, optional): Species type 1-5 (default: 1)
+
+### 13. imitate_style
+
+Analyze musical style characteristics and generate new music following those patterns.
+
+**Parameters:**
+- `score_id` (str): ID of the reference score
+- `target_style` (str, optional): `"bach"`, `"mozart"`, `"chopin"`, `"beethoven"`, `"jazz"` (default: `"bach"`)
+
+### 14. health_check
+
+Check server health and operational status.
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+  "status": "healthy",
+  "tools_available": 13,
+  "memory_usage": "24.5 MB"
+}
+```
+
 ## Error Handling
 
 All tools return consistent error responses:
@@ -405,6 +506,14 @@ If migrating from the complex server, note these changes:
 3. **Consistent returns**: All tools return `status` field
 4. **No advanced features**: Counterpoint, voice leading, etc. not available
 5. **Stable API**: This API will remain stable for backward compatibility
+
+## Security Considerations
+
+- **No Code Execution**: The server only analyzes existing music files
+- **Read-Only File Access**: File system access is limited to reading music files
+- **No Network Access**: The server does not make external network requests
+- **Input Validation**: All inputs are validated and sanitized
+- **Resource Limits**: Memory and processing time limits prevent abuse
 
 ## Examples Repository
 

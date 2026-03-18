@@ -125,6 +125,92 @@ Add to Claude Desktop config (`~/.config/claude-desktop/config.json`):
 }
 ```
 
+### Other MCP Clients
+
+#### VS Code with MCP Extension
+
+Add to your VS Code `settings.json`:
+
+```json
+{
+  "mcp.servers": {
+    "music21-analysis": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "music21_mcp.server_minimal"],
+      "cwd": "/path/to/music21-mcp-server"
+    }
+  }
+}
+```
+
+#### Cursor IDE
+
+Add to your Cursor configuration:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "music21-analysis": {
+        "command": "python",
+        "args": ["-m", "music21_mcp.server_minimal"],
+        "env": {
+          "PYTHONPATH": "/path/to/music21-mcp-server/src"
+        }
+      }
+    }
+  }
+}
+```
+
+#### Zed Editor
+
+Add to your Zed settings:
+
+```json
+{
+  "experimental": {
+    "mcp": {
+      "servers": {
+        "music21-analysis": {
+          "command": "python",
+          "args": ["-m", "music21_mcp.server_minimal"]
+        }
+      }
+    }
+  }
+}
+```
+
+### Docker Installation
+
+For containerized deployment:
+
+```dockerfile
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install git+https://github.com/brightlikethelight/music21-mcp-server.git
+RUN python -m music21.configure
+
+CMD ["python", "-m", "music21_mcp.server_minimal"]
+```
+
+```bash
+docker build -t music21-mcp-server .
+docker run -i music21-mcp-server
+```
+
+### Environment Variables
+
+- `MUSIC21_CORPUS_PATH`: Custom path for music21 corpus files
+- `MCP_LOG_LEVEL`: Set logging level (DEBUG, INFO, WARNING, ERROR)
+- `MCP_MAX_SCORES`: Maximum number of scores to keep in memory (default: 10)
+- `MCP_CACHE_SIZE`: Cache size for analysis results (default: 100MB)
+
 ## Available Tools
 
 The server provides 13 music analysis tools:

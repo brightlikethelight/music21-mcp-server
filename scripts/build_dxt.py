@@ -278,7 +278,7 @@ echo "The Music21 MCP Server is ready to use with Claude Desktop."
         """Bundle critical dependencies"""
 
         # Copy workflow templates
-        docs_src = self.root_dir / "docs" / "WORKFLOW_TEMPLATES.md"
+        docs_src = self.root_dir / "docs" / "examples.md"
         if docs_src.exists():
             shutil.copy2(docs_src, self.dxt_dir / "WORKFLOWS.md")
 

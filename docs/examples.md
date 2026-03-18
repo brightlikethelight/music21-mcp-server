@@ -564,3 +564,34 @@ async def analyze_harmonic_language(score_file):
 6. **Use batch processing**: When analyzing multiple scores, use batch_analysis for better performance.
 
 7. **Export in appropriate formats**: Use MusicXML for maximum compatibility, MIDI for audio applications, and PNG/SVG for visual documentation.
+
+## Troubleshooting Common Issues
+
+### Score Import Failures
+
+If you get "Score not found" errors when importing:
+- Verify the source path or corpus identifier is correct
+- Use `list_scores()` to check currently loaded scores
+- Try a different `source_type` (e.g., `"file"` instead of `"corpus"`)
+
+### Analysis Returning Empty Results
+
+If harmony analysis returns no chords:
+- Check that the score has harmonic content (not a single melodic line)
+- Verify the score imported correctly with `get_score_info()`
+- Ensure the score is not corrupted or malformed
+
+### Performance Issues with Large Scores
+
+For scores that take too long or time out:
+- Check score size first with `get_score_info()`
+- Delete unused scores to free memory with `delete_score()`
+- Break large scores into sections for analysis
+
+### Inconsistent Analysis Results
+
+If different algorithms give very different key results:
+- This is normal for atonal or highly chromatic music
+- Try analyzing shorter passages to isolate key areas
+- Use multiple algorithms and compare confidence scores
+- Check for frequent modulations with windowed analysis
