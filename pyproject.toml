@@ -28,7 +28,7 @@ dependencies = [
     "music21>=9.1.0",
     "numpy>=1.24.0",
     "pydantic>=2.11.0",
-    "cachetools>=5.3.0",
+    "cachetools>=7.0.0,<8.0",
     "psutil>=5.9.0",
     "mcp>=1.23.0",
     "fastmcp>=2.14.0,<3.0",
@@ -225,6 +225,22 @@ exclude_lines = [
 # See .github/workflows/ci.yml for the security scan configuration
 exclude_dirs = ["tests", "examples", "debug_test.py"]
 
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/music21_mcp/__init__.py:__version__"]
+branch = "main"
+commit_message = "chore(release): {version}"
+build_command = "uv build"
+upload_to_pypi = false  # handled by publish.yml on release event
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["feat", "fix", "perf", "refactor", "revert", "build", "chore", "ci", "docs", "style", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf", "refactor", "revert"]
+
+[tool.semantic_release.changelog]
+changelog_file = "CHANGELOG.md"
+
 [dependency-groups]
 dev = [
     # Testing
@@ -235,11 +251,11 @@ dev = [
     "pytest-benchmark>=4.0.0",
     "pytest-timeout>=2.2.0",
     # Linting and formatting
-    "ruff>=0.1.0",
+    "ruff>=0.14.0",
     "mypy>=1.8.0",
     # Type stubs
     "types-psutil>=5.9.0",
-    "types-cachetools>=5.3.0",
+    "types-cachetools>=6.0.0",
     # Security scanning
     "bandit[toml]>=1.8.6",
     "pip-audit>=2.9.0",
