@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -53,7 +53,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
@@ -111,7 +111,7 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-results-${{ matrix.python-version }}
         path: junit/
@@ -126,7 +126,7 @@ jobs:
         fail_ci_if_error: false
 
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: coverage-report-${{ matrix.python-version }}
         path: htmlcov/
@@ -137,7 +137,7 @@ jobs:
     needs: lint-and-type-check
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -169,7 +169,7 @@ jobs:
         uv run pip-audit --desc || true
 
     - name: Upload security results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: security-results
         path: |
@@ -183,7 +183,7 @@ jobs:
     if: success()
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -219,7 +219,7 @@ jobs:
     needs: [test, security]
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -245,7 +245,7 @@ jobs:
         uv run python -c "import music21_mcp; print(music21_mcp.__version__)"
     
     - name: Store distribution packages
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: distribution-packages
         path: dist/
@@ -256,7 +256,7 @@ jobs:
     needs: lint-and-type-check
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -287,7 +287,7 @@ jobs:
     needs: test
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -312,7 +312,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Check CHANGELOG.md exists
       run: |
