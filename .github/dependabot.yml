@@ -11,11 +11,50 @@ updates:
       - "brightlikethelight"
     reviewers:
       - "brightlikethelight"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
       include: "scope"
+    groups:
+      production-deps:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "ruff"
+          - "mypy"
+          - "pytest*"
+          - "types-*"
+          - "bandit*"
+          - "pip-audit"
+          - "safety*"
+          - "twine"
+        update-types:
+          - "minor"
+          - "patch"
+      dev-deps:
+        patterns:
+          - "ruff"
+          - "mypy"
+          - "pytest*"
+          - "types-*"
+          - "bandit*"
+          - "pip-audit"
+          - "safety*"
+          - "twine"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "urllib3"
+      - dependency-name: "python-multipart"
+      - dependency-name: "cryptography"
+      - dependency-name: "filelock"
+      - dependency-name: "marshmallow"
+      - dependency-name: "authlib"
+      - dependency-name: "pip"
+      - dependency-name: "sphinx"
+      - dependency-name: "sphinx-rtd-theme"
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
@@ -32,6 +71,10 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
+    groups:
+      actions:
+        patterns:
+          - "*"
 
   # Docker dependencies
   - package-ecosystem: "docker"
