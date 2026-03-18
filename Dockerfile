@@ -21,7 +21,9 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 # Install dependencies using UV
-RUN uv pip install --no-cache-dir -r <(uv pip compile pyproject.toml)
+RUN uv pip compile pyproject.toml > /tmp/requirements.txt && \
+    uv pip install --no-cache-dir -r /tmp/requirements.txt && \
+    rm /tmp/requirements.txt
 
 # Production stage
 FROM python:3.11-slim

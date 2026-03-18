@@ -98,8 +98,8 @@ def build_package():
     # Clean previous builds
     run_command("rm -rf dist/ build/ *.egg-info", check=False)
 
-    # Build with poetry
-    run_command("poetry build")
+    # Build with uv
+    run_command("uv build")
 
     # Check the built package
     run_command("twine check dist/*")
