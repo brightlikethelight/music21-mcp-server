@@ -1,6 +1,7 @@
 # Music21 Analysis - Multi-Interface Music Server
 
 [![CI/CD Pipeline](https://github.com/brightlikethelight/music21-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/brightlikethelight/music21-mcp-server/actions/workflows/ci.yml)
+[![CI](https://github.com/brightlikethelight/music21-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/brightlikethelight/music21-mcp-server/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-brightgreen.svg)](https://github.com/brightlikethelight/music21-mcp-server/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -128,7 +129,7 @@ python -m music21_mcp.launcher cli tools
 
 #### 🐍 Python Library (for programming)
 ```python
-from music21_mcp.adapters import create_sync_analyzer
+from music21_mcp import create_sync_analyzer
 
 # Create analyzer
 analyzer = create_sync_analyzer()

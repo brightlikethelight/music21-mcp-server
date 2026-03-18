@@ -33,7 +33,7 @@ jobs:
       run: uv python install ${{ env.PYTHON_VERSION }}
 
     - name: Install python-semantic-release
-      run: uv pip install python-semantic-release
+      run: uv pip install --system python-semantic-release
 
     - name: Run semantic-release
       env:

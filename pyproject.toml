@@ -239,6 +239,9 @@ minor_tags = ["feat"]
 patch_tags = ["fix", "perf", "refactor", "revert"]
 
 [tool.semantic_release.changelog]
+exclude_commit_patterns = ["chore\\(release\\)"]
+
+[tool.semantic_release.changelog.default_templates]
 changelog_file = "CHANGELOG.md"
 
 [dependency-groups]
@@ -259,7 +262,6 @@ dev = [
     # Security scanning
     "bandit[toml]>=1.8.6",
     "pip-audit>=2.9.0",
-    "safety>=3.2.9",
     # Publishing
     "twine>=6.1.0",
 ]
