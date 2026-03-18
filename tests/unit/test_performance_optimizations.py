@@ -120,5 +120,3 @@ class TestPerformanceOptimizer:
         c_major = chord.Chord(["C", "E", "G"])
         cached = optimizer.get_cached_roman_numeral(c_major, c_key)
         assert cached is not None
-
-
