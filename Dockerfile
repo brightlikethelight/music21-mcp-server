@@ -1,5 +1,5 @@
 # Multi-stage build for optimized production image
-FROM python:3.11-slim AS builder
+FROM python:3.14-slim AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -24,7 +24,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv pip install --no-cache-dir -r <(uv pip compile pyproject.toml)
 
 # Production stage
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
