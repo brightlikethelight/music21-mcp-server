@@ -15,7 +15,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -52,7 +52,7 @@ jobs:
         python-version: ['3.10', '3.11', '3.12']
     
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -91,7 +91,7 @@ jobs:
       id-token: write  # For trusted publishing
     
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     
     - name: Download artifacts
       uses: actions/download-artifact@v4
