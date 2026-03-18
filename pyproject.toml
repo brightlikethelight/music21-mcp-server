@@ -57,11 +57,6 @@ music21-cli = "music21_mcp.adapters.cli_adapter:main"
 "Changelog" = "https://github.com/brightlikethelight/music21-mcp-server/blob/main/CHANGELOG.md"
 "Discussions" = "https://github.com/brightlikethelight/music21-mcp-server/discussions"
 
-[tool.black]
-line-length = 88
-target-version = ['py310', 'py311', 'py312']
-include = '\.pyi?$'
-
 [tool.ruff]
 line-length = 88
 target-version = "py310"
@@ -150,10 +145,6 @@ disallow_untyped_defs = false
 warn_return_any = false
 warn_unreachable = true
 strict_equality = true
-
-[tool.isort]
-profile = "black"
-line_length = 88
 
 [[tool.mypy.overrides]]
 module = "music21.*"
