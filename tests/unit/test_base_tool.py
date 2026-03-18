@@ -71,14 +71,12 @@ class TestErrorHandling:
     def test_error_handling_slow_operation(self, caplog):
         """Operations >1s inside error_handling log an info message."""
         tool = _StubTool(score_manager={})
-        with caplog.at_level(logging.INFO):
-            with tool.error_handling("slow op"):
+        with caplog.at_level(logging.INFO), tool.error_handling("slow op"):
                 time.sleep(1.1)
         assert any("slow op" in r.message and "completed" in r.message for r in caplog.records)
 
     def test_error_handling_exception(self):
         """Exceptions inside error_handling are logged and re-raised."""
         tool = _StubTool(score_manager={})
-        with pytest.raises(ValueError, match="boom"):
-            with tool.error_handling("failing op"):
+        with pytest.raises(ValueError, match="boom"), tool.error_handling("failing op"):
                 raise ValueError("boom")
