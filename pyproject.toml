@@ -259,7 +259,6 @@ dev = [
     # Security scanning
     "bandit[toml]>=1.8.6",
     "pip-audit>=2.9.0",
-    "safety>=3.2.9",
     # Publishing
     "twine>=6.1.0",
 ]
