@@ -94,8 +94,8 @@ We use automated tools to ensure consistent code style:
 ## Testing Requirements
 
 ### Coverage Requirements
-- **Minimum Coverage**: 80%
-- **Target Coverage**: >80%
+- **Minimum Coverage**: 82%
+- **Target Coverage**: >82%
 
 ### Running Tests
 
@@ -106,7 +106,7 @@ pytest tests/
 # Run with coverage
 pytest tests/ --cov=src/music21_mcp --cov-report=term-missing
 
-# Run with coverage threshold (will fail if below 80%)
+# Run with coverage threshold (will fail if below 82%)
 pytest tests/ --cov=src/music21_mcp --cov-fail-under=82
 
 # Run specific test file
@@ -232,7 +232,7 @@ Your PR must pass all automated checks:
 2. **Tests**
    - All unit tests pass
    - All integration tests pass
-   - Coverage remains above 80%
+   - Coverage remains above 82%
 
 3. **Security Scan**
    - Bandit security scan passes

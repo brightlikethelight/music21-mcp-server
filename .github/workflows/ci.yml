@@ -294,7 +294,7 @@ jobs:
     - name: Start container
       run: |
         docker run -d --name test-container -p 8000:8000 music21-mcp-test
-        sleep 10
+        sleep 30
     - name: Health check
       run: |
         curl -f http://localhost:8000/health || exit 1

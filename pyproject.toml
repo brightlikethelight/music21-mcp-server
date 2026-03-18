@@ -47,7 +47,7 @@ packages = [{include = "music21_mcp", from = "src"}]
 music21-analysis = "music21_mcp.launcher:main"
 music21-mcp = "music21_mcp.server_minimal:main"
 music21-http = "music21_mcp.adapters.http_adapter:main"
-music21-cli = "music21_mcp.adapters.cli_adapter:main"
+music21-cli = "music21_mcp.adapters.cli_adapter:main_sync"
 
 [project.urls]
 "Homepage" = "https://github.com/brightlikethelight/music21-mcp-server"
@@ -228,10 +228,13 @@ exclude_dirs = ["tests", "examples", "debug_test.py"]
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
 version_variables = ["src/music21_mcp/__init__.py:__version__"]
-branch = "main"
 commit_message = "chore(release): {version}"
 build_command = "uv build"
 upload_to_pypi = false  # handled by publish.yml on release event
+
+[tool.semantic_release.branches.main]
+match = "(main|master)"
+prerelease = false
 
 [tool.semantic_release.commit_parser_options]
 allowed_tags = ["feat", "fix", "perf", "refactor", "revert", "build", "chore", "ci", "docs", "style", "test"]

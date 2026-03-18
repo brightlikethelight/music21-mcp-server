@@ -259,5 +259,10 @@ Examples:
         traceback.print_exc()
 
 
-if __name__ == "__main__":
+def main_sync():
+    """Sync wrapper for entry point (pyproject.toml console_scripts)."""
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    main_sync()

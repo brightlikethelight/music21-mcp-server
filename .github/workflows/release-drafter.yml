@@ -1,9 +1,10 @@
 name: Release Drafter
 
+# Disabled: semantic-release handles versioning via conventional commits.
+# Release-drafter uses PR labels which conflicts and creates stale drafts.
+# Keep config (.github/release-drafter.yml) for manual use if needed.
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
