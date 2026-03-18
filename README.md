@@ -128,7 +128,7 @@ python -m music21_mcp.launcher cli tools
 
 #### 🐍 Python Library (for programming)
 ```python
-from music21_mcp.adapters import create_sync_analyzer
+from music21_mcp import create_sync_analyzer
 
 # Create analyzer
 analyzer = create_sync_analyzer()

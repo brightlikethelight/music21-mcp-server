@@ -6,7 +6,7 @@ The Music21 MCP Server uses GitHub Actions for continuous integration and deploy
 
 ## Current Status
 
-- **Coverage**: 83.34% (Required: 80%)
+- **Coverage**: 84%+ (Required: 80%)
 - **Python Versions**: 3.10, 3.11, 3.12
 - **Protected Branch**: main
 - **Auto-deployment**: PyPI on tag push

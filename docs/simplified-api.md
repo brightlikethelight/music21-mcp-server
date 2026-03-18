@@ -381,7 +381,7 @@ Check server health and operational status.
 ```json
 {
   "status": "healthy",
-  "tools_available": 13,
+  "tools_available": 14,
   "memory_usage": "24.5 MB"
 }
 ```

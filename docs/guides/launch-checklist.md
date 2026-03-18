@@ -52,7 +52,7 @@ python -c "import music21_mcp; print(music21_mcp.__version__)"
   "author": "brightliu",
   "repository": "https://github.com/brightlikethelight/music21-mcp-server",
   "version": "1.0.0",
-  "tools": 16,
+  "tools": 14,
   "categories": ["music", "analysis", "education"]
 }
 ```
@@ -63,7 +63,7 @@ python -c "import music21_mcp; print(music21_mcp.__version__)"
 - [ ] Add to Music section:
 ```markdown
 ### Music & Audio
-- **[music21-mcp-server](https://github.com/brightlikethelight/music21-mcp-server)** - Professional music analysis and generation with MIT's music21. Features harmony analysis, counterpoint generation, style imitation (Bach/Mozart/Chopin), and export to multiple formats. [16 tools]
+- **[music21-mcp-server](https://github.com/brightlikethelight/music21-mcp-server)** - Professional music analysis and generation with MIT's music21. Features harmony analysis, counterpoint generation, style imitation (Bach/Mozart/Chopin), and export to multiple formats. [14 tools]
 ```
 - [ ] Submit PR
 
@@ -158,7 +158,7 @@ Track these metrics to measure launch success:
 Professional music analysis and generation tools for Claude Desktop, powered by MIT's music21 library.
 
 ✨ Features:
-• 16 powerful music analysis tools
+• 14 powerful music analysis tools (13 analysis + health check)
 • Harmony analysis with Roman numerals
 • Generate counterpoint and harmonizations
 • Imitate styles of Bach, Mozart, Chopin
