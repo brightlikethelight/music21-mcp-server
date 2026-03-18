@@ -93,9 +93,7 @@ class TestHealthCheckThresholds:
         """Filling storage to capacity and triggering cleanup removes items."""
         from music21 import stream
 
-        storage = ScoreStorage(
-            max_scores=3, score_ttl_seconds=1, max_memory_mb=1024
-        )
+        storage = ScoreStorage(max_scores=3, score_ttl_seconds=1, max_memory_mb=1024)
         try:
             # Fill to capacity
             for i in range(3):
@@ -105,6 +103,7 @@ class TestHealthCheckThresholds:
 
             # Force cleanup — TTL is 1s so entries will expire after sleep
             import time
+
             time.sleep(1.2)
             stats = storage.cleanup()
             # After TTL expiry, cleanup should have removed entries

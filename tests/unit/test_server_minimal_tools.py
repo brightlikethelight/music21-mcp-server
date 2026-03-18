@@ -186,7 +186,9 @@ class TestMainFunction:
     def test_main_keyboard_interrupt(self, monkeypatch):
         """KeyboardInterrupt during mcp.run() triggers graceful shutdown log."""
         monkeypatch.setattr(sm, "HAS_MCP", True)
-        monkeypatch.setattr(sm.mcp, "run", lambda: (_ for _ in ()).throw(KeyboardInterrupt))
+        monkeypatch.setattr(
+            sm.mcp, "run", lambda: (_ for _ in ()).throw(KeyboardInterrupt)
+        )
         infos = []
         monkeypatch.setattr(sm.logger, "info", lambda msg: infos.append(msg))
         sm.main()
