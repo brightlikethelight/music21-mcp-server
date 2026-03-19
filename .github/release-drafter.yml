@@ -108,13 +108,13 @@ template: |
   - **13 comprehensive music analysis tools**
   - **4 different interfaces**: MCP Server, HTTP API, CLI, Python Library  
   - **Protocol-independent architecture** for maximum reliability
-  - **Professional CI/CD** with 80%+ test coverage
+  - **Professional CI/CD** with 82%+ test coverage
   - **Security scanning** and type checking
   
   ## 📊 Stats
   
   - **Python**: 3.10+ supported
-  - **Test Coverage**: 80%+ with comprehensive test suite
+  - **Test Coverage**: 82%+ with comprehensive test suite
   - **Security**: Scanned with bandit, pip-audit, safety
   - **Type Checking**: Full mypy coverage
   

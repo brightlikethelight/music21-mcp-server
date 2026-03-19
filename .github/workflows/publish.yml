@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
     
     steps:
     - uses: actions/checkout@v6
@@ -69,7 +69,7 @@ jobs:
     - name: Install from wheel
       run: |
         uv venv .venv
-        uv pip install dist/*.whl
+        VIRTUAL_ENV=.venv uv pip install dist/*.whl
 
     - name: Test import
       run: |
@@ -78,8 +78,8 @@ jobs:
 
     - name: Test CLI
       run: |
-        .venv/bin/music21-analysis --help || true
-        .venv/bin/music21-mcp --help || true
+        .venv/bin/music21-analysis --help
+        .venv/bin/music21-mcp --help
 
   publish:
     needs: [build, test]
