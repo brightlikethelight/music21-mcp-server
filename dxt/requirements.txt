@@ -18,7 +18,7 @@ psutil>=5.9.0
 
 # MCP Protocol support
 mcp>=1.23.0
-fastmcp>=2.14.0,<3.0
+fastmcp>=2.14.0,<4.0
 
 # HTTP server
 fastapi>=0.115.0
