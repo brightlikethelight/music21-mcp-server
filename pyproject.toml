@@ -261,7 +261,7 @@ dev = [
     "ruff>=0.14.0",
     "mypy>=1.8.0",
     # Type stubs
-    "types-psutil>=5.9.0",
+    "types-psutil>=7.2.2.20260408",
     "types-cachetools>=6.0.0",
     # Security scanning
     "bandit[toml]>=1.8.6",
