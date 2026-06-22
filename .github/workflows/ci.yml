@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -53,7 +53,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
@@ -117,7 +117,7 @@ jobs:
         path: junit/
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
@@ -137,7 +137,7 @@ jobs:
     needs: lint-and-type-check
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -184,7 +184,7 @@ jobs:
     if: success()
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -220,7 +220,7 @@ jobs:
     needs: [test, security]
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -257,7 +257,7 @@ jobs:
     needs: lint-and-type-check
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set up UV
       uses: astral-sh/setup-uv@v7
@@ -288,7 +288,7 @@ jobs:
     continue-on-error: true
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: Build Docker image
       run: docker build -t music21-mcp-test .
     - name: Start container
@@ -309,7 +309,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Check CHANGELOG.md exists
       run: |
